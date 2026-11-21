@@ -1,0 +1,1982 @@
+<meta charset="utf-8">
+<title>AquaSense</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="AquaSense: an IoT-based smart irrigation system. EDI Project 1, CS-C Group 10, VIT Pune.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an instrument-style app. Sticky top bar with views (Overview, Dashboard, 3D Simulation, History, Assistant); one shared simulation engine drives every view. */
+:root {
+  --bg: #edf1ee;
+  --surface: #f8faf8;
+  --sunk: #e2e9e4;
+  --ink: #10231f;
+  --muted: #52655f;
+  --line: #c9d5cf;
+  --water: #1667c4;
+  --water-soft: rgba(22, 103, 196, .14);
+  --soil: #8a5a2c;
+  --soil-soft: #c9a47c;
+  --ok: #2c7a4b;
+  --warn: #a86b12;
+  --crit: #b8382a;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
+    --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+    --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
+  --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+  --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.015em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.4rem); line-height: 1; font-weight: 800; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.15; font-weight: 700; }
+h3 { font-size: 1.05rem; line-height: 1.3; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--water); }
+:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; border-radius: 4px; }
+.label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+/* ---------- Top bar ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 20px; padding-block: 10px; }
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; text-decoration: none; color: var(--ink); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.brand svg { width: 20px; height: 20px; }
+.topbar nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; flex: 1; }
+.topbar nav a { color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 500; white-space: nowrap; padding: 6px 12px; border-radius: 8px; }
+.topbar nav a:hover { color: var(--ink); background: var(--sunk); }
+.topbar nav a[aria-current="page"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.chip-status { display: flex; align-items: center; gap: 8px; font: 500 .78rem var(--font-mono); white-space: nowrap; color: var(--muted); flex-shrink: 0; }
+.chip-status b { color: var(--ink); font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); flex-shrink: 0; }
+.dot.paused { background: var(--muted); box-shadow: none; }
+.dot.pumping { background: var(--water); box-shadow: 0 0 0 3px var(--water-soft); }
+@media (max-width: 900px) { .topbar .wrap { flex-wrap: wrap; gap: 6px 16px; } .topbar nav { order: 3; flex-basis: 100%; } }
+
+main > section[data-view] { padding-block: 36px 72px; }
+.view-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 24px; }
+.view-head p { color: var(--muted); max-width: 62ch; margin-top: 6px; }
+
+/* ---------- Shared controls ---------- */
+.btn { font: 500 .85rem var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--muted); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary { background: var(--water); color: #fff; border-color: var(--water); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg .btn { border: 0; border-radius: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+.panel-pad { padding: 20px; display: grid; gap: 14px; align-content: start; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 .74rem var(--font-mono); letter-spacing: .05em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.on { color: var(--water); background: var(--water-soft); }
+.pill.off { color: var(--muted); }
+.pill.lock { color: var(--crit); }
+
+.mode-switch { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunk); border-radius: 12px; padding: 4px; gap: 4px; }
+.mode-switch button { font: 600 .95rem var(--font-body); border: 0; background: transparent; color: var(--muted); padding: 11px 8px; border-radius: 9px; cursor: pointer; display: grid; gap: 2px; justify-items: center; }
+.mode-switch button small { font: 400 .72rem var(--font-body); }
+.mode-switch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.pump-btn { width: 100%; font: 700 1.05rem var(--font-display); padding: 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--water); color: #fff; }
+.pump-btn.stop { background: var(--crit); }
+.pump-btn:disabled { background: var(--sunk); color: var(--muted); cursor: not-allowed; box-shadow: inset 0 0 0 1px var(--line); }
+.hint { font-size: .84rem; color: var(--muted); }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: .92rem; }
+.row > span:first-child { color: var(--muted); }
+input[type="range"] { width: 100%; accent-color: var(--water); }
+
+/* ---------- Overview ---------- */
+.hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: end; padding-block: 24px 40px; }
+.hero h1 em { font-style: normal; color: var(--water); }
+.hero .kicker { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 20px; }
+.hero .lede { font-size: 1.1rem; color: var(--muted); max-width: 50ch; }
+.hero .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.hero .ctas .btn { padding: 10px 16px; font-size: .95rem; }
+@media (max-width: 860px) { .hero { grid-template-columns: 1fr; gap: 20px; } }
+.feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.feature { padding: 18px; display: grid; gap: 8px; align-content: start; text-decoration: none; color: var(--ink); transition: border-color .15s, transform .15s; }
+.feature:hover { border-color: var(--water); transform: translateY(-2px); }
+.feature p { color: var(--muted); font-size: .9rem; }
+.feature .go { font: 500 .8rem var(--font-mono); color: var(--water); }
+.feature .live { font: 800 1.9rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+@media (max-width: 960px) { .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .feature-grid { grid-template-columns: 1fr; } }
+.ov-block { margin-top: 56px; display: grid; gap: 18px; }
+.diagram { overflow-x: auto; padding: 16px; }
+.diagram svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.diagram text { font-family: var(--font-body); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+.parts { list-style: none; margin: 0; padding: 0; }
+.parts li { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: .94rem; }
+.parts li:last-child { border-bottom: 0; }
+.tag { font: 500 .7rem var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+.tag.done { color: var(--ok); }
+.tag.plan { color: var(--warn); }
+.timeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: relative; }
+.timeline::before { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: var(--line); }
+.timeline div { position: relative; padding-top: 26px; padding-right: 12px; min-width: 0; font-size: .9rem; }
+.timeline div::before { content: ""; position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line); }
+.timeline div.done::before { background: var(--ok); border-color: var(--ok); }
+.timeline div.now::before { background: var(--water); border-color: var(--water); box-shadow: 0 0 0 4px var(--water-soft); }
+.timeline b { display: block; font-weight: 600; }
+.timeline span { color: var(--muted); font-size: .82rem; }
+@media (max-width: 860px) {
+  .timeline { grid-template-columns: 1fr; gap: 16px; }
+  .timeline::before { left: 7px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; }
+  .timeline div { padding: 0 0 0 30px; }
+}
+
+/* ---------- Dashboard ---------- */
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 960px) { .dash { grid-template-columns: 1fr; } }
+.console-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--sunk); border-radius: 14px 14px 0 0; }
+.console-bar .spacer { flex: 1; }
+.console-body { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 20px; padding: 18px; }
+@media (max-width: 520px) { .console-body { grid-template-columns: 70px minmax(0, 1fr); gap: 14px; padding: 14px; } }
+.soil { position: relative; min-height: 320px; height: 100%; border-radius: 10px; overflow: hidden; background: var(--soil-soft); border: 1px solid var(--line); }
+.soil .wet { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, color-mix(in srgb, var(--water) 65%, var(--soil)), color-mix(in srgb, var(--water) 30%, var(--soil-soft))); transition: height .6s ease; }
+.soil .grain { position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 30%, rgba(0,0,0,.12) 1.2px, transparent 1.6px), radial-gradient(circle at 70% 60%, rgba(0,0,0,.1) 1px, transparent 1.5px), radial-gradient(circle at 45% 85%, rgba(255,255,255,.12) 1px, transparent 1.5px); background-size: 14px 14px, 11px 11px, 17px 17px; }
+.soil .mark { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--ink); opacity: .75; }
+.soil .mark span { position: absolute; right: 4px; top: 2px; font: 500 .62rem var(--font-mono); background: var(--surface); color: var(--ink); padding: 0 4px; border-radius: 3px; }
+.readout { display: grid; gap: 16px; min-width: 0; }
+.big { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 24px; }
+.big .val { font: 800 clamp(3rem, 7vw, 4.4rem)/0.9 var(--font-display); font-variant-numeric: tabular-nums; }
+.big .val small { font-size: .45em; color: var(--muted); margin-left: 2px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 620px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; }
+.stat .v { font: 500 1rem var(--font-mono); font-variant-numeric: tabular-nums; display: block; overflow-wrap: anywhere; }
+.chart-box { position: relative; height: 180px; min-width: 0; }
+.chart-box canvas { width: 100%; height: 100%; display: block; }
+.log { list-style: none; margin: 0; padding: 8px 0 0; font: .8rem/1.5 var(--font-mono); max-height: 130px; overflow-y: auto; border-top: 1px solid var(--line); }
+.log li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; color: var(--muted); }
+.log li b { font-weight: 500; color: var(--ink); }
+.log li.crit b { color: var(--crit); }
+.log li.on b { color: var(--water); }
+.side { display: grid; gap: 16px; }
+
+/* ---------- Simulation ---------- */
+.sim-stage { position: relative; height: clamp(420px, 64vh, 640px); border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--sunk); }
+.sim-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.sim-stage canvas:active { cursor: grabbing; }
+.sim-labels { position: absolute; inset: 0; pointer-events: none; }
+.sim-labels span { position: absolute; transform: translate(-50%, -100%); font: 600 .7rem var(--font-mono); letter-spacing: .04em; padding: 2px 7px; border-radius: 6px; background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--ink); border: 1px solid var(--line); white-space: nowrap; }
+.sim-labels span.hot { background: var(--water); color: #fff; border-color: var(--water); }
+.sim-hud { position: absolute; left: 12px; top: 12px; display: flex; flex-wrap: wrap; gap: 8px; max-width: calc(100% - 24px); pointer-events: none; }
+.sim-hud > div { background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; display: grid; }
+.sim-hud b { font: 700 1.25rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.sim-hint { position: absolute; right: 12px; bottom: 10px; font-size: .75rem; color: var(--muted); pointer-events: none; }
+.sim-fallback { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); }
+.stepper { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.stepper li { border-top: 3px solid var(--line); padding-top: 8px; font-size: .86rem; color: var(--muted); min-width: 0; transition: border-color .3s, color .3s; }
+.stepper li b { display: block; font: 500 .72rem var(--font-mono); letter-spacing: .06em; }
+.stepper li.active { border-color: var(--water); color: var(--ink); }
+.stepper li.active b { color: var(--water); }
+.stepper li.done { border-color: color-mix(in srgb, var(--water) 40%, var(--line)); }
+@media (max-width: 760px) { .stepper { grid-template-columns: 1fr; } }
+.caption { font-size: 1.05rem; min-height: 3.2em; }
+.caption b { font-weight: 600; }
+.sim-under { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; margin-top: 18px; align-items: start; }
+@media (max-width: 900px) { .sim-under { grid-template-columns: 1fr; } }
+
+/* ---------- History ---------- */
+.hstats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; }
+.hstats > div { padding: 16px 18px; border-right: 1px solid var(--line); min-width: 0; }
+.hstats > div:last-child { border-right: 0; }
+.hstats .v { font: 700 1.6rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; display: block; margin-top: 4px; }
+@media (max-width: 900px) { .hstats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hstats > div:nth-child(3) { border-right: 0; } .hstats > div:nth-child(-n+3) { border-bottom: 1px solid var(--line); } }
+@media (max-width: 480px) { .hstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hstats > div { border-right: 0 !important; border-bottom: 1px solid var(--line); } }
+.hchart { height: 340px; position: relative; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 .76rem/1.4 var(--font-mono); padding: 6px 9px; border-radius: 7px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+.legend i.box { height: 10px; border: 0; background: var(--water-soft); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .9rem; }
+th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+th { font: 500 .7rem var(--font-mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: var(--sunk); }
+tr:last-child td { border-bottom: 0; }
+.note { font-size: .82rem; color: var(--muted); }
+
+/* ---------- Assistant ---------- */
+.assist { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 960px) { .assist { grid-template-columns: 1fr; } }
+.chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 620px; }
+.chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.msgs { overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: .95rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--sunk); border-bottom-left-radius: 4px; }
+.msg.bot .src { display: block; margin-top: 6px; font: 500 .66rem var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.chat-foot { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font: 500 .8rem var(--font-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+.chips button:hover { border-color: var(--water); color: var(--water); }
+.chat-form { display: flex; gap: 8px; }
+.chat-form input { flex: 1; min-width: 0; font: 400 .95rem var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.ring { --p: 50; --c: var(--ok); width: 150px; height: 150px; margin: 4px auto 0; border-radius: 50%; background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--line) 0); display: grid; place-items: center; }
+.ring > div { width: 122px; height: 122px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; text-align: center; }
+.ring .num { font: 800 2.4rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.factors { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.factors li { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; }
+.factors li span:first-child { color: var(--muted); }
+.predict { background: var(--water-soft); border-radius: 10px; padding: 12px 14px; font-size: .92rem; }
+
+/* ---------- Your plants ---------- */
+.nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: var(--crit); color: #fff; font: 600 .68rem var(--font-mono); vertical-align: 1px; }
+.pl-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 14px 18px; }
+.pl-bar .sum { display: flex; flex-wrap: wrap; gap: 6px 22px; flex: 1; min-width: 0; }
+.pl-bar .sum b { font: 700 1.15rem var(--font-display); font-variant-numeric: tabular-nums; margin-right: 4px; }
+.pl-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+@media (max-width: 1100px) { .pl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .pl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .pl-grid { grid-template-columns: 1fr; } }
+.pcard { padding: 16px; display: grid; gap: 10px; align-content: start; transition: border-color .2s, box-shadow .2s; scroll-margin-top: 90px; }
+.pcard.alerting { border-color: var(--crit); box-shadow: 0 0 0 3px color-mix(in srgb, var(--crit) 18%, transparent); }
+.pcard.flash { border-color: var(--water); box-shadow: 0 0 0 4px var(--water-soft); }
+.pc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pc-m { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pc-val { font: 800 2.1rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.pc-bar { position: relative; height: 8px; border-radius: 4px; background: var(--sunk); }
+.pc-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--water); transition: width .5s; }
+.pc-bar i.dry { background: var(--soil); }
+.pc-bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .5; }
+.pcard canvas { width: 100%; height: 40px; display: block; }
+.pc-alert { font-size: .8rem; font-weight: 600; color: var(--crit); background: color-mix(in srgb, var(--crit) 12%, transparent); border-radius: 8px; padding: 6px 9px; }
+.mini-switch { display: grid; grid-template-columns: 1fr 1fr; background: var(--sunk); border-radius: 9px; padding: 3px; gap: 3px; }
+.mini-switch button { font: 600 .8rem var(--font-body); border: 0; background: transparent; color: var(--muted); padding: 6px; border-radius: 7px; cursor: pointer; }
+.mini-switch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.pc-pump { justify-content: center; width: 100%; }
+.pc-pump.stop { background: var(--crit); color: #fff; border-color: var(--crit); }
+.pc-pump:disabled { color: var(--muted); cursor: not-allowed; background: var(--sunk); }
+.pc-set { font: .74rem var(--font-mono); color: var(--muted); }
+.alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 180px; overflow-y: auto; }
+.alert-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: .88rem; }
+.alert-list li .t { font: .76rem var(--font-mono); color: var(--muted); }
+.alert-list li.cleared { opacity: .55; }
+
+/* toasts */
+.toasts { position: fixed; z-index: 50; top: calc(70px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 10px; width: min(360px, calc(100vw - 32px)); }
+.toast { background: var(--surface); border: 1px solid var(--crit); border-left-width: 5px; border-radius: 12px; padding: 12px 14px; box-shadow: 0 14px 30px -12px rgba(0,0,0,.4); display: grid; gap: 6px; animation: tin .25s ease-out; }
+.toast b { font-family: var(--font-display); font-size: 1rem; }
+.toast p { font-size: .86rem; color: var(--muted); }
+.toast .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+@keyframes tin { from { transform: translateY(-8px); opacity: .3; } to { transform: none; opacity: 1; } }
+
+/* ---------- Pump settings ---------- */
+.pumps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 960px) { .pumps { grid-template-columns: 1fr; } }
+.setting { display: grid; gap: 8px; }
+.setting .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.setting .big-v { font: 800 2rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.setting .scale { display: flex; justify-content: space-between; font: .72rem var(--font-mono); color: var(--muted); }
+.preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.preview > div { background: var(--sunk); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.preview b { display: block; font: 600 1rem var(--font-mono); font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .preview { grid-template-columns: 1fr; } }
+.warn-box { color: var(--warn); font-size: .86rem; }
+.advisor-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+select { font: 500 .9rem var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.msg .apply { margin-top: 8px; }
+
+/* save dialog */
+.modal-back { position: fixed; inset: 0; z-index: 60; background: rgba(5, 12, 10, .55); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal { width: min(520px, 100%); max-height: 100%; overflow-y: auto; padding: 22px; display: grid; gap: 14px; }
+.plant-checks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 480px) { .plant-checks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.plant-checks label { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; cursor: pointer; font-size: .9rem; }
+.plant-checks label:has(input:checked) { border-color: var(--water); background: var(--water-soft); }
+.plant-checks input, .all-check input { accent-color: var(--water); width: 16px; height: 16px; }
+.all-check { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--line); cursor: pointer; }
+.modal .acts { display: flex; justify-content: flex-end; gap: 8px; }
+
+footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: .88rem; }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; }
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#overview" aria-label="AquaSense overview">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M5.6 15.5h12.8" stroke="var(--soil)" stroke-width="2"/></svg>
+      AquaSense
+    </a>
+    <nav aria-label="Views">
+      <a href="#overview" data-nav="overview">Overview</a>
+      <a href="#dashboard" data-nav="dashboard">Dashboard</a>
+      <a href="#plants" data-nav="plants">Your Plants<span class="nav-badge" id="navBadge" hidden>0</span></a>
+      <a href="#pumps" data-nav="pumps">Pump Settings</a>
+      <a href="#simulation" data-nav="simulation">3D Simulation</a>
+      <a href="#history" data-nav="history">History</a>
+      <a href="#assistant" data-nav="assistant">Assistant</a>
+    </nav>
+    <div class="chip-status" aria-live="off">
+      <span class="dot" id="liveDot"></span>
+      <b data-bind="m">48%</b>·<span data-bind="pumpShort">Pump off</span>·<span data-bind="modeShort">Auto</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= OVERVIEW ================= -->
+  <section data-view="overview" id="view-overview">
+    <div class="wrap">
+      <div class="hero">
+        <div>
+          <div class="kicker">
+            <span class="label">EDI Project 1</span>
+            <span class="label">CS-C · Group 10</span>
+            <span class="label">VIT Pune · 2026–27</span>
+          </div>
+          <h1>Water only when the <em>soil</em> asks for it.</h1>
+        </div>
+        <div>
+          <p class="lede">AquaSense reads soil moisture with an ESP32, switches a pump on its own when the soil gets dry, and stops it when the soil is wet enough. You can watch and control it from your phone.</p>
+          <div class="ctas">
+            <a class="btn primary" href="#simulation">Watch the 3D simulation</a>
+            <a class="btn" href="#dashboard">Open dashboard</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <a class="panel feature" href="#dashboard">
+          <span class="label">Dashboard</span>
+          <span class="live" data-bind="m">48%</span>
+          <p>Live moisture, and switch the pump between automatic and manual at any time.</p>
+          <span class="go">Open →</span>
+        </a>
+        <a class="panel feature" href="#plants">
+          <span class="label">Your Plants</span>
+          <span class="live" data-bind="plantAlerts">0 alerts</span>
+          <p>Twelve plants, each with its own moisture reading, pump and automatic or manual mode.</p>
+          <span class="go">Open →</span>
+        </a>
+        <a class="panel feature" href="#pumps">
+          <span class="label">Pump Settings</span>
+          <span class="live">0–100%</span>
+          <p>Set pump power and watering time, with an AI advisor that predicts how each soil takes water.</p>
+          <span class="go">Open →</span>
+        </a>
+        <a class="panel feature" href="#simulation">
+          <span class="label">3D Simulation</span>
+          <span class="live" data-bind="pumpShort">Pump off</span>
+          <p>See the sensor, ESP32, cloud, app and pump work together in a 3D model.</p>
+          <span class="go">Open →</span>
+        </a>
+        <a class="panel feature" href="#history">
+          <span class="label">History</span>
+          <span class="live" data-bind="water24">0</span>
+          <p>Waterings in the last 24 hours. Graphs of past soil moisture over 1, 3 or 7 days.</p>
+          <span class="go">Open →</span>
+        </a>
+        <a class="panel feature" href="#assistant">
+          <span class="label">AI Assistant</span>
+          <span class="live" data-bind="healthLabel">Healthy</span>
+          <p>Ask for a summary, a plant health check, or when the soil will need water next.</p>
+          <span class="go">Open →</span>
+        </a>
+      </div>
+
+      <div class="ov-block">
+        <h2>How the system is connected</h2>
+        <div class="panel diagram" role="img" aria-label="Soil moisture sensor feeds the ESP32. The ESP32 drives a relay and pump, and sends data over Wi-Fi to the cloud, which syncs with the mobile app. Commands go back the same way.">
+          <svg viewBox="0 0 900 270" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+              <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--water)"/></marker>
+            </defs>
+            <rect x="10" y="40" width="160" height="86" rx="12" fill="var(--sunk)" stroke="var(--line)"/>
+            <text x="90" y="78" text-anchor="middle" font-weight="600" font-size="15" fill="var(--ink)">Soil moisture</text>
+            <text x="90" y="98" text-anchor="middle" font-weight="600" font-size="15" fill="var(--ink)">sensor</text>
+            <rect x="250" y="40" width="170" height="86" rx="12" fill="var(--ink)"/>
+            <text x="335" y="80" text-anchor="middle" font-weight="700" font-size="17" fill="var(--bg)">ESP32</text>
+            <text x="335" y="102" text-anchor="middle" font-size="12" fill="var(--bg)" opacity=".8">decides when to water</text>
+            <rect x="500" y="40" width="170" height="86" rx="12" fill="var(--sunk)" stroke="var(--line)"/>
+            <text x="585" y="80" text-anchor="middle" font-weight="600" font-size="15" fill="var(--ink)">Cloud</text>
+            <text x="585" y="100" text-anchor="middle" font-size="12" fill="var(--muted)">real-time sync</text>
+            <rect x="750" y="40" width="140" height="86" rx="12" fill="var(--sunk)" stroke="var(--line)"/>
+            <text x="820" y="80" text-anchor="middle" font-weight="600" font-size="15" fill="var(--ink)">Mobile app</text>
+            <text x="820" y="100" text-anchor="middle" font-size="12" fill="var(--muted)">monitor + control</text>
+            <rect x="250" y="180" width="170" height="70" rx="12" fill="var(--sunk)" stroke="var(--line)"/>
+            <text x="335" y="212" text-anchor="middle" font-weight="600" font-size="14" fill="var(--ink)">Relay → mini pump</text>
+            <text x="335" y="232" text-anchor="middle" font-size="12" fill="var(--muted)">waters the plant</text>
+            <path d="M170 83 H246" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+            <path d="M420 70 H496" stroke="var(--water)" stroke-width="2" fill="none" marker-end="url(#ahw)"/>
+            <text x="458" y="60" text-anchor="middle" font-size="11" fill="var(--water)">Wi-Fi</text>
+            <path d="M496 98 H424" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+            <path d="M670 70 H746" stroke="var(--water)" stroke-width="2" fill="none" marker-end="url(#ahw)"/>
+            <path d="M746 98 H674" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+            <path d="M335 126 V176" stroke="var(--muted)" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+            <g font-size="12">
+              <line x1="560" y1="196" x2="590" y2="196" stroke="var(--water)" stroke-width="2"/>
+              <text x="598" y="200" fill="var(--ink)">Up: moisture %, pump state, history</text>
+              <line x1="560" y1="222" x2="590" y2="222" stroke="var(--muted)" stroke-width="2"/>
+              <text x="598" y="226" fill="var(--ink)">Down: pump on/off, mode, thresholds</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="ov-block two">
+        <div class="panel panel-pad">
+          <h3>Hardware</h3>
+          <ul class="parts">
+            <li><span>ESP32 development board</span><span class="tag plan">Planned</span></li>
+            <li><span>Capacitive soil moisture sensor</span><span class="tag plan">Planned</span></li>
+            <li><span>5 V relay module + mini water pump</span><span class="tag plan">Planned</span></li>
+            <li><span>Power supply, tubing, wires, breadboard</span><span class="tag plan">Planned</span></li>
+          </ul>
+        </div>
+        <div class="panel panel-pad">
+          <h3>Progress</h3>
+          <ul class="parts">
+            <li><span>Mobile app running on a phone</span><span class="tag done">Done</span></li>
+            <li><span>Cloud sync and sign-in</span><span class="tag done">Done</span></li>
+            <li><span>Auto/manual modes, thresholds, safety cutoff</span><span class="tag done">Done</span></li>
+            <li><span>ESP32 + sensor + pump integration</span><span class="tag plan">Next</span></li>
+            <li><span>Physical watering tests and calibration</span><span class="tag plan">Next</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ov-block">
+        <div class="timeline" aria-label="Project timeline">
+          <div class="done"><b>Registration</b><span>Project approved</span></div>
+          <div class="done"><b>Software build</b><span>App, cloud, simulator</span></div>
+          <div class="now"><b>Mid-sem review</b><span>16 Nov 2026</span></div>
+          <div><b>Hardware</b><span>Integrate ESP32</span></div>
+          <div><b>Field test</b><span>Calibrate on a plant</span></div>
+          <div><b>End-sem review</b><span>Final demo</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section data-view="dashboard" id="view-dashboard" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">Live dashboard</span>
+          <h2>Soil moisture and pump control</h2>
+          <p>Readings come from a virtual ESP32 until the hardware is connected. Switch between automatic and manual whenever you like.</p>
+        </div>
+      </div>
+      <div class="dash">
+        <div class="panel">
+          <div class="console-bar">
+            <span class="label" style="color:var(--ink)">esp32-node-01</span>
+            <span class="label mono"><span data-bind="date">—</span> · <span data-bind="clock">—</span></span>
+            <span class="spacer"></span>
+            <div class="seg" role="group" aria-label="Simulation speed">
+              <button class="btn" data-act="speed1" aria-pressed="true">1×</button>
+              <button class="btn" data-act="speed4" aria-pressed="false">4×</button>
+            </div>
+            <button class="btn" data-act="pause" aria-pressed="false">Pause</button>
+          </div>
+          <div class="console-body">
+            <div class="soil" aria-hidden="true">
+              <div class="wet" id="soilWet"></div>
+              <div class="grain"></div>
+              <div class="mark" id="markWet"><span>WET</span></div>
+              <div class="mark" id="markDry"><span>DRY</span></div>
+            </div>
+            <div class="readout">
+              <div class="big">
+                <div>
+                  <span class="label">Soil moisture</span>
+                  <div class="val"><span data-bind="mNum">48</span><small>%</small></div>
+                </div>
+                <div style="display:grid; gap:6px; padding-bottom:4px">
+                  <span class="pill off" data-pill>Pump off</span>
+                  <span class="label">Mode: <span data-bind="mode">Automatic</span></span>
+                </div>
+              </div>
+              <div class="stats">
+                <div class="stat"><span class="label">Sensor raw</span><span class="v" data-bind="raw">—</span></div>
+                <div class="stat"><span class="label">Thresholds</span><span class="v"><span data-bind="dry">35</span> / <span data-bind="wet">60</span> %</span></div>
+                <div class="stat"><span class="label">Pump run</span><span class="v" data-bind="run">—</span></div>
+                <div class="stat"><span class="label">Waterings 24 h</span><span class="v" data-bind="water24">0</span></div>
+              </div>
+              <div>
+                <span class="label">Last 12 hours</span>
+                <div class="chart-box"><canvas id="dashChart" aria-label="Soil moisture over the last 12 hours"></canvas></div>
+              </div>
+              <ul class="log" id="log" aria-label="Event log"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="side">
+          <div class="panel panel-pad">
+            <div class="row"><h3>Pump mode</h3><span class="pill off" data-pill>Pump off</span></div>
+            <div class="mode-switch" role="group" aria-label="Pump mode">
+              <button data-act="auto" aria-pressed="true">Automatic<small>Waters by threshold</small></button>
+              <button data-act="manual" aria-pressed="false">Manual<small>You decide</small></button>
+            </div>
+            <button class="pump-btn" data-act="pump" disabled>Turn pump on</button>
+            <p class="hint" data-bind="pumpHint">—</p>
+          </div>
+          <div class="panel panel-pad">
+            <h3>Thresholds</h3>
+            <div class="row"><span>Start watering below</span><b class="mono"><span data-bind="dry">35</span>%</b></div>
+            <input type="range" id="sDry" min="20" max="50" value="35" aria-label="Start watering below this moisture">
+            <div class="row"><span>Stop watering at</span><b class="mono"><span data-bind="wet">60</span>%</b></div>
+            <input type="range" id="sWet" min="45" max="85" value="60" aria-label="Stop watering at this moisture">
+            <div class="row"><span>Max pump runtime</span><b class="mono"><span data-bind="maxRun">45</span> min</b></div>
+            <input type="range" id="sRun" min="10" max="60" step="5" value="45" aria-label="Maximum continuous pump runtime">
+            <p class="hint">The two thresholds stay at least 10% apart. The pump also stops after the max runtime, even in manual mode.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= YOUR PLANTS ================= -->
+  <section data-view="plants" id="view-plants" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">Your plants</span>
+          <h2>Every plant, its own pump</h2>
+          <p>Each plant waters itself automatically. Switch any plant to manual to take over its pump. In manual mode you get an alert if a plant drops below 5% with its pump off, or goes above 95% with its pump on.</p>
+        </div>
+      </div>
+      <div class="panel pl-bar">
+        <div class="sum">
+          <span><b id="plCount">12</b><span class="muted">plants</span></span>
+          <span><b id="plWatering">0</b><span class="muted">watering now</span></span>
+          <span><b id="plManual">0</b><span class="muted">in manual</span></span>
+          <span><b id="plAlerts" style="color:var(--crit)">0</b><span class="muted">active alerts</span></span>
+        </div>
+        <button class="btn" data-pall="auto">Set all to automatic</button>
+        <button class="btn" data-pall="manual">Set all to manual</button>
+      </div>
+      <div class="pl-grid" id="plGrid"></div>
+      <div class="panel panel-pad" style="margin-top:18px">
+        <div class="row"><h3>Alerts</h3><button class="btn" id="clearAlerts">Clear history</button></div>
+        <ul class="alert-list" id="alertList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PUMP SETTINGS ================= -->
+  <section data-view="pumps" id="view-pumps" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">Pump settings</span>
+          <h2>Power and watering time</h2>
+          <p>Choose how hard the pump pushes water and how long each watering burst lasts. Press Save to pick which plants get the setting.</p>
+        </div>
+      </div>
+      <div class="pumps">
+        <div class="side">
+          <div class="panel panel-pad">
+            <div class="setting">
+              <div class="head"><label for="pPower"><h3>Pump power</h3></label><span class="big-v"><span id="pPowerV">70</span>%</span></div>
+              <input type="range" id="pPower" min="0" max="100" step="5" value="70">
+              <div class="scale"><span>0% off</span><span>50%</span><span>100% full</span></div>
+            </div>
+            <div class="setting">
+              <div class="head"><label for="pTime"><h3>Pump timing</h3></label><span class="big-v" id="pTimeV">1 min</span></div>
+              <input type="range" id="pTime" min="10" max="150" step="5" value="60">
+              <div class="scale"><span>10 s</span><span>1 min 20 s</span><span>2 min 30 s</span></div>
+            </div>
+            <div class="preview">
+              <div><span class="label">Water per burst</span><b id="pvWater">—</b></div>
+              <div><span class="label">Flow rate</span><b id="pvFlow">—</b></div>
+              <div><span class="label">Run time</span><b id="pvRun">—</b></div>
+            </div>
+            <p class="warn-box" id="pvWarn" hidden></p>
+            <button class="pump-btn" id="saveSettings">Save…</button>
+          </div>
+          <div class="panel">
+            <div style="padding:16px 18px"><h3>Current settings by plant</h3></div>
+            <div class="table-wrap">
+              <table style="min-width:480px">
+                <thead><tr><th>Plant</th><th>Mode</th><th>Power</th><th>Timing</th><th>Soil (predicted)</th></tr></thead>
+                <tbody id="setTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel chat">
+          <div class="chat-head"><h3>Pump advisor</h3><span class="pill off" id="advBadge">Built-in analysis</span></div>
+          <div class="msgs" id="advMsgs" aria-live="polite"></div>
+          <div class="chat-foot">
+            <div class="advisor-pick">
+              <label for="advPlant" class="muted" style="font-size:.86rem">Plant</label>
+              <select id="advPlant"></select>
+              <button class="btn primary" id="advAnalyze">Predict soil &amp; suggest</button>
+            </div>
+            <div class="chips">
+              <button data-aq="all">Suggest for all plants</button>
+              <button data-aq="explain">What do power and timing do?</button>
+              <button data-aq="current">Is my current setting OK?</button>
+            </div>
+            <form class="chat-form" id="advForm">
+              <input id="advInput" type="text" autocomplete="off" placeholder="Ask about soil, power or timing…" aria-label="Message to pump advisor">
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3D SIMULATION ================= -->
+  <section data-view="simulation" id="view-simulation" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">3D virtual simulation</span>
+          <h2>From dry soil to a watered plant</h2>
+          <p>The sensor reads the soil. The ESP32 sends each reading to the cloud and your app. When moisture drops below the threshold it turns the pump on, and it turns the pump off once the soil is wet enough. Drag to rotate, scroll to zoom.</p>
+        </div>
+        <button class="btn primary" data-act="demo">▶ Start a watering cycle</button>
+      </div>
+
+      <div class="sim-stage" id="simStage">
+        <canvas id="simCanvas" aria-label="3D model of the AquaSense irrigation system"></canvas>
+        <div class="sim-labels" id="simLabels"></div>
+        <div class="sim-hud">
+          <div><span class="label">Moisture</span><b data-bind="m">48%</b></div>
+          <div><span class="label">Pump</span><b data-bind="pumpWord">Off</b></div>
+          <div><span class="label">Mode</span><b data-bind="mode">Automatic</b></div>
+          <div><span class="label">Range</span><b><span data-bind="dry">35</span>–<span data-bind="wet">60</span>%</b></div>
+        </div>
+        <span class="sim-hint">Drag to rotate · scroll to zoom</span>
+        <div class="sim-fallback" id="simFallback" hidden><p>The 3D view needs WebGL and an internet connection to load the 3D library. The dashboard still works.</p></div>
+      </div>
+
+      <div class="sim-under">
+        <div class="panel panel-pad">
+          <ol class="stepper" id="stepper">
+            <li data-step="1"><b>01 SENSE</b>Sensor reads soil</li>
+            <li data-step="2"><b>02 SEND</b>ESP32 sends data</li>
+            <li data-step="3"><b>03 DECIDE</b>Below threshold → pump on</li>
+            <li data-step="4"><b>04 WATER</b>Moisture rises</li>
+            <li data-step="5"><b>05 STOP</b>Threshold reached → pump off</li>
+          </ol>
+          <p class="caption" id="caption" aria-live="polite">—</p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px">
+            <div class="seg" role="group" aria-label="Simulation speed">
+              <button class="btn" data-act="speed1" aria-pressed="true">1×</button>
+              <button class="btn" data-act="speed4" aria-pressed="false">4×</button>
+            </div>
+            <button class="btn" data-act="pause" aria-pressed="false">Pause</button>
+            <button class="btn" data-act="resetView">Reset view</button>
+          </div>
+        </div>
+        <div class="panel panel-pad">
+          <div class="mode-switch" role="group" aria-label="Pump mode">
+            <button data-act="auto" aria-pressed="true">Automatic<small>Waters by threshold</small></button>
+            <button data-act="manual" aria-pressed="false">Manual<small>You decide</small></button>
+          </div>
+          <button class="pump-btn" data-act="pump" disabled>Turn pump on</button>
+          <p class="hint" data-bind="pumpHint">—</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section data-view="history" id="view-history" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">History</span>
+          <h2>Past soil moisture</h2>
+          <p>Every reading is stored, including the live session. Hover over the graph to see a reading.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Time range">
+          <button class="btn" data-range="288" aria-pressed="true">24 hours</button>
+          <button class="btn" data-range="864" aria-pressed="false">3 days</button>
+          <button class="btn" data-range="2016" aria-pressed="false">7 days</button>
+        </div>
+      </div>
+      <div class="panel" style="display:grid">
+        <div class="hstats">
+          <div><span class="label">Average</span><span class="v" id="hAvg">—</span></div>
+          <div><span class="label">Lowest</span><span class="v" id="hMin">—</span></div>
+          <div><span class="label">Highest</span><span class="v" id="hMax">—</span></div>
+          <div><span class="label">Waterings</span><span class="v" id="hWater">—</span></div>
+          <div><span class="label">Pump time</span><span class="v" id="hPump">—</span></div>
+          <div><span class="label">In healthy range</span><span class="v" id="hGood">—</span></div>
+        </div>
+        <div style="padding:18px; border-top:1px solid var(--line); display:grid; gap:10px">
+          <div class="legend">
+            <span><i style="border-color:var(--ink)"></i>Soil moisture</span>
+            <span><i class="box"></i>Pump running</span>
+            <span><i style="border-color:var(--soil); border-top-style:dashed"></i>Start watering (dry)</span>
+            <span><i style="border-color:var(--water); border-top-style:dashed"></i>Stop watering (wet)</span>
+          </div>
+          <div class="hchart"><canvas id="histChart" aria-label="Soil moisture history graph"></canvas><div class="tip" id="tip" hidden></div></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px">
+        <div style="padding:16px 18px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap"><h3>Watering log</h3><span class="note">Most recent first</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Started</th><th>Triggered by</th><th>Duration</th><th>Moisture</th><th>Stopped by</th></tr></thead>
+            <tbody id="wLog"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="note" style="margin-top:12px">Data before this session is simulated. Real sensor readings will replace it once the hardware is connected.</p>
+    </div>
+  </section>
+
+  <!-- ================= ASSISTANT ================= -->
+  <section data-view="assistant" id="view-assistant" hidden>
+    <div class="wrap">
+      <div class="view-head">
+        <div>
+          <span class="label">AI assistant</span>
+          <h2>Ask about your plant</h2>
+          <p>The assistant reads the moisture history and pump log, then summarizes them, rates plant health and predicts when the soil will need water next.</p>
+        </div>
+      </div>
+      <div class="assist">
+        <div class="panel chat">
+          <div class="chat-head"><h3>AquaSense Assistant</h3><span class="pill off" id="engineBadge">Built-in analysis</span></div>
+          <div class="msgs" id="msgs" aria-live="polite"></div>
+          <div class="chat-foot">
+            <div class="chips">
+              <button data-q="Give me a summary of the last 24 hours.">Summary</button>
+              <button data-q="How healthy is my plant?">Plant health</button>
+              <button data-q="When will the soil need water next?">Next watering</button>
+              <button data-q="Are there any problems I should know about?">Any problems?</button>
+              <button data-q="Are my threshold settings good for this plant?">Check my settings</button>
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input id="chatInput" type="text" autocomplete="off" placeholder="Ask about moisture, watering or plant health…" aria-label="Message">
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+          </div>
+        </div>
+        <div class="side">
+          <div class="panel panel-pad">
+            <div class="row"><h3>Plant health</h3><span class="label">last 24 h</span></div>
+            <div class="ring" id="healthRing"><div><div><div class="num" id="healthNum">—</div><span class="label" data-bind="healthLabel">—</span></div></div></div>
+            <ul class="factors" id="factors"></ul>
+          </div>
+          <div class="panel panel-pad">
+            <h3>Prediction</h3>
+            <p class="predict" id="predict">—</p>
+            <ul class="factors">
+              <li><span>Drying rate</span><b class="mono" id="pRate">—</b></li>
+              <li><span>Change, last 6 h</span><b class="mono" id="pTrend">—</b></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><b style="color:var(--ink)">AquaSense</b> · IoT-based smart irrigation</span>
+    <span>EDI Project 1 · CS-C Group 10 · VIT Pune · 2026–27</span>
+  </div>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+<div class="modal-back" id="saveModal" hidden>
+  <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+    <div>
+      <h3 id="saveTitle">Apply this setting to which plants?</h3>
+      <p class="hint" id="saveSummary">—</p>
+    </div>
+    <div class="plant-checks" id="plantChecks"></div>
+    <label class="all-check"><input type="checkbox" id="allPlants"> All of the plants</label>
+    <div class="acts">
+      <button class="btn" id="saveCancel">Cancel</button>
+      <button class="btn primary" id="saveApply" disabled>Apply</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const TICK = 5;            // simulated minutes per reading
+  const DAY = 288;           // readings per day
+  const DRY_RAW = 3200, WET_RAW = 1350; // example calibration, 12-bit ADC
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // seeded random so the generated history looks the same on every load
+  function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  let rand = mulberry(1708);
+
+  const start = new Date(); start.setHours(10, 0, 0, 0);
+  const T0 = start.getTime() - 7 * DAY * TICK * 60000;
+  const tAt = (i) => new Date(T0 + i * TICK * 60000);
+  const hhmm = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  const dayStr = (d) => d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  // ---------------- engine ----------------
+  let S, M = [], P = [], W = [], LOG = [], silent = true;
+  const hooks = { tick: [], pump: [], command: [] };
+  S = { m: 55, pump: false, mode: 'auto', dry: 35, wet: 60, maxRun: 45, runFor: 0, lockout: 0, stress: 0,
+        stage: 'monitor', hold: 0, cutoffs: [], raw: 0, cur: null };
+
+  function log(msg, cls) {
+    if (silent) return;
+    LOG.unshift({ t: hhmm(tAt(M.length)), msg, cls: cls || '' });
+    LOG.length = Math.min(LOG.length, 40);
+  }
+
+  function setPump(on, by, reason) {
+    if (S.pump === on) return;
+    S.pump = on; S.runFor = 0;
+    const i = M.length;
+    if (on) {
+      S.cur = { start: i, from: S.m, by };
+      S.stage = by === 'auto' ? 'triggered' : 'watering'; S.hold = by === 'auto' ? 2 : 0;
+    } else {
+      if (S.cur) { W.push(Object.assign({}, S.cur, { end: i, to: S.m, stop: by })); S.cur = null; }
+      S.stage = by === 'auto' ? 'reached' : by === 'safety' ? 'cutoff' : 'monitor';
+      S.hold = by === 'manual' ? 0 : 3;
+    }
+    log((on ? 'Pump ON' : 'Pump OFF') + ' · ' + reason + ' (' + Math.round(S.m) + '%)', on ? 'on' : by === 'safety' ? 'crit' : '');
+    if (!silent) hooks.pump.forEach((f) => f(on));
+  }
+
+  const rains = [DAY * 2 + 66, DAY * 5 + 200];
+  function tick() {
+    const i = M.length;
+    const d = tAt(i);
+    const h = d.getHours() + d.getMinutes() / 60;
+    const dayF = Math.max(0, Math.sin(Math.PI * (h - 6) / 12));
+    const evap = 0.12 + 0.5 * dayF + rand() * 0.08;
+    if (S.hold > 0) S.hold--; else S.stage = S.pump ? 'watering' : 'monitor';
+    if (S.pump) S.m += 5.2 + rand() * 0.8;
+    if (silent && rains.some((r) => i >= r && i < r + 8)) S.m += 3.4;
+    S.m = clamp(S.m - evap, 3, 98);
+    if (S.lockout > 0) { S.lockout--; if (!S.lockout) log('Safety lockout cleared'); }
+    if (S.mode === 'auto') {
+      if (!S.pump && S.m < S.dry && !S.lockout) setPump(true, 'auto', 'below ' + S.dry + '%');
+      else if (S.pump && S.m >= S.wet) setPump(false, 'auto', 'reached ' + S.wet + '%');
+    }
+    if (S.pump) {
+      S.runFor += TICK;
+      if (S.runFor >= S.maxRun) { setPump(false, 'safety', 'safety cutoff at ' + S.maxRun + ' min'); S.lockout = 3; S.cutoffs.push(i); }
+    }
+    if (S.m < S.dry) S.stress = Math.min(1, S.stress + 0.05);
+    else if (S.m > S.wet + 20) S.stress = Math.min(1, S.stress + 0.02);
+    else S.stress = Math.max(0, S.stress - 0.04);
+    S.raw = Math.round(DRY_RAW - (S.m / 100) * (DRY_RAW - WET_RAW) + (rand() - 0.5) * 24);
+    M.push(S.m); P.push(S.pump ? 1 : 0);
+    if (!silent) { hooks.tick.forEach((f) => f()); render(); }
+  }
+
+  for (let k = 0; k < 7 * DAY; k++) tick();
+  silent = false;
+  rand = Math.random;
+  log('Live session started at ' + hhmm(tAt(M.length)));
+
+  // ---------------- analysis ----------------
+  function analyze(span) {
+    span = span || DAY;
+    const n = M.length, s = Math.max(0, n - span);
+    let sum = 0, mn = 100, mx = 0, dry = 0, soggy = 0, pumpTicks = 0;
+    for (let i = s; i < n; i++) {
+      const v = M[i]; sum += v; mn = Math.min(mn, v); mx = Math.max(mx, v);
+      if (v < S.dry) dry++; else if (v > S.wet + 15) soggy++;
+      pumpTicks += P[i];
+    }
+    const cnt = n - s;
+    const waterings = W.filter((w) => w.start >= s).length + (S.cur && S.cur.start >= s ? 1 : 0);
+    const cutoffs = S.cutoffs.filter((i) => i >= s).length;
+    // drying rate from the latest stretch with the pump off
+    const pts = [];
+    for (let k = n - 1; k >= 0 && P[k] === 0 && pts.length < 24; k--) pts.push([k, M[k]]);
+    let rate = null;
+    if (pts.length >= 4) {
+      const mxk = pts.reduce((a, p) => a + p[0], 0) / pts.length, myv = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+      let num = 0, den = 0; pts.forEach((p) => { num += (p[0] - mxk) * (p[1] - myv); den += (p[0] - mxk) ** 2; });
+      rate = -(num / den) * (60 / TICK); // % per hour, positive = drying
+    }
+    const pctDry = dry / cnt, pctSoggy = soggy / cnt, pctGood = 1 - pctDry - pctSoggy;
+    const score = Math.round(clamp(100 - 220 * pctDry - 90 * pctSoggy - 10 * cutoffs - 25 * S.stress, 0, 100));
+    const label = score >= 80 ? 'Healthy' : score >= 55 ? 'Needs attention' : 'At risk';
+    let hoursToDry = null;
+    if (!S.pump && rate && rate > 0.05 && S.m > S.dry) hoursToDry = (S.m - S.dry) / rate;
+    const trend6 = n > 72 ? M[n - 1] - M[n - 73] : 0;
+    return {
+      now: tAt(n - 1), moisture: S.m, mode: S.mode, pumpOn: S.pump, lockoutMin: S.lockout * TICK,
+      dry: S.dry, wet: S.wet, maxRunMin: S.maxRun,
+      avg: sum / cnt, min: mn, max: mx, waterings, pumpMin: pumpTicks * TICK, cutoffs,
+      pctGood, pctDry, pctSoggy, stress: S.stress, score, label,
+      dryingRatePerHour: rate, hoursToDry, nextWateringAt: hoursToDry != null ? tAt(n - 1 + Math.round(hoursToDry * 60 / TICK)) : null,
+      trend6h: trend6
+    };
+  }
+
+  // ---------------- charts ----------------
+  const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  function drawSeries(canvas, span, opts) {
+    opts = opts || {};
+    const r = canvas.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    const dpr = window.devicePixelRatio || 1;
+    const cw = Math.round(r.width * dpr), ch = Math.round(r.height * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W_ = r.width, H = r.height, L = 36, R = 8, T = 8, B = 22;
+    const pw = W_ - L - R, ph = H - T - B;
+    const end = M.length, s = Math.max(0, end - span), n = end - s;
+    const x = (i) => L + ((i - s) / Math.max(1, span - 1)) * pw;
+    const y = (v) => T + (1 - v / 100) * ph;
+    ctx.clearRect(0, 0, W_, H);
+    const ink = css('--ink'), muted = css('--muted'), line = css('--line'), water = css('--water'), soil = css('--soil');
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.fillStyle = muted;
+    [0, 25, 50, 75, 100].forEach((v) => {
+      ctx.beginPath(); ctx.moveTo(L, Math.round(y(v)) + .5); ctx.lineTo(W_ - R, Math.round(y(v)) + .5); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(v + '%', L - 6, y(v));
+    });
+    // time ticks
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    const step = span <= 144 ? 3 : span <= DAY ? 6 : 24;
+    for (let i = s; i < end; i++) {
+      const d = tAt(i);
+      if (d.getMinutes() === 0 && d.getHours() % step === 0) {
+        const X = x(i);
+        if (X < L + 14 || X > W_ - R - 14) continue;
+        ctx.fillStyle = muted;
+        ctx.fillText(step === 24 ? d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' }) : hhmm(d), X, H - 6);
+        ctx.strokeStyle = line; ctx.globalAlpha = .5; ctx.beginPath(); ctx.moveTo(Math.round(X) + .5, T); ctx.lineTo(Math.round(X) + .5, T + ph); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
+    // pump shading
+    ctx.fillStyle = css('--water-soft');
+    const bw = pw / span;
+    for (let i = s; i < end; i++) if (P[i]) ctx.fillRect(x(i) - bw / 2, T, bw + .6, ph);
+    // thresholds
+    ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+    ctx.strokeStyle = soil; ctx.beginPath(); ctx.moveTo(L, y(S.dry)); ctx.lineTo(W_ - R, y(S.dry)); ctx.stroke();
+    ctx.strokeStyle = water; ctx.beginPath(); ctx.moveTo(L, y(S.wet)); ctx.lineTo(W_ - R, y(S.wet)); ctx.stroke();
+    ctx.setLineDash([]);
+    // line (bucket by pixel when dense)
+    ctx.beginPath();
+    const cols = Math.min(n, Math.floor(pw));
+    for (let c = 0; c < cols; c++) {
+      const a = s + Math.floor(c * n / cols), b = Math.max(a + 1, s + Math.floor((c + 1) * n / cols));
+      let sum = 0; for (let i = a; i < b; i++) sum += M[i];
+      const X = x((a + b - 1) / 2), Y = y(sum / (b - a));
+      c ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+    }
+    ctx.strokeStyle = ink; ctx.lineWidth = span > DAY ? 1.4 : 2; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x(end - 1), y(M[end - 1]), 3.5, 0, Math.PI * 2); ctx.fillStyle = ink; ctx.fill();
+    // hover
+    if (opts.hover != null && opts.hover >= s && opts.hover < end) {
+      const X = x(opts.hover);
+      ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, T); ctx.lineTo(X, T + ph); ctx.stroke();
+      ctx.beginPath(); ctx.arc(X, y(M[opts.hover]), 4, 0, Math.PI * 2); ctx.fillStyle = water; ctx.fill();
+    }
+    return { s, end, L, pw, span, x, y };
+  }
+
+  // ---------------- views ----------------
+  const VIEWS = ['overview', 'dashboard', 'plants', 'pumps', 'simulation', 'history', 'assistant'];
+  let view = 'overview';
+  function showView() {
+    const h = location.hash.replace('#', '');
+    view = VIEWS.includes(h) ? h : 'overview';
+    VIEWS.forEach((v) => { $('view-' + v).hidden = v !== view; });
+    $$('[data-nav]').forEach((a) => a.setAttribute('aria-current', a.dataset.nav === view ? 'page' : 'false'));
+    window.scrollTo(0, 0);
+    if (view === 'simulation') sim3d.init();
+    render();
+  }
+  window.addEventListener('hashchange', showView);
+
+  // ---------------- render ----------------
+  let speed = 1, paused = false, timer = null, histSpan = DAY, hoverIdx = null, lastFacts = null;
+
+  function pumpHint() {
+    if (S.lockout > 0) return 'Safety lockout after a runtime cutoff. The pump can start again in ' + S.lockout * TICK + ' min.';
+    if (S.mode === 'auto') return S.pump ? 'Watering until the soil reaches ' + S.wet + '%. Switch to manual to stop it yourself.' : 'The pump starts by itself below ' + S.dry + '%. Switch to manual to control it yourself.';
+    return S.pump ? 'Pump is on. It stops when you press the button, or after ' + S.maxRun + ' min for safety.' : 'Manual mode: the pump only runs when you press the button.';
+  }
+
+  function captionHTML() {
+    const m = Math.round(S.m);
+    if (S.lockout > 0) return '<b>Safety cutoff.</b> The pump ran for the maximum ' + S.maxRun + ' min, so the ESP32 stopped it. Locked for ' + S.lockout * TICK + ' min.';
+    if (S.mode === 'manual') return S.pump ? '<b>Manual watering.</b> You turned the pump on from the app. Moisture is ' + m + '%.' : '<b>Manual mode.</b> The sensor still reports ' + m + '% to the app, but the pump only runs when you press the button.';
+    switch (S.stage) {
+      case 'triggered': return '<b>Below threshold.</b> Moisture ' + m + '% is under ' + S.dry + '%, so the ESP32 switches the relay and the pump turns ON.';
+      case 'watering': return '<b>Watering.</b> Pump running for ' + S.runFor + ' min. Moisture is rising: ' + m + '% → target ' + S.wet + '%.';
+      case 'reached': return '<b>Threshold reached.</b> Moisture hit ' + m + '%, so the ESP32 turns the pump OFF automatically.';
+      case 'cutoff': return '<b>Safety cutoff.</b> The pump was stopped after ' + S.maxRun + ' min.';
+      default: return '<b>Monitoring.</b> The sensor reads ' + m + '% and the ESP32 sends it to the cloud and app. That is above ' + S.dry + '%, so the pump stays off.';
+    }
+  }
+
+  function render() {
+    const f = analyze(DAY); lastFacts = f;
+    const B = {
+      m: Math.round(S.m) + '%', mNum: Math.round(S.m), raw: S.raw,
+      pumpShort: S.lockout ? 'Locked' : S.pump ? 'Pump on' : 'Pump off',
+      pumpWord: S.lockout ? 'Locked' : S.pump ? 'On' : 'Off',
+      modeShort: S.mode === 'auto' ? 'Auto' : 'Manual', mode: S.mode === 'auto' ? 'Automatic' : 'Manual',
+      dry: S.dry, wet: S.wet, maxRun: S.maxRun,
+      run: (S.pump ? S.runFor : 0) + ' / ' + S.maxRun + ' min',
+      clock: hhmm(tAt(M.length - 1)), date: dayStr(tAt(M.length - 1)),
+      water24: f.waterings, healthLabel: f.label, pumpHint: pumpHint(),
+      plantAlerts: plantsUI.activeCount() + (plantsUI.activeCount() === 1 ? ' alert' : ' alerts')
+    };
+    plantsUI.badge();
+    $$('[data-bind]').forEach((el) => { const v = B[el.dataset.bind]; if (v !== undefined && el.textContent !== String(v)) el.textContent = v; });
+    $$('[data-pill]').forEach((el) => {
+      el.className = 'pill ' + (S.lockout ? 'lock' : S.pump ? 'on' : 'off');
+      el.textContent = S.lockout ? 'Locked' : S.pump ? 'Pump on' : 'Pump off';
+    });
+    $$('[data-act="auto"]').forEach((b) => b.setAttribute('aria-pressed', S.mode === 'auto'));
+    $$('[data-act="manual"]').forEach((b) => b.setAttribute('aria-pressed', S.mode === 'manual'));
+    $$('[data-act="pump"]').forEach((b) => {
+      b.disabled = S.mode !== 'manual' || S.lockout > 0;
+      b.textContent = S.mode !== 'manual' ? (S.pump ? 'Pump on (automatic)' : 'Pump off (automatic)') : S.pump ? 'Turn pump off' : 'Turn pump on';
+      b.classList.toggle('stop', S.mode === 'manual' && S.pump);
+    });
+    $$('[data-act="speed1"]').forEach((b) => b.setAttribute('aria-pressed', speed === 1));
+    $$('[data-act="speed4"]').forEach((b) => b.setAttribute('aria-pressed', speed === 4));
+    $$('[data-act="pause"]').forEach((b) => { b.setAttribute('aria-pressed', paused); b.textContent = paused ? 'Resume' : 'Pause'; });
+    const dot = $('liveDot'); dot.className = 'dot' + (paused ? ' paused' : S.pump ? ' pumping' : '');
+
+    if (view === 'dashboard') renderDashboard();
+    else if (view === 'simulation') renderSim();
+    else if (view === 'history') renderHistory();
+    else if (view === 'assistant') renderHealth(f);
+    else if (view === 'plants') plantsUI.renderPlants();
+    else if (view === 'pumps') plantsUI.renderPumps();
+  }
+
+  function renderDashboard() {
+    $('soilWet').style.height = S.m + '%';
+    $('markDry').style.bottom = S.dry + '%';
+    $('markWet').style.bottom = S.wet + '%';
+    $('sDry').value = S.dry; $('sWet').value = S.wet; $('sRun').value = S.maxRun;
+    $('log').innerHTML = LOG.slice(0, 20).map((e) => '<li class="' + e.cls + '"><span>' + e.t + '</span><b>' + e.msg + '</b></li>').join('');
+    drawSeries($('dashChart'), 144);
+  }
+
+  function renderSim() {
+    $('caption').innerHTML = captionHTML();
+    let active = [1, 2];
+    if (S.mode === 'auto' && !S.lockout) {
+      if (S.stage === 'triggered') active = [3];
+      else if (S.stage === 'watering') active = [4];
+      else if (S.stage === 'reached') active = [5];
+    } else if (S.pump) active = [4];
+    $$('#stepper li').forEach((li) => {
+      const n = +li.dataset.step;
+      li.classList.toggle('active', active.includes(n));
+      li.classList.toggle('done', !active.includes(n) && n < Math.min.apply(null, active));
+    });
+  }
+
+  function renderHistory() {
+    const f = analyze(histSpan);
+    $('hAvg').textContent = Math.round(f.avg) + '%';
+    $('hMin').textContent = Math.round(f.min) + '%';
+    $('hMax').textContent = Math.round(f.max) + '%';
+    $('hWater').textContent = f.waterings;
+    $('hPump').textContent = f.pumpMin >= 120 ? (f.pumpMin / 60).toFixed(1) + ' h' : f.pumpMin + ' min';
+    $('hGood').textContent = Math.round(f.pctGood * 100) + '%';
+    histGeom = drawSeries($('histChart'), histSpan, { hover: hoverIdx });
+    const rows = W.slice().reverse().slice(0, 15);
+    if (S.cur) rows.unshift(Object.assign({}, S.cur, { end: null }));
+    const by = { auto: 'Automatic', manual: 'Manual (app)', safety: 'Safety cutoff' };
+    $('wLog').innerHTML = rows.map((w) => {
+      const d = tAt(w.start);
+      const dur = w.end == null ? 'running' : (w.end - w.start) * TICK + ' min';
+      const to = w.end == null ? Math.round(S.m) + '%…' : Math.round(w.to) + '%';
+      return '<tr><td>' + dayStr(d) + ', ' + hhmm(d) + '</td><td>' + by[w.by] + '</td><td>' + dur + '</td><td>' + Math.round(w.from) + '% → ' + to + '</td><td>' + (w.end == null ? '—' : by[w.stop]) + '</td></tr>';
+    }).join('') || '<tr><td colspan="5" class="muted">No waterings yet.</td></tr>';
+  }
+  let histGeom = null;
+  const hc = $('histChart');
+  hc.addEventListener('mousemove', (e) => {
+    if (!histGeom) return;
+    const r = hc.getBoundingClientRect();
+    const rel = clamp((e.clientX - r.left - histGeom.L) / histGeom.pw, 0, 1);
+    hoverIdx = clamp(Math.round(histGeom.s + rel * (histGeom.span - 1)), histGeom.s, histGeom.end - 1);
+    const tip = $('tip'); tip.hidden = false;
+    const d = tAt(hoverIdx);
+    tip.textContent = dayStr(d) + ' ' + hhmm(d) + ' · ' + Math.round(M[hoverIdx]) + '%' + (P[hoverIdx] ? ' · pump on' : '');
+    tip.style.left = clamp(histGeom.x(hoverIdx), 80, r.width - 80) + 'px';
+    tip.style.top = histGeom.y(M[hoverIdx]) + 'px';
+    renderHistory();
+  });
+  hc.addEventListener('mouseleave', () => { hoverIdx = null; $('tip').hidden = true; renderHistory(); });
+
+  function fmtH(h) { if (h < 1) return Math.max(5, Math.round(h * 60 / 5) * 5) + ' min'; return h.toFixed(h < 10 ? 1 : 0) + ' h'; }
+  function predictionText(f) {
+    if (f.lockoutMin) return 'The pump is in a safety lockout for ' + f.lockoutMin + ' more minutes. Check the water tank and tubing.';
+    if (f.pumpOn) {
+      const mins = Math.max(5, Math.round((f.wet - f.moisture) / 5 * TICK));
+      return f.mode === 'auto' ? 'Watering now. The soil should reach ' + f.wet + '% and the pump should stop in about ' + mins + ' min.' : 'The pump is on in manual mode. Turn it off once moisture is near ' + f.wet + '%.';
+    }
+    if (f.hoursToDry == null) return 'Moisture is steady, so no watering is expected soon.';
+    const when = 'in about ' + fmtH(f.hoursToDry) + ' (around ' + hhmm(f.nextWateringAt) + ')';
+    return f.mode === 'auto' ? 'The soil will reach ' + f.dry + '% ' + when + '. The pump will start by itself then.' : 'The soil will reach ' + f.dry + '% ' + when + '. You\'re in manual mode, so water it yourself then.';
+  }
+  function renderHealth(f) {
+    const ring = $('healthRing');
+    ring.style.setProperty('--p', f.score);
+    ring.style.setProperty('--c', f.score >= 80 ? 'var(--ok)' : f.score >= 55 ? 'var(--warn)' : 'var(--crit)');
+    $('healthNum').textContent = f.score;
+    $('factors').innerHTML = [
+      ['Time in healthy range', Math.round(f.pctGood * 100) + '%'],
+      ['Dry readings', Math.round(f.pctDry * 100) + '%'],
+      ['Waterlogged readings', Math.round(f.pctSoggy * 100) + '%'],
+      ['Safety cutoffs', f.cutoffs],
+      ['Leaf stress', f.stress < .15 ? 'None' : f.stress < .5 ? 'Mild' : 'High']
+    ].map((r) => '<li><span>' + r[0] + '</span><b class="mono">' + r[1] + '</b></li>').join('');
+    $('predict').textContent = predictionText(f);
+    $('pRate').textContent = f.dryingRatePerHour != null && !f.pumpOn ? f.dryingRatePerHour.toFixed(1) + ' %/h' : '—';
+    $('pTrend').textContent = (f.trend6h >= 0 ? '+' : '') + f.trend6h.toFixed(1) + '%';
+  }
+
+  // ---------------- controls ----------------
+  function schedule() { clearInterval(timer); if (!paused) timer = setInterval(tick, speed === 1 ? 800 : 200); }
+  function setMode(m) {
+    if (S.mode === m) return;
+    S.mode = m; log('App: mode set to ' + (m === 'auto' ? 'automatic' : 'manual'));
+    hooks.command.forEach((f) => f());
+    render();
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const a = b.dataset.act;
+    if (a === 'auto' || a === 'manual') setMode(a);
+    else if (a === 'pump') {
+      if (S.mode === 'manual' && !S.lockout) { setPump(!S.pump, 'manual', 'app button'); hooks.command.forEach((f) => f()); render(); }
+    }
+    else if (a === 'speed1' || a === 'speed4') { speed = a === 'speed1' ? 1 : 4; schedule(); render(); }
+    else if (a === 'pause') { paused = !paused; schedule(); render(); }
+    else if (a === 'resetView') sim3d.resetView();
+    else if (a === 'demo') {
+      if (S.pump) setPump(false, 'manual', 'demo reset');
+      S.mode = 'auto'; S.lockout = 0; S.stress = 0;
+      S.m = S.dry + 2.2;
+      log('Demo: soil dried to ' + Math.round(S.m) + '%, just above the threshold');
+      if (paused) { paused = false; schedule(); }
+      render();
+    }
+  });
+  $('sDry').addEventListener('input', (e) => { S.dry = +e.target.value; if (S.wet < S.dry + 10) S.wet = S.dry + 10; render(); });
+  $('sWet').addEventListener('input', (e) => { S.wet = +e.target.value; if (S.dry > S.wet - 10) S.dry = S.wet - 10; render(); });
+  $('sRun').addEventListener('input', (e) => { S.maxRun = +e.target.value; render(); });
+  ['sDry', 'sWet', 'sRun'].forEach((id) => $(id).addEventListener('change', () => { log('App: settings saved (' + S.dry + '–' + S.wet + '%, max ' + S.maxRun + ' min)'); hooks.command.forEach((f) => f()); render(); }));
+  $$('[data-range]').forEach((b) => b.addEventListener('click', () => {
+    histSpan = +b.dataset.range;
+    $$('[data-range]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    renderHistory();
+  }));
+
+  // ---------------- assistant ----------------
+  let sampler = null;
+  const chat = [];
+  function addMsg(role, text, src) {
+    const el = document.createElement('div');
+    el.className = 'msg ' + role;
+    el.textContent = text;
+    if (src) { const s = document.createElement('span'); s.className = 'src'; s.textContent = src; el.appendChild(s); }
+    $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight;
+    return el;
+  }
+  function localAnswer(q, f) {
+    q = q.toLowerCase();
+    const r = (v) => Math.round(v);
+    const summary = 'Last 24 hours: moisture averaged ' + r(f.avg) + '% (low ' + r(f.min) + '%, high ' + r(f.max) + '%). The pump ran ' + f.waterings + ' time' + (f.waterings === 1 ? '' : 's') + ' for ' + f.pumpMin + ' min in total. The soil was in the healthy range ' + r(f.pctGood * 100) + '% of the time. Right now it reads ' + r(f.moisture) + '% in ' + (f.mode === 'auto' ? 'automatic' : 'manual') + ' mode.';
+    const health = 'Plant health score: ' + f.score + '/100 (' + f.label + '). ' +
+      (f.pctDry > 0.05 ? 'The soil was dry ' + r(f.pctDry * 100) + '% of the time, which can stress the roots. ' : 'The roots have rarely been dry. ') +
+      (f.pctSoggy > 0.05 ? 'It was waterlogged ' + r(f.pctSoggy * 100) + '% of the time, so there is a risk of root rot. ' : '') +
+      (f.stress > 0.3 ? 'The leaves are showing stress, so water soon. ' : 'No leaf stress at the moment. ') +
+      'If conditions stay like this, the plant should stay ' + (f.score >= 80 ? 'healthy.' : 'under some stress until watering becomes more regular.');
+    if (/health|plant|leaf|leaves|okay|fine|alive|growing/.test(q)) return health;
+    if (/predict|next|when|forecast|tomorrow|dry out|need water/.test(q)) return predictionText(f) + (f.dryingRatePerHour && !f.pumpOn ? ' Right now the soil is drying at about ' + f.dryingRatePerHour.toFixed(1) + '% per hour.' : '');
+    if (/problem|issue|wrong|alert|warn|cutoff|error/.test(q)) {
+      const issues = [];
+      if (f.cutoffs) issues.push(f.cutoffs + ' safety cutoff' + (f.cutoffs > 1 ? 's' : '') + '. The pump ran too long, so check the tank and tubing');
+      if (f.pctDry > 0.05) issues.push('the soil was dry ' + r(f.pctDry * 100) + '% of the time');
+      if (f.pctSoggy > 0.05) issues.push('the soil was waterlogged ' + r(f.pctSoggy * 100) + '% of the time');
+      if (f.mode === 'manual' && f.moisture < f.dry) issues.push('you are in manual mode and the soil is below ' + f.dry + '%');
+      return issues.length ? 'Things to look at: ' + issues.join('; ') + '.' : 'No problems found. Readings are steady, the pump stops on time and there were no safety cutoffs.';
+    }
+    if (/threshold|setting|recommend|should|good for/.test(q)) {
+      const gap = f.wet - f.dry;
+      let t = 'Current settings: start watering below ' + f.dry + '% and stop at ' + f.wet + '%, with a ' + f.maxRunMin + ' min safety limit. ';
+      if (f.dry < 30) t += 'A start level under 30% is quite dry for most potted plants; 30–40% is safer. ';
+      if (f.wet > 75) t += 'Stopping above 75% can waterlog the soil. ';
+      if (gap > 35) t += 'The gap is wide, so each watering will be long. ';
+      if (f.cutoffs) t += 'There were safety cutoffs, so raise the max runtime a little or check the pump flow. ';
+      return t + (f.dry >= 30 && f.wet <= 75 && !f.cutoffs ? 'These settings look good for most potted plants.' : '');
+    }
+    if (/pump|water|usage|how much|run/.test(q)) return 'The pump ran ' + f.waterings + ' time' + (f.waterings === 1 ? '' : 's') + ' in the last 24 hours, ' + f.pumpMin + ' min in total. It is ' + (f.pumpOn ? 'on' : 'off') + ' now, in ' + (f.mode === 'auto' ? 'automatic' : 'manual') + ' mode.';
+    return summary + ' ' + health.split('. ')[0] + '.';
+  }
+  function factsForAI(f) {
+    const n = M.length;
+    const hourly = [];
+    for (let k = Math.max(0, n - DAY); k < n; k += 12) hourly.push(hhmm(tAt(k)) + ' ' + Math.round(M[k]) + '%' + (P[k] ? ' (pump on)' : ''));
+    return {
+      currentTime: hhmm(f.now), moisturePct: +f.moisture.toFixed(1), mode: f.mode, pumpOn: f.pumpOn, safetyLockoutMin: f.lockoutMin,
+      thresholds: { startBelowPct: f.dry, stopAtPct: f.wet, maxRuntimeMin: f.maxRunMin },
+      last24h: { avgPct: +f.avg.toFixed(1), minPct: +f.min.toFixed(1), maxPct: +f.max.toFixed(1), waterings: f.waterings, pumpMinutes: f.pumpMin, safetyCutoffs: f.cutoffs,
+                 timeHealthyPct: Math.round(f.pctGood * 100), timeDryPct: Math.round(f.pctDry * 100), timeWaterloggedPct: Math.round(f.pctSoggy * 100) },
+      leafStress0to1: +f.stress.toFixed(2), healthScore: f.score, healthLabel: f.label,
+      dryingRatePctPerHour: f.dryingRatePerHour != null ? +f.dryingRatePerHour.toFixed(2) : null,
+      predictedHoursUntilStartThreshold: f.hoursToDry != null ? +f.hoursToDry.toFixed(1) : null,
+      predictedNextWateringTime: f.nextWateringAt ? hhmm(f.nextWateringAt) : null,
+      change6hPct: +f.trend6h.toFixed(1), hourlyReadingsLast24h: hourly
+    };
+  }
+  async function ask(q) {
+    q = q.trim(); if (!q) return;
+    addMsg('user', q); chat.push({ role: 'user', text: q });
+    const f = analyze(DAY);
+    if (sampler) {
+      const el = addMsg('bot', 'Thinking…');
+      const prompt = 'You are the AquaSense plant-care assistant inside a smart irrigation app (ESP32 + capacitive soil moisture sensor + relay-driven pump; automatic mode waters below the start threshold and stops at the stop threshold; manual mode lets the user switch the pump). ' +
+        'Answer the user using ONLY the sensor facts below. Be specific with numbers, friendly and brief (under 110 words, plain text, no markdown). When asked about health, give the score and the reasons; when asked to predict, use the drying rate and predicted time. Suggest an action if one is useful.\n\n' +
+        'Sensor facts (JSON):\n' + JSON.stringify(factsForAI(f)) + '\n\n' +
+        'Conversation so far:\n' + chat.slice(-7, -1).map((c) => (c.role === 'user' ? 'User: ' : 'Assistant: ') + c.text).join('\n') + '\n\nUser: ' + q;
+      try {
+        const out = await sampler(prompt, { cache: false, modelTier: 'quick', onText: ({ text }) => { el.firstChild.textContent = text; $('msgs').scrollTop = $('msgs').scrollHeight; } });
+        el.firstChild.textContent = out.text;
+        const s = document.createElement('span'); s.className = 'src'; s.textContent = 'AI · based on live readings'; el.appendChild(s);
+        chat.push({ role: 'assistant', text: out.text });
+        return;
+      } catch (err) {
+        el.remove();
+        if (err && err.code === 'not_granted') { sampler = null; setBadge(); }
+      }
+    }
+    const a = localAnswer(q, f);
+    addMsg('bot', a, 'Built-in analysis');
+    chat.push({ role: 'assistant', text: a });
+  }
+  function setBadge() {
+    const b = $('engineBadge');
+    b.textContent = sampler ? 'AI on' : 'Built-in analysis';
+    b.className = 'pill ' + (sampler ? 'on' : 'off');
+  }
+  $('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('chatInput').value; $('chatInput').value = ''; ask(v); });
+  $$('.chips button').forEach((b) => b.addEventListener('click', () => ask(b.dataset.q)));
+  addMsg('bot', 'Hi! I watch your soil moisture and pump. Ask me for a summary, a plant health check or when the next watering will be.');
+  (async () => {
+    try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; }
+  })();
+
+  // ---------------- 3D simulation ----------------
+  const sim3d = (function () {
+    let ready = false, failed = false, renderer, scene, camera, controls, clock;
+    const R = {};
+    const labels = [];
+    const packets = [];
+    const drops = [];
+    const beads = [];
+    let disp = S.m, ring = null, ringT = 1;
+
+    function fail() { failed = true; $('simFallback').hidden = false; }
+
+    function init() {
+      if (ready || failed) { if (ready) resize(); return; }
+      if (!window.THREE) return fail();
+      const canvas = $('simCanvas');
+      try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); } catch (e) { return fail(); }
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+      clock = new THREE.Clock();
+      if (THREE.OrbitControls) {
+        controls = new THREE.OrbitControls(camera, canvas);
+        controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false;
+        controls.minDistance = 7; controls.maxDistance = 22; controls.maxPolarAngle = 1.45;
+      }
+      resetView();
+      build();
+      applyTheme();
+      ready = true;
+      new ResizeObserver(resize).observe($('simStage'));
+      resize();
+      requestAnimationFrame(loop);
+    }
+
+    function resetView() {
+      if (!camera) return;
+      camera.position.set(8.2, 7.4, 12.2);
+      if (controls) { controls.target.set(1.6, 2.3, 0); controls.update(); } else camera.lookAt(1.6, 2.3, 0);
+    }
+
+    function resize() {
+      if (!renderer) return;
+      const r = $('simStage').getBoundingClientRect();
+      if (!r.width) return;
+      renderer.setSize(r.width, r.height, false);
+      camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+    }
+
+    const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0.05 }, o || {}));
+    function mesh(geo, m, shadow) { const x = new THREE.Mesh(geo, m); if (shadow !== false) { x.castShadow = true; x.receiveShadow = true; } return x; }
+    function tube(points, r, color, o) {
+      const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
+      const m = mesh(new THREE.TubeGeometry(curve, 64, r, 8, false), mat(color, o));
+      scene.add(m); return curve;
+    }
+    function label(text, pos, key) {
+      const el = document.createElement('span'); el.textContent = text;
+      $('simLabels').appendChild(el);
+      const l = { el, pos: new THREE.Vector3(pos[0], pos[1], pos[2]) };
+      labels.push(l); if (key) R['lbl_' + key] = l;
+      return l;
+    }
+
+    const SOIL_B = 0.08, SOIL_H = 1.6, TOP = SOIL_B + SOIL_H;
+
+    function build() {
+      cDry = new THREE.Color(0xc9a06f); cDamp = new THREE.Color(0x6e4c33); cHealthy = new THREE.Color(0x3f9b4b); cSick = new THREE.Color(0xb8a03c);
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x4a5a50, 0.75));
+      const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+      sun.position.set(6, 12, 7); sun.castShadow = true;
+      sun.shadow.mapSize.set(1024, 1024);
+      Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+      scene.add(sun);
+
+      R.ground = mesh(new THREE.PlaneGeometry(60, 60), mat(0xdde4df, { roughness: 0.95 }));
+      R.ground.rotation.x = -Math.PI / 2; R.ground.castShadow = false; scene.add(R.ground);
+      R.table = mesh(new THREE.BoxGeometry(11, 0.12, 6.4), mat(0xb98d62, { roughness: 0.8 }));
+      R.table.position.set(1.6, -0.06, -0.2); scene.add(R.table);
+
+      // planter: glass box with soil layers
+      const glass = mesh(new THREE.BoxGeometry(3.2, 2.1, 2.4), mat(0xbfd8ea, { transparent: true, opacity: 0.16, roughness: 0.1, depthWrite: false }), false);
+      glass.position.set(-1, 1.05, 0); scene.add(glass);
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.2, 2.1, 2.4)), new THREE.LineBasicMaterial({ color: 0x7f97a8 }));
+      edges.position.copy(glass.position); scene.add(edges);
+      const base = mesh(new THREE.BoxGeometry(3.2, 0.08, 2.4), mat(0x6f7f88)); base.position.set(-1, 0.04, 0); scene.add(base);
+      R.wetMat = mat(0x3a2a1f, { roughness: 0.95 });
+      R.dryMat = mat(0xc49a6c, { roughness: 1 });
+      R.wet = mesh(new THREE.BoxGeometry(3.1, 1, 2.3), R.wetMat); R.wet.position.x = -1; scene.add(R.wet);
+      R.dry = mesh(new THREE.BoxGeometry(3.1, 1, 2.3), R.dryMat); R.dry.position.x = -1; scene.add(R.dry);
+      // waterline glow at the boundary
+      R.front = mesh(new THREE.PlaneGeometry(3.1, 0.04), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0.8 }), false);
+      R.front.position.set(-1, 1, 1.151); scene.add(R.front);
+
+      // plant
+      R.plant = new THREE.Group(); R.plant.position.set(-1.7, TOP, -0.45); R.plant.scale.setScalar(1.35); scene.add(R.plant);
+      const stem = mesh(new THREE.CylinderGeometry(0.045, 0.07, 1.9, 8), mat(0x4f7a3a)); stem.position.y = 0.95; R.plant.add(stem);
+      R.leafMat = mat(0x3f9b4b, { roughness: 0.6, side: THREE.DoubleSide });
+      R.leaves = [];
+      for (let j = 0; j < 7; j++) {
+        const py = new THREE.Group(); py.position.y = 0.45 + j * 0.22; py.rotation.y = j * 2.2;
+        const pz = new THREE.Group(); py.add(pz);
+        const leaf = mesh(new THREE.SphereGeometry(1, 16, 10), R.leafMat);
+        const sz = 0.5 - j * 0.035;
+        leaf.scale.set(sz, 0.05, sz * 0.42); leaf.position.x = sz * 0.9;
+        pz.add(leaf); R.plant.add(py); R.leaves.push(pz);
+      }
+      const bud = mesh(new THREE.SphereGeometry(0.12, 12, 10), mat(0x6cbf5a)); bud.position.y = 1.95; R.plant.add(bud);
+
+      // sensor
+      const sx = -0.15, sz = 0.55;
+      const pcb = mesh(new THREE.BoxGeometry(0.5, 0.6, 0.05), mat(0x1c1f22, { roughness: 0.5 }));
+      pcb.position.set(sx, TOP + 0.45, sz); scene.add(pcb);
+      [-0.14, 0.14].forEach((dx) => {
+        const prong = mesh(new THREE.BoxGeometry(0.1, 1.0, 0.04), mat(0x23272b)); prong.position.set(sx + dx, TOP - 0.35, sz); scene.add(prong);
+      });
+      const chip = mesh(new THREE.BoxGeometry(0.18, 0.14, 0.03), mat(0x111111)); chip.position.set(sx, TOP + 0.55, sz + 0.035); scene.add(chip);
+      R.sensorLed = mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: 0.3 }), false);
+      R.sensorLed.position.set(sx + 0.16, TOP + 0.66, sz + 0.035); scene.add(R.sensorLed);
+      ring = mesh(new THREE.TorusGeometry(0.3, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0 }), false);
+      ring.rotation.x = Math.PI / 2; ring.position.set(sx, TOP - 0.5, sz); scene.add(ring);
+
+      // ESP32
+      const ex = 3.0, ez = 1.3;
+      const board = mesh(new THREE.BoxGeometry(1.5, 0.08, 0.75), mat(0x1f2a33, { roughness: 0.5 })); board.position.set(ex, 0.04, ez); scene.add(board);
+      const shield = mesh(new THREE.BoxGeometry(0.62, 0.1, 0.52), mat(0xb9c0c8, { metalness: 0.8, roughness: 0.3 })); shield.position.set(ex - 0.25, 0.13, ez); scene.add(shield);
+      const ant = mesh(new THREE.BoxGeometry(0.22, 0.02, 0.5), mat(0xc9a227, { metalness: 0.6 })); ant.position.set(ex - 0.66, 0.1, ez); scene.add(ant);
+      [-1, 1].forEach((k) => { const pins = mesh(new THREE.BoxGeometry(1.3, 0.12, 0.07), mat(0x111111)); pins.position.set(ex + 0.05, 0.1, ez + k * 0.33); scene.add(pins); });
+      R.espLed = mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0x2f8bff, emissive: 0x2f8bff, emissiveIntensity: 0.4 }), false);
+      R.espLed.position.set(ex + 0.55, 0.12, ez + 0.2); scene.add(R.espLed);
+
+      // relay
+      const rx = 3.0, rz = -0.7;
+      const relay = mesh(new THREE.BoxGeometry(0.75, 0.35, 0.55), mat(0x2a6ad1, { roughness: 0.4 })); relay.position.set(rx, 0.175, rz); scene.add(relay);
+      const term = mesh(new THREE.BoxGeometry(0.2, 0.18, 0.5), mat(0x2e8b57)); term.position.set(rx + 0.32, 0.26, rz); scene.add(term);
+      R.relayLed = mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff453a, emissive: 0xff453a, emissiveIntensity: 0.05 }), false);
+      R.relayLed.position.set(rx - 0.2, 0.37, rz + 0.15); scene.add(R.relayLed);
+
+      // tank + pump
+      const tank = mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.0, 32, 1, true), mat(0xcfe3f2, { transparent: true, opacity: 0.22, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }), false);
+      tank.position.set(5.6, 1.0, -1.4); scene.add(tank);
+      const tankBase = mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.06, 32), mat(0x7a8a95)); tankBase.position.set(5.6, 0.03, -1.4); scene.add(tankBase);
+      R.water = mesh(new THREE.CylinderGeometry(0.74, 0.74, 1.4, 32), mat(0x2f7fd6, { transparent: true, opacity: 0.55, roughness: 0.1 }), false);
+      R.water.position.set(5.6, 0.76, -1.4); scene.add(R.water);
+      R.pump = new THREE.Group(); R.pump.position.set(4.35, 0.24, -1.1); scene.add(R.pump);
+      const pb = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 20), mat(0x2b2f33, { roughness: 0.4 })); pb.rotation.z = Math.PI / 2; R.pump.add(pb);
+      const pc = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.1, 20), mat(0x3b82c4)); pc.rotation.z = Math.PI / 2; pc.position.x = -0.3; R.pump.add(pc);
+      tube([[4.62, 0.24, -1.1], [4.95, 0.22, -1.25], [5.15, 0.25, -1.35]], 0.05, 0x9fb3c2);
+
+      // delivery pipe + nozzle
+      R.pipe = tube([[4.05, 0.3, -1.1], [3.85, 1.8, -1.1], [2.6, 3.25, -0.7], [0.4, 3.35, -0.25], [-0.75, 2.95, 0.05]], 0.065, 0xa9d1f0, { transparent: true, opacity: 0.75, roughness: 0.15 });
+      const noz = mesh(new THREE.ConeGeometry(0.13, 0.28, 14), mat(0x4b5a66)); noz.position.set(-0.8, 2.82, 0.07); noz.rotation.x = Math.PI; scene.add(noz);
+      R.nozzle = new THREE.Vector3(-0.8, 2.66, 0.07);
+
+      // wires
+      R.wSense = tube([[-0.15, TOP + 0.76, 0.55], [0.5, 2.9, 0.9], [1.9, 1.6, 1.5], [2.5, 0.25, 1.4], [2.6, 0.12, 1.3]], 0.025, 0xd2453a);
+      R.wRelay = tube([[3.0, 0.12, 0.9], [3.15, 0.3, 0.2], [3.0, 0.3, -0.4]], 0.025, 0xe2b93b);
+      R.wPump = tube([[3.38, 0.24, -0.75], [3.85, 0.35, -0.95], [4.15, 0.3, -1.1]], 0.025, 0xe07b39);
+
+      // cloud
+      R.cloud = new THREE.Group(); R.cloud.position.set(1.2, 5.6, -2.4); scene.add(R.cloud);
+      R.cloudMat = mat(0xf2f6fa, { roughness: 0.95 });
+      [[0, 0, 0, 0.7], [0.75, -0.1, 0.1, 0.55], [-0.7, -0.12, 0, 0.5], [0.25, 0.35, -0.1, 0.5]].forEach((c) => {
+        const s = mesh(new THREE.SphereGeometry(c[3], 20, 16), R.cloudMat, false); s.position.set(c[0], c[1], c[2]); R.cloud.add(s);
+      });
+
+      // phone with live screen
+      R.phone = new THREE.Group(); R.phone.position.set(6.0, 4.1, 1.6); R.phone.rotation.set(-0.08, -0.6, 0); scene.add(R.phone);
+      R.phone.add(mesh(new THREE.BoxGeometry(1.0, 1.95, 0.09), mat(0x111417, { roughness: 0.3 })));
+      R.screenCanvas = document.createElement('canvas'); R.screenCanvas.width = 256; R.screenCanvas.height = 500;
+      R.screenTex = new THREE.CanvasTexture(R.screenCanvas); R.screenTex.encoding = THREE.sRGBEncoding;
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.76), new THREE.MeshBasicMaterial({ map: R.screenTex }));
+      scr.position.z = 0.047; R.phone.add(scr);
+      drawScreen();
+
+      // data paths
+      const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+      R.pEspCloud = new THREE.CatmullRomCurve3([V([3.3, 0.3, 1.3]), V([3.4, 2.6, 0.4]), V([1.9, 5.3, -2.2])]);
+      R.pCloudPhone = new THREE.CatmullRomCurve3([V([1.9, 5.7, -2.2]), V([4.2, 6.0, -0.6]), V([5.9, 4.6, 1.5])]);
+      R.pPhoneCloud = new THREE.CatmullRomCurve3(R.pCloudPhone.points.slice().reverse());
+      R.pCloudEsp = new THREE.CatmullRomCurve3(R.pEspCloud.points.slice().reverse());
+      for (let k = 0; k < 16; k++) {
+        const m = mesh(new THREE.SphereGeometry(0.09, 12, 10), new THREE.MeshBasicMaterial({ color: 0x5ea9ff }), false);
+        m.visible = false; scene.add(m); packets.push({ m, curve: null, t: 0, next: null });
+      }
+      for (let k = 0; k < 60; k++) {
+        const m = mesh(new THREE.SphereGeometry(0.045, 8, 6), mat(0x4aa3ff, { roughness: 0.2, transparent: true, opacity: 0.9 }), false);
+        m.visible = false; scene.add(m); drops.push({ m, v: new THREE.Vector3() });
+      }
+      for (let k = 0; k < 14; k++) {
+        const m = mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x1f78ff }), false);
+        m.visible = false; scene.add(m); beads.push({ m, t: k / 14 });
+      }
+      R.signals = [];
+      for (let k = 0; k < 6; k++) {
+        const m = mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f }), false);
+        m.visible = false; scene.add(m); R.signals.push({ m, curve: null, t: 0, next: null });
+      }
+
+      label('Soil moisture sensor', [-0.15, TOP + 1.0, 0.55], 'sensor');
+      label('ESP32', [3.0, 0.65, 1.3], 'esp');
+      label('Relay', [3.0, 0.8, -0.7], 'relay');
+      label('Pump', [4.35, 0.8, -1.1], 'pump');
+      label('Water tank', [5.6, 2.35, -1.4]);
+      label('Cloud', [1.2, 6.65, -2.4], 'cloud');
+      label('Mobile app', [6.0, 5.35, 1.6], 'app');
+      R.soilLabel = label('48%', [-1, 2.35, 1.25]);
+      R.plantLabel = label('Plant', [-1.7, TOP + 3.0, -0.45]);
+    }
+
+    function applyTheme() {
+      if (!scene) return;
+      scene.background = new THREE.Color(css('--sunk') || '#e2e9e4');
+      const dark = (css('--bg') || '#fff').toLowerCase() < '#5';
+      R.ground.material.color.set(dark ? 0x16221f : 0xdde4df);
+      R.table.material.color.set(dark ? 0x5b4632 : 0xb98d62);
+    }
+
+    function drawScreen() {
+      const c = R.screenCanvas, g = c.getContext('2d');
+      g.fillStyle = '#0f1b18'; g.fillRect(0, 0, 256, 500);
+      g.fillStyle = '#93a69f'; g.font = '500 16px "IBM Plex Mono", monospace'; g.fillText(hhmm(tAt(M.length - 1)), 18, 30);
+      g.fillStyle = '#e2ece8'; g.font = '800 26px "Bricolage Grotesque", sans-serif'; g.fillText('AquaSense', 18, 72);
+      const cx = 128, cy = 185, r = 78, p = S.m / 100;
+      g.lineWidth = 16; g.strokeStyle = '#263a34'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = '#5ea9ff'; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.stroke();
+      g.fillStyle = '#e2ece8'; g.font = '800 46px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(Math.round(S.m) + '%', cx, cy + 14);
+      g.fillStyle = '#93a69f'; g.font = '500 14px "IBM Plex Mono", monospace'; g.fillText('MOISTURE', cx, cy + 40);
+      g.textAlign = 'left';
+      const row = (y, k, v, col) => { g.fillStyle = '#13201d'; g.fillRect(14, y, 228, 52); g.fillStyle = '#93a69f'; g.font = '500 15px "IBM Plex Sans", sans-serif'; g.fillText(k, 28, y + 32); g.fillStyle = col || '#e2ece8'; g.font = '600 17px "IBM Plex Sans", sans-serif'; g.textAlign = 'right'; g.fillText(v, 228, y + 32); g.textAlign = 'left'; };
+      row(300, 'Pump', S.lockout ? 'Locked' : S.pump ? 'RUNNING' : 'Off', S.pump ? '#5ea9ff' : S.lockout ? '#ef7565' : null);
+      row(360, 'Mode', S.mode === 'auto' ? 'Automatic' : 'Manual');
+      row(420, 'Range', S.dry + '–' + S.wet + '%');
+      R.screenTex.needsUpdate = true;
+    }
+
+    function send(curve, next, color, pool) {
+      const p = (pool || packets).find((x) => !x.curve);
+      if (!p) return;
+      p.curve = curve; p.t = 0; p.next = next || null; p.m.visible = true;
+      if (color) p.m.material.color.set(color);
+    }
+
+    // engine hooks
+    hooks.tick.push(() => {
+      if (!ready) return;
+      ringT = 0; // sensing pulse
+      send(R.wSense, null, 0xffd23f, R.signals);
+      setTimeout(() => send(R.pEspCloud, R.pCloudPhone, 0x5ea9ff), 180);
+      drawScreen();
+    });
+    hooks.pump.push(() => { if (!ready) return; send(R.wRelay, R.wPump, 0xffd23f, R.signals); drawScreen(); });
+    hooks.command.push(() => { if (!ready) return; send(R.pPhoneCloud, R.pCloudEsp, 0xffa53f); drawScreen(); });
+
+    let cDry, cDamp, cHealthy, cSick;
+
+    function loop() {
+      requestAnimationFrame(loop);
+      if (view !== 'simulation') { clock.getDelta(); return; }
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
+      disp += (S.m - disp) * Math.min(1, dt * 2.2);
+      const f = clamp(disp / 100, 0.01, 0.99);
+      const wetH = SOIL_H * f, dryH = SOIL_H - wetH;
+      R.wet.scale.y = wetH; R.wet.position.y = SOIL_B + wetH / 2;
+      R.dry.scale.y = dryH; R.dry.position.y = SOIL_B + wetH + dryH / 2;
+      R.dryMat.color.copy(cDry).lerp(cDamp, clamp((disp - 15) / 70, 0, 1));
+      R.front.position.y = SOIL_B + wetH;
+      R.front.material.opacity = 0.35 + 0.35 * Math.sin(t * 3) ** 2;
+      // plant reacts to stress
+      R.leafMat.color.copy(cHealthy).lerp(cSick, S.stress);
+      R.leaves.forEach((pz, j) => { pz.rotation.z += ((-0.12 - S.stress * 0.75 + Math.sin(t * 1.3 + j) * 0.03) - pz.rotation.z) * Math.min(1, dt * 3); });
+      // sensor pulse
+      ringT = Math.min(1, ringT + dt * 1.4);
+      ring.scale.setScalar(0.6 + ringT * 2.2); ring.material.opacity = (1 - ringT) * 0.8;
+      R.sensorLed.material.emissiveIntensity = ringT < 0.3 ? 2 : 0.3;
+      R.espLed.material.emissiveIntensity = 0.4 + (Math.sin(t * 6) > 0.6 ? 1.6 : 0);
+      R.relayLed.material.emissiveIntensity = S.pump ? 2.2 : 0.05;
+      R.pump.position.y = 0.24 + (S.pump ? Math.sin(t * 60) * 0.008 : 0);
+      // water through the pipe
+      beads.forEach((b) => {
+        b.m.visible = S.pump;
+        if (S.pump) { b.t = (b.t + dt * 0.45) % 1; R.pipe.getPoint(b.t, b.m.position); }
+      });
+      // droplets
+      drops.forEach((d, k) => {
+        if (!d.m.visible) {
+          if (S.pump && Math.random() < dt * 14) {
+            d.m.visible = true; d.m.position.copy(R.nozzle);
+            d.v.set((Math.random() - 0.5) * 0.6, -0.5 - Math.random() * 0.4, (Math.random() - 0.5) * 0.6);
+          }
+          return;
+        }
+        d.v.y -= 9.8 * dt; d.m.position.addScaledVector(d.v, dt);
+        if (d.m.position.y < TOP) d.m.visible = false;
+      });
+      // packets and wire signals
+      [packets, R.signals].forEach((pool) => pool.forEach((p) => {
+        if (!p.curve) return;
+        p.t += dt * (pool === packets ? 0.9 : 1.6);
+        if (p.t >= 1) {
+          const nx = p.next, col = p.m.material.color.getHex();
+          p.curve = null; p.m.visible = false;
+          if (nx) send(nx, null, col, pool);
+          return;
+        }
+        p.curve.getPoint(p.t, p.m.position);
+      }));
+      R.cloud.position.y = 5.6 + Math.sin(t * 0.8) * 0.06;
+      // labels
+      R.soilLabel.el.textContent = 'Soil ' + Math.round(disp) + '%';
+      R.plantLabel.el.textContent = S.stress > 0.3 ? 'Plant: thirsty' : 'Plant: healthy';
+      if (R.lbl_pump) R.lbl_pump.el.classList.toggle('hot', S.pump);
+      if (R.lbl_relay) R.lbl_relay.el.classList.toggle('hot', S.pump);
+      if (controls) controls.update();
+      renderer.render(scene, camera);
+      const r = $('simStage').getBoundingClientRect();
+      const v = new THREE.Vector3();
+      labels.forEach((l) => {
+        v.copy(l.pos).project(camera);
+        const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
+        l.el.style.display = vis ? '' : 'none';
+        if (vis) { l.el.style.left = ((v.x + 1) / 2 * r.width) + 'px'; l.el.style.top = ((1 - v.y) / 2 * r.height) + 'px'; }
+      });
+    }
+
+    return { init, resetView, applyTheme };
+  })();
+
+  // ---------------- your plants + pump settings ----------------
+  const plantsUI = (function () {
+    const SOILS = {
+      sandy:   { name: 'Sandy', dry: 1.05, eff: 0.95, runoff: 0.10, behaviour: 'Sandy soil takes water in fast but drains it just as fast, so it dries out quickly and needs short, frequent waterings.' },
+      loamy:   { name: 'Loamy', dry: 0.55, eff: 0.90, runoff: 0.15, behaviour: 'Loamy soil soaks water evenly and holds it well. It is the easiest soil to water.' },
+      clay:    { name: 'Clay', dry: 0.30, eff: 0.85, runoff: 0.55, behaviour: 'Clay soil absorbs slowly. Strong flow runs off the surface, but once wet it stays wet for a long time.' },
+      potting: { name: 'Potting mix', dry: 0.65, eff: 0.92, runoff: 0.12, behaviour: 'Potting mix is light and airy. It absorbs well but dries faster than garden soil.' },
+      silty:   { name: 'Silty', dry: 0.45, eff: 0.88, runoff: 0.35, behaviour: 'Silty soil holds water fairly well but packs down, so heavy flow can pool and run off.' },
+      peaty:   { name: 'Peaty', dry: 0.40, eff: 0.97, runoff: 0.08, behaviour: 'Peaty soil acts like a sponge. It soaks up almost everything, so it is easy to overwater.' }
+    };
+    const REC = {
+      sandy:   { power: 60, timing: 30, why: 'Short bursts stop water from draining straight past the roots.' },
+      loamy:   { power: 70, timing: 60, why: 'A balanced setting works because loam absorbs evenly.' },
+      clay:    { power: 35, timing: 120, why: 'Low power with a longer run lets water soak in instead of running off.' },
+      potting: { power: 65, timing: 45, why: 'Medium bursts keep the light mix moist without flooding the pot.' },
+      silty:   { power: 50, timing: 90, why: 'Moderate power avoids pooling on the packed surface.' },
+      peaty:   { power: 55, timing: 40, why: 'Shorter bursts prevent the sponge-like soil from getting waterlogged.' }
+    };
+    const ORDER = ['loamy', 'sandy', 'clay', 'potting', 'silty', 'peaty', 'loamy', 'clay', 'sandy', 'potting', 'loamy', 'silty'];
+    const prand = mulberry(42);
+    const plants = ORDER.map((soil, i) => ({
+      id: i + 1, soil, m: 38 + prand() * 32, mode: 'auto', pump: false, power: 70, timing: 60,
+      burst: 0, soak: 0, watering: false, hist: [], predicted: null, alertLow: false, alertHigh: false, dryObs: [], effObs: []
+    }));
+    const alerts = [];
+    const fmtSec = (t) => t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : '');
+    const mlPerBurst = (p, t) => Math.round(25 * p / 100 * t); // 1.5 L/min at 100%
+    const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+    const effAt = (pl, power) => { const s = SOILS[pl.soil], p = power / 100; return Math.max(0, s.eff - s.runoff * p * p); };
+    function dayK() { const d = tAt(M.length - 1); const h = d.getHours() + d.getMinutes() / 60; return 0.6 + 0.6 * Math.max(0, Math.sin(Math.PI * (h - 6) / 12)); }
+
+    function step(pl, live) {
+      const s = SOILS[pl.soil], k = dayK();
+      if (pl.mode === 'auto') {
+        if (pl.burst > 0) pl.pump = true;
+        else {
+          pl.pump = false;
+          if (pl.m >= S.wet) pl.watering = false;
+          if (pl.soak > 0) pl.soak--;
+          else if (pl.m < S.dry || (pl.watering && pl.m < S.wet)) { pl.watering = true; pl.burst = Math.max(1, Math.round(pl.timing / 30)); pl.pump = true; }
+        }
+      }
+      let gain = 0;
+      if (pl.pump) {
+        const p = pl.power / 100;
+        if (pl.mode === 'auto') {
+          const n = Math.max(1, Math.round(pl.timing / 30)), sent = 7 * p * (pl.timing / 30) / n;
+          gain = sent * effAt(pl, pl.power);
+          if (sent > 0) pl.effObs.push(gain / sent);
+          pl.burst--; if (pl.burst <= 0) { pl.burst = 0; pl.soak = 2; }
+        } else {
+          gain = 7 * p * effAt(pl, pl.power);
+          if (p > 0) pl.effObs.push(gain / (7 * p));
+        }
+      }
+      const loss = s.dry * k * (0.85 + prand() * 0.3);
+      pl.m = clamp(pl.m + gain - loss, 0, 100);
+      if (!pl.pump) pl.dryObs.push(loss / k);
+      if (pl.dryObs.length > 40) pl.dryObs.shift();
+      if (pl.effObs.length > 20) pl.effObs.shift();
+      pl.hist.push(pl.m); if (pl.hist.length > 72) pl.hist.shift();
+      if (live) checkAlerts(pl);
+    }
+    for (let k = 0; k < 72; k++) plants.forEach((pl) => step(pl, false));
+    // two example plants left in manual mode so the alerts can be seen working
+    Object.assign(plants[3], { mode: 'manual', pump: true, m: 86, burst: 0, soak: 0 });
+    Object.assign(plants[8], { mode: 'manual', pump: false, m: 11, burst: 0, soak: 0 });
+
+    function checkAlerts(pl) {
+      const low = pl.mode === 'manual' && !pl.pump && pl.m < 5;
+      const high = pl.mode === 'manual' && pl.pump && pl.m > 95;
+      if (low && !pl.alertLow) raise(pl, 'low');
+      if (high && !pl.alertHigh) raise(pl, 'high');
+      pl.alertLow = low; pl.alertHigh = high;
+    }
+    function alertText(pl, type) {
+      return type === 'low'
+        ? { title: 'Plant ' + pl.id + ': moisture below 5%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is off (manual mode).', act: 'Turn pump on' }
+        : { title: 'Plant ' + pl.id + ': moisture above 95%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is still on (manual mode).', act: 'Turn pump off' };
+    }
+    function raise(pl, type) {
+      const a = alertText(pl, type);
+      alerts.unshift({ pid: pl.id, type, t: hhmm(tAt(M.length - 1)), text: a.title });
+      if (alerts.length > 50) alerts.pop();
+      const el = document.createElement('div');
+      el.className = 'toast'; el.setAttribute('role', 'alert');
+      el.innerHTML = '<b></b><p></p><div class="acts"><button class="btn primary" data-tact="pump">' + a.act + '</button><button class="btn" data-tact="view">View plant</button><button class="btn" data-tact="close">Dismiss</button></div>';
+      el.querySelector('b').textContent = a.title; el.querySelector('p').textContent = a.body;
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-tact]'); if (!b) return;
+        if (b.dataset.tact === 'pump') { setPlantPump(pl, type === 'low'); }
+        if (b.dataset.tact === 'view') { location.hash = 'plants'; setTimeout(() => flash(pl.id), 60); }
+        el.remove();
+      });
+      const box = $('toasts'); box.prepend(el);
+      while (box.children.length > 4) box.lastChild.remove();
+      setTimeout(() => el.remove(), 15000);
+      try { if (window.Notification && Notification.permission === 'granted') new Notification('AquaSense · ' + a.title, { body: a.body }); } catch (e) { /* not available here */ }
+    }
+    function flash(id) {
+      const c = $('pc-' + id); if (!c) return;
+      c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      c.classList.add('flash'); setTimeout(() => c.classList.remove('flash'), 1600);
+    }
+    function setPlantPump(pl, on) {
+      if (pl.mode !== 'manual') { pl.mode = 'manual'; pl.burst = 0; pl.soak = 0; }
+      pl.pump = on; checkAlerts(pl); render();
+    }
+    function setMode(pl, mode) {
+      if (pl.mode === mode) return;
+      pl.mode = mode; pl.burst = 0; pl.soak = 0; pl.watering = false;
+      if (mode === 'auto') pl.pump = false;
+      checkAlerts(pl);
+    }
+    hooks.tick.push(() => plants.forEach((pl) => step(pl, true)));
+
+    const activeCount = () => plants.filter((p) => p.alertLow || p.alertHigh).length;
+    function badge() { const n = activeCount(), b = $('navBadge'); b.hidden = n === 0; b.textContent = n; }
+
+    // ----- plants grid -----
+    let built = false;
+    function build() {
+      $('plGrid').innerHTML = plants.map((pl) =>
+        '<article class="panel pcard" id="pc-' + pl.id + '">' +
+        '<div class="pc-head"><h3>Plant ' + pl.id + '</h3><span class="pill off" data-f="pill">Pump off</span></div>' +
+        '<div class="pc-alert" data-f="alert" hidden></div>' +
+        '<div class="pc-m"><span class="pc-val" data-f="m">—</span><span class="label" data-f="soil">—</span></div>' +
+        '<div class="pc-bar"><i data-f="bar"></i><b data-f="tDry"></b><b data-f="tWet"></b></div>' +
+        '<canvas data-f="spark" aria-label="Recent moisture for plant ' + pl.id + '"></canvas>' +
+        '<div class="mini-switch" role="group" aria-label="Pump mode for plant ' + pl.id + '"><button data-pact="auto" data-pid="' + pl.id + '">Automatic</button><button data-pact="manual" data-pid="' + pl.id + '">Manual</button></div>' +
+        '<button class="btn pc-pump" data-pact="pump" data-pid="' + pl.id + '">Turn pump on</button>' +
+        '<div class="pc-set" data-f="set"></div></article>').join('');
+      built = true;
+    }
+    function spark(canvas, pl) {
+      const r = canvas.getBoundingClientRect(); if (!r.width) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(r.width * dpr)) { canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr); }
+      const g = canvas.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const w = r.width, h = r.height, y = (v) => 2 + (1 - v / 100) * (h - 4);
+      g.clearRect(0, 0, w, h);
+      g.setLineDash([3, 3]); g.lineWidth = 1;
+      g.strokeStyle = css('--soil'); g.beginPath(); g.moveTo(0, y(S.dry)); g.lineTo(w, y(S.dry)); g.stroke();
+      g.strokeStyle = css('--water'); g.beginPath(); g.moveTo(0, y(S.wet)); g.lineTo(w, y(S.wet)); g.stroke();
+      g.setLineDash([]);
+      g.beginPath(); pl.hist.forEach((v, i) => { const X = (i / 71) * w; i ? g.lineTo(X, y(v)) : g.moveTo(X, y(v)); });
+      g.strokeStyle = css('--ink'); g.lineWidth = 1.6; g.stroke();
+    }
+    function renderPlants() {
+      if (!built) build();
+      plants.forEach((pl) => {
+        const c = $('pc-' + pl.id), f = (n) => c.querySelector('[data-f="' + n + '"]');
+        const alerting = pl.alertLow || pl.alertHigh;
+        c.classList.toggle('alerting', alerting);
+        const al = f('alert'); al.hidden = !alerting;
+        if (alerting) al.textContent = pl.alertLow ? '⚠ Below 5% and pump is off' : '⚠ Above 95% and pump is on';
+        f('m').textContent = Math.round(pl.m) + '%';
+        f('soil').textContent = pl.predicted ? SOILS[pl.predicted].name + ' (predicted)' : 'Soil not analyzed';
+        const bar = f('bar'); bar.style.width = pl.m + '%'; bar.classList.toggle('dry', pl.m < S.dry);
+        f('tDry').style.left = S.dry + '%'; f('tWet').style.left = S.wet + '%';
+        const pill = f('pill'); pill.className = 'pill ' + (pl.pump ? 'on' : 'off'); pill.textContent = pl.pump ? 'Pump on' : 'Pump off';
+        c.querySelector('[data-pact="auto"]').setAttribute('aria-pressed', pl.mode === 'auto');
+        c.querySelector('[data-pact="manual"]').setAttribute('aria-pressed', pl.mode === 'manual');
+        const pb = c.querySelector('[data-pact="pump"]');
+        pb.disabled = pl.mode !== 'manual';
+        pb.textContent = pl.mode !== 'manual' ? (pl.pump ? 'Watering (automatic)' : 'Automatic') : pl.pump ? 'Turn pump off' : 'Turn pump on';
+        pb.classList.toggle('stop', pl.mode === 'manual' && pl.pump);
+        f('set').textContent = 'Power ' + pl.power + '% · ' + fmtSec(pl.timing);
+        spark(f('spark'), pl);
+      });
+      $('plWatering').textContent = plants.filter((p) => p.pump).length;
+      $('plManual').textContent = plants.filter((p) => p.mode === 'manual').length;
+      $('plAlerts').textContent = activeCount();
+      $('alertList').innerHTML = alerts.slice(0, 20).map((a) => {
+        const pl = plants[a.pid - 1];
+        const still = a.type === 'low' ? pl.alertLow : pl.alertHigh;
+        return '<li class="' + (still ? '' : 'cleared') + '"><span class="t">' + a.t + '</span><span>' + a.text + (still ? '' : ' · resolved') + '</span><a href="#plants" data-goto="' + a.pid + '">View</a></li>';
+      }).join('') || '<li class="muted">No alerts. Alerts appear here when a plant in manual mode drops below 5% with its pump off, or goes above 95% with its pump on.</li>';
+    }
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pact]');
+      if (b) {
+        const pl = plants[+b.dataset.pid - 1], a = b.dataset.pact;
+        if (a === 'auto' || a === 'manual') setMode(pl, a);
+        else if (a === 'pump' && pl.mode === 'manual') { pl.pump = !pl.pump; checkAlerts(pl); }
+        render(); return;
+      }
+      const all = e.target.closest('[data-pall]');
+      if (all) { plants.forEach((pl) => setMode(pl, all.dataset.pall)); render(); return; }
+      const go = e.target.closest('[data-goto]');
+      if (go) { e.preventDefault(); if (location.hash !== '#plants') location.hash = 'plants'; setTimeout(() => flash(+go.dataset.goto), 60); }
+    });
+    $('clearAlerts').addEventListener('click', () => { alerts.length = 0; render(); });
+
+    // ----- pump settings -----
+    const draft = { power: 70, timing: 60 };
+    function syncDraft() {
+      $('pPower').value = draft.power; $('pTime').value = draft.timing;
+      $('pPowerV').textContent = draft.power; $('pTimeV').textContent = fmtSec(draft.timing);
+      $('pvWater').textContent = mlPerBurst(draft.power, draft.timing) + ' mL';
+      $('pvFlow').textContent = (1.5 * draft.power / 100).toFixed(2) + ' L/min';
+      $('pvRun').textContent = fmtSec(draft.timing);
+      const w = $('pvWarn');
+      const msg = draft.power === 0 ? 'At 0% power the pump will not move any water.' : draft.power >= 85 && draft.timing >= 120 ? 'High power with a long run can flood small pots and wash soil out.' : '';
+      w.hidden = !msg; w.textContent = msg;
+    }
+    $('pPower').addEventListener('input', (e) => { draft.power = +e.target.value; syncDraft(); });
+    $('pTime').addEventListener('input', (e) => { draft.timing = +e.target.value; syncDraft(); });
+    syncDraft();
+    function renderPumps() {
+      $('setTable').innerHTML = plants.map((pl) => '<tr><td>Plant ' + pl.id + '</td><td>' + (pl.mode === 'auto' ? 'Automatic' : 'Manual') + '</td><td>' + pl.power + '%</td><td>' + fmtSec(pl.timing) + '</td><td>' + (pl.predicted ? SOILS[pl.predicted].name : '<span class="muted">—</span>') + '</td></tr>').join('');
+    }
+
+    // save dialog
+    const modal = $('saveModal');
+    $('plantChecks').innerHTML = plants.map((pl) => '<label><input type="checkbox" value="' + pl.id + '"> Plant ' + pl.id + '</label>').join('');
+    const boxes = () => $$('#plantChecks input');
+    function syncAll() {
+      const n = boxes().filter((b) => b.checked).length;
+      $('allPlants').checked = n === plants.length; $('allPlants').indeterminate = n > 0 && n < plants.length;
+      $('saveApply').disabled = n === 0;
+      $('saveApply').textContent = n ? 'Apply to ' + n + (n === 1 ? ' plant' : ' plants') : 'Apply';
+    }
+    function openSave(preselect) {
+      boxes().forEach((b) => { b.checked = !!(preselect && preselect.includes(+b.value)); });
+      $('saveSummary').textContent = 'Power ' + draft.power + '% · timing ' + fmtSec(draft.timing) + ' per watering burst.';
+      syncAll(); modal.hidden = false; $('saveCancel').focus();
+    }
+    $('saveSettings').addEventListener('click', () => openSave());
+    $('plantChecks').addEventListener('change', syncAll);
+    $('allPlants').addEventListener('change', (e) => { boxes().forEach((b) => { b.checked = e.target.checked; }); syncAll(); });
+    $('saveCancel').addEventListener('click', () => { modal.hidden = true; });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.hidden = true; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) modal.hidden = true; });
+    $('saveApply').addEventListener('click', () => {
+      const ids = boxes().filter((b) => b.checked).map((b) => +b.value);
+      ids.forEach((id) => { plants[id - 1].power = draft.power; plants[id - 1].timing = draft.timing; });
+      modal.hidden = true;
+      const t = document.createElement('div'); t.className = 'toast'; t.style.borderColor = 'var(--ok)';
+      t.innerHTML = '<b>Settings saved</b><p></p>';
+      t.querySelector('p').textContent = 'Power ' + draft.power + '% · ' + fmtSec(draft.timing) + ' applied to ' + (ids.length === plants.length ? 'all plants' : 'Plant ' + ids.join(', '));
+      $('toasts').prepend(t); setTimeout(() => t.remove(), 5000);
+      render();
+    });
+
+    // ----- pump advisor -----
+    $('advPlant').innerHTML = plants.map((pl) => '<option value="' + pl.id + '">Plant ' + pl.id + '</option>').join('');
+    function infer(pl) {
+      const dr = pl.dryObs.length ? avg(pl.dryObs) : null;
+      const ef = pl.effObs.length ? avg(pl.effObs) : null;
+      let best = 'loamy', bd = Infinity;
+      Object.keys(SOILS).forEach((k) => {
+        const s = SOILS[k], p = pl.power / 100;
+        let d = dr != null ? Math.abs(s.dry - dr) / 0.08 : 0;
+        if (ef != null) d += Math.abs((s.eff - s.runoff * p * p) - ef) / 0.05;
+        if (d < bd) { bd = d; best = k; }
+      });
+      const conf = pl.dryObs.length + pl.effObs.length < 15 ? 'low' : bd < 1.2 ? 'high' : 'medium';
+      return { soil: best, conf, dryPerHour: dr != null ? dr * dayK() * 12 : null, runoffPct: ef != null ? Math.round((1 - ef) * 100) : null };
+    }
+    function advice(pl) {
+      const inf = infer(pl); pl.predicted = inf.soil;
+      const s = SOILS[inf.soil], r = REC[inf.soil];
+      const text = 'Plant ' + pl.id + ' looks like ' + s.name.toLowerCase() + ' soil (' + inf.conf + ' confidence). ' +
+        (inf.dryPerHour != null ? 'It is losing about ' + inf.dryPerHour.toFixed(1) + '% moisture per hour right now' : 'It has little drying data so far') +
+        (inf.runoffPct != null ? ', and at ' + pl.power + '% power about ' + inf.runoffPct + '% of the water runs off instead of soaking in.' : '.') +
+        ' ' + s.behaviour + '\n\nSuggested setting: power ' + r.power + '%, timing ' + fmtSec(r.timing) + '. ' + r.why;
+      return { text, rec: r, inf, ids: [pl.id] };
+    }
+    function adviceAll() {
+      const groups = {};
+      plants.forEach((pl) => { const s = infer(pl).soil; pl.predicted = s; (groups[s] = groups[s] || []).push(pl.id); });
+      const lines = Object.keys(groups).map((k) => SOILS[k].name + ' (Plant ' + groups[k].join(', ') + '): power ' + REC[k].power + '%, ' + fmtSec(REC[k].timing));
+      return { text: 'I predicted the soil for every plant from how fast it dries and how much water it absorbs:\n\n' + lines.join('\n') + '\n\nUse the buttons to load a setting and apply it to that group.', groups };
+    }
+    function addAdv(role, text, src) {
+      const el = document.createElement('div'); el.className = 'msg ' + role; el.textContent = text;
+      if (src) { const s = document.createElement('span'); s.className = 'src'; s.textContent = src; el.appendChild(s); }
+      $('advMsgs').appendChild(el); $('advMsgs').scrollTop = $('advMsgs').scrollHeight; return el;
+    }
+    function applyBtn(el, label, rec, ids) {
+      const b = document.createElement('button'); b.className = 'btn apply'; b.textContent = label;
+      b.addEventListener('click', () => { draft.power = rec.power; draft.timing = rec.timing; syncDraft(); openSave(ids); });
+      el.appendChild(document.createElement('br')); el.appendChild(b);
+    }
+    async function aiPolish(localText, facts, el) {
+      if (!sampler) return false;
+      el.firstChild.textContent = 'Thinking…';
+      try {
+        const out = await sampler('You are the AquaSense pump advisor. A smart irrigation system has 12 plants, each with its own pump. Pump power is 0–100% (1.5 L/min at 100%) and timing is the length of each watering burst (10 s–2 min 30 s). ' +
+          'Using ONLY the facts below, explain your prediction of the soil type and how it behaves with water, and give the recommended power and timing exactly as provided. Plain text, friendly, under 110 words, no markdown.\n\nFacts (JSON):\n' + JSON.stringify(facts) + '\n\nDraft answer to improve:\n' + localText,
+          { cache: false, modelTier: 'quick', onText: ({ text }) => { el.firstChild.textContent = text; } });
+        el.firstChild.textContent = out.text; return true;
+      } catch (err) { if (err && err.code === 'not_granted') { sampler = null; setAdvBadge(); } el.firstChild.textContent = localText; return false; }
+    }
+    function setAdvBadge() { const b = $('advBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
+    async function advAsk(kind, question) {
+      if (question) addAdv('user', question);
+      const pl = plants[+$('advPlant').value - 1];
+      if (kind === 'plant') {
+        const a = advice(pl);
+        const el = addAdv('bot', a.text);
+        const ok = await aiPolish(a.text, { plant: pl.id, currentPower: pl.power, currentTimingSec: pl.timing, predictedSoil: SOILS[a.inf.soil].name, confidence: a.inf.conf, dryingPctPerHour: a.inf.dryPerHour && +a.inf.dryPerHour.toFixed(1), runoffPctAtCurrentPower: a.inf.runoffPct, recommendedPower: a.rec.power, recommendedTimingSec: a.rec.timing, reason: a.rec.why }, el);
+        const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : 'Built-in analysis'; el.appendChild(s);
+        applyBtn(el, 'Use for Plant ' + pl.id, a.rec, a.ids);
+      } else if (kind === 'all') {
+        const a = adviceAll();
+        const el = addAdv('bot', a.text, 'Built-in analysis');
+        Object.keys(a.groups).forEach((k) => applyBtn(el, 'Use ' + REC[k].power + '% · ' + fmtSec(REC[k].timing) + ' for ' + SOILS[k].name, REC[k], a.groups[k]));
+      } else if (kind === 'explain') {
+        addAdv('bot', 'Power is how hard the pump pushes water: 100% is about 1.5 L/min. Higher power waters faster, but on clay or silty soil the extra flow runs off instead of soaking in.\n\nTiming is how long each watering burst lasts, from 10 s to 2 min 30 s. After a burst the system waits for the water to soak in, checks the sensor again, and only waters again if the soil is still below the stop level. Short bursts suit fast-draining soil. Long, gentle bursts suit soil that absorbs slowly.', 'Built-in analysis');
+      } else if (kind === 'current') {
+        const inf = infer(pl), r = REC[inf.soil];
+        const dp = pl.power - r.power, dt = pl.timing - r.timing;
+        let t = 'Plant ' + pl.id + ' is set to ' + pl.power + '% for ' + fmtSec(pl.timing) + '. For ' + SOILS[inf.soil].name.toLowerCase() + ' soil I would use ' + r.power + '% for ' + fmtSec(r.timing) + '. ';
+        t += Math.abs(dp) <= 10 && Math.abs(dt) <= 20 ? 'Your setting is close enough. No change needed.' : (dp > 10 ? 'Power is on the high side, so some water may run off. ' : dp < -10 ? 'Power is low, so watering will take longer. ' : '') + (dt > 20 ? 'Bursts are longer than needed. ' : dt < -20 ? 'Bursts are short, so it will take several to reach the stop level. ' : '');
+        pl.predicted = inf.soil;
+        const el = addAdv('bot', t, 'Built-in analysis');
+        applyBtn(el, 'Use the suggested setting', r, [pl.id]);
+      }
+      render();
+    }
+    $('advAnalyze').addEventListener('click', () => advAsk('plant', 'Predict the soil of Plant ' + $('advPlant').value + ' and suggest a setting.'));
+    $$('[data-aq]').forEach((b) => b.addEventListener('click', () => advAsk(b.dataset.aq, b.textContent)));
+    $('advForm').addEventListener('submit', (e) => {
+      e.preventDefault(); const q = $('advInput').value.trim(); if (!q) return; $('advInput').value = '';
+      const m = q.match(/plant\s*(\d{1,2})/i);
+      if (m && +m[1] >= 1 && +m[1] <= 12) $('advPlant').value = m[1];
+      const kind = /all|every/i.test(q) ? 'all' : /what (do|does|is)|explain|meaning|mean/i.test(q) ? 'explain' : /current|ok|okay|good|right/i.test(q) ? 'current' : 'plant';
+      advAsk(kind, q);
+    });
+    addAdv('bot', 'Pick a plant and press "Predict soil & suggest". I will work out its soil type from how fast it dries and how much water it absorbs, then suggest a pump power and timing.');
+    setTimeout(setAdvBadge, 0);
+    setTimeout(setAdvBadge, 11000);
+
+    return { renderPlants, renderPumps, badge, activeCount };
+  })();
+
+  // theme changes
+  const reTheme = () => { sim3d.applyTheme(); render(); };
+  if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener ? mq.addEventListener('change', reTheme) : mq.addListener(reTheme); }
+  new MutationObserver(reTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (view === 'dashboard' || view === 'history') render(); }).observe(document.body);
+
+  showView();
+  schedule();
+})();
+</script>
