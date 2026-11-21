@@ -22,6 +22,7 @@
   --ok: #2c7a4b;
   --warn: #a86b12;
   --crit: #b8382a;
+  --s1: #1667c4; --s2: #c2410c; --s3: #2c7a4b; --s4: #7e3fc9; --s5: #0e7490;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -30,13 +31,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
     --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
-    --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; color-scheme: dark;
+    --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; --s1: #5ea9ff; --s2: #fb923c; --s3: #5cc184; --s4: #c08cff; --s5: #22c3dd; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
   --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
-  --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; color-scheme: dark;
+  --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; --s1: #5ea9ff; --s2: #fb923c; --s3: #5cc184; --s4: #c08cff; --s5: #22c3dd; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -205,7 +206,44 @@ input[type="range"] { width: 100%; accent-color: var(--water); }
 .hstats .v { font: 700 1.6rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; display: block; margin-top: 4px; }
 @media (max-width: 900px) { .hstats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hstats > div:nth-child(3) { border-right: 0; } .hstats > div:nth-child(-n+3) { border-bottom: 1px solid var(--line); } }
 @media (max-width: 480px) { .hstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hstats > div { border-right: 0 !important; border-bottom: 1px solid var(--line); } }
-.hchart { height: 340px; position: relative; }
+.hchart { height: 340px; position: relative; overflow: hidden; }
+.hchart canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.series-pick { padding: 16px 18px; display: grid; gap: 12px; }
+.series-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.series-chips button { font: 500 .84rem var(--font-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.series-chips button:hover { border-color: var(--muted); }
+.series-chips button i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.series-chips button[aria-pressed="true"] { border-color: currentColor; background: var(--sunk); font-weight: 600; }
+table.cmp td:first-child { font-weight: 600; white-space: nowrap; }
+table.cmp tr.diff td { background: var(--sunk); font-family: var(--font-mono); font-size: .85rem; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 0; }
+.legend .ln { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 6px; }
+/* 3D story */
+.story { position: relative; height: calc(8 * 75vh + 100vh); }
+.story-stage { position: sticky; top: calc(var(--hdr, 64px) + 8px); height: calc(100vh - var(--hdr, 64px) - 24px); min-height: 420px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--sunk); }
+.story-stage canvas { display: block; width: 100%; height: 100%; }
+.story-card { position: absolute; left: 16px; bottom: 16px; width: min(400px, calc(100% - 96px)); background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; box-shadow: 0 10px 30px -16px rgba(0,0,0,.4); }
+.story-card h3 { font-size: 1.2rem; }
+.story-card p { font-size: .92rem; color: var(--muted); }
+.story-prog { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.story-prog i { display: block; height: 100%; width: 0; background: var(--water); }
+.story-rail { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.story-rail button { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); background: var(--surface); cursor: pointer; padding: 0; position: relative; display: block; }
+.story-rail button.done { background: var(--muted); }
+.story-rail button.active { background: var(--water); border-color: var(--water); box-shadow: 0 0 0 4px var(--water-soft); }
+.story-rail button span { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); white-space: nowrap; font: 500 .75rem var(--font-body); background: var(--ink); color: var(--bg); padding: 3px 8px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.story-rail button:hover span, .story-rail button:focus-visible span { opacity: 1; }
+.scroll-cue { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 600 .9rem var(--font-body); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; pointer-events: none; animation: bob 1.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translate(-50%, calc(-50% + 6px)); } }
+.sim-labels span.think { background: var(--ink); color: var(--bg); border-color: var(--ink); font-size: .78rem; padding: 4px 9px; }
+.story-end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 24px; color: var(--muted); }
+@media (max-width: 640px) {
+  .story-card { left: 10px; right: 10px; bottom: 10px; width: auto; padding: 12px; }
+  .story-card p { font-size: .84rem; }
+  .story-rail { right: 8px; top: 64px; transform: none; gap: 7px; }
+  .story-rail button { width: 11px; height: 11px; }
+  .sim-hud b { font-size: 1rem; }
+}
 .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 .76rem/1.4 var(--font-mono); padding: 6px 9px; border-radius: 7px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .8rem; color: var(--muted); }
 .legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
@@ -650,52 +688,34 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <div class="view-head">
         <div>
           <span class="label">3D virtual simulation</span>
-          <h2>From dry soil to a watered plant</h2>
-          <p>The sensor reads the soil. The ESP32 sends each reading to the cloud and your app. When moisture drops below the threshold it turns the pump on, and it turns the pump off once the soil is wet enough. Drag to rotate, scroll to zoom.</p>
+          <h2>One watering cycle, step by step</h2>
+          <p>Scroll down to move through the eight steps, from dry soil to a watered plant. Scroll back up to rewind, or press Play.</p>
         </div>
-        <button class="btn primary" data-act="demo">▶ Start a watering cycle</button>
+        <button class="btn primary" id="storyPlay">▶ Play</button>
       </div>
-
-      <div class="sim-stage" id="simStage">
-        <canvas id="simCanvas" aria-label="3D model of the AquaSense irrigation system"></canvas>
-        <div class="sim-labels" id="simLabels"></div>
-        <div class="sim-hud">
-          <div><span class="label">Moisture</span><b data-bind="m">48%</b></div>
-          <div><span class="label">Pump</span><b data-bind="pumpWord">Off</b></div>
-          <div><span class="label">Mode</span><b data-bind="mode">Automatic</b></div>
-          <div><span class="label">Range</span><b><span data-bind="dry">35</span>–<span data-bind="wet">60</span>%</b></div>
+      <div class="story" id="story">
+        <div class="story-stage" id="simStage">
+          <canvas id="simCanvas" aria-label="3D model of the AquaSense irrigation system"></canvas>
+          <div class="sim-labels" id="simLabels"></div>
+          <div class="sim-hud">
+            <div><span class="label">Step</span><b id="hudStep">1 / 8</b></div>
+            <div><span class="label">Moisture</span><b id="hudM">62%</b></div>
+            <div><span class="label">Pump</span><b id="hudPump">Off</b></div>
+          </div>
+          <div class="story-card" id="storyCard" aria-live="polite">
+            <span class="label" id="scStep">Step 1 of 8</span>
+            <h3 id="scTitle">—</h3>
+            <p id="scText">—</p>
+            <div class="story-prog"><i id="scBar"></i></div>
+          </div>
+          <ol class="story-rail" id="storyRail" aria-label="Jump to a step"></ol>
+          <span class="scroll-cue" id="scrollCue">Scroll to start ↓</span>
+          <div class="sim-fallback" id="simFallback" hidden><p>The 3D view needs WebGL and an internet connection to load the 3D library. The step captions still work as you scroll.</p></div>
         </div>
-        <span class="sim-hint">Drag to rotate · scroll to zoom</span>
-        <div class="sim-fallback" id="simFallback" hidden><p>The 3D view needs WebGL and an internet connection to load the 3D library. The dashboard still works.</p></div>
       </div>
-
-      <div class="sim-under">
-        <div class="panel panel-pad">
-          <ol class="stepper" id="stepper">
-            <li data-step="1"><b>01 SENSE</b>Sensor reads soil</li>
-            <li data-step="2"><b>02 SEND</b>ESP32 sends data</li>
-            <li data-step="3"><b>03 DECIDE</b>Below threshold → pump on</li>
-            <li data-step="4"><b>04 WATER</b>Moisture rises</li>
-            <li data-step="5"><b>05 STOP</b>Threshold reached → pump off</li>
-          </ol>
-          <p class="caption" id="caption" aria-live="polite">—</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px">
-            <div class="seg" role="group" aria-label="Simulation speed">
-              <button class="btn" data-act="speed1" aria-pressed="true">1×</button>
-              <button class="btn" data-act="speed4" aria-pressed="false">4×</button>
-            </div>
-            <button class="btn" data-act="pause" aria-pressed="false">Pause</button>
-            <button class="btn" data-act="resetView">Reset view</button>
-          </div>
-        </div>
-        <div class="panel panel-pad">
-          <div class="mode-switch" role="group" aria-label="Pump mode">
-            <button data-act="auto" aria-pressed="true">Automatic<small>Waters by threshold</small></button>
-            <button data-act="manual" aria-pressed="false">Manual<small>You decide</small></button>
-          </div>
-          <button class="pump-btn" data-act="pump" disabled>Turn pump on</button>
-          <p class="hint" data-bind="pumpHint">—</p>
-        </div>
+      <div class="story-end">
+        <p>That is one full cycle. AquaSense repeats it whenever the soil drops below the threshold.</p>
+        <button class="btn" id="storyReplay">↺ Replay from the start</button>
       </div>
     </div>
   </section>
@@ -715,8 +735,18 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <button class="btn" data-range="2016" aria-pressed="false">7 days</button>
         </div>
       </div>
-      <div class="panel" style="display:grid">
-        <div class="hstats">
+      <div class="panel series-pick">
+        <div class="row"><h3>Show plants</h3><span class="note" id="pickNote">Pick one plant, or up to 5 to compare</span></div>
+        <div class="series-chips" id="seriesChips" role="group" aria-label="Plants shown on the graph"></div>
+      </div>
+      <div class="panel" style="display:grid; margin-top:16px">
+        <div class="table-wrap" id="cmpWrap" hidden>
+          <table class="cmp">
+            <thead><tr><th>Plant</th><th>Average</th><th>Lowest</th><th>Highest</th><th>Waterings</th><th>Pump time</th><th>In healthy range</th></tr></thead>
+            <tbody id="cmpBody"></tbody>
+          </table>
+        </div>
+        <div class="hstats" id="hstats">
           <div><span class="label">Average</span><span class="v" id="hAvg">—</span></div>
           <div><span class="label">Lowest</span><span class="v" id="hMin">—</span></div>
           <div><span class="label">Highest</span><span class="v" id="hMax">—</span></div>
@@ -725,12 +755,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <div><span class="label">In healthy range</span><span class="v" id="hGood">—</span></div>
         </div>
         <div style="padding:18px; border-top:1px solid var(--line); display:grid; gap:10px">
-          <div class="legend">
-            <span><i style="border-color:var(--ink)"></i>Soil moisture</span>
-            <span><i class="box"></i>Pump running</span>
-            <span><i style="border-color:var(--soil); border-top-style:dashed"></i>Start watering (dry)</span>
-            <span><i style="border-color:var(--water); border-top-style:dashed"></i>Stop watering (wet)</span>
-          </div>
+          <div class="legend" id="histLegend"></div>
           <div class="hchart"><canvas id="histChart" aria-label="Soil moisture history graph"></canvas><div class="tip" id="tip" hidden></div></div>
         </div>
       </div>
@@ -738,7 +763,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <div style="padding:16px 18px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap"><h3>Watering log</h3><span class="note">Most recent first</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Started</th><th>Triggered by</th><th>Duration</th><th>Moisture</th><th>Stopped by</th></tr></thead>
+            <thead><tr><th>Plant</th><th>Started</th><th>Triggered by</th><th>Duration</th><th>Moisture</th><th>Stopped by</th></tr></thead>
             <tbody id="wLog"></tbody>
           </table>
         </div>
@@ -819,7 +844,6 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 (function () {
   'use strict';
@@ -976,31 +1000,38 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         ctx.strokeStyle = line; ctx.globalAlpha = .5; ctx.beginPath(); ctx.moveTo(Math.round(X) + .5, T); ctx.lineTo(Math.round(X) + .5, T + ph); ctx.stroke(); ctx.globalAlpha = 1;
       }
     }
-    // pump shading
-    ctx.fillStyle = css('--water-soft');
+    const series = opts.series || [{ data: M, pump: P, color: ink }];
+    // pump shading (only when one series is shown)
     const bw = pw / span;
-    for (let i = s; i < end; i++) if (P[i]) ctx.fillRect(x(i) - bw / 2, T, bw + .6, ph);
+    if (series.length === 1) {
+      ctx.fillStyle = css('--water-soft');
+      const pp = series[0].pump;
+      for (let i = s; i < end; i++) if (pp[i]) ctx.fillRect(x(i) - bw / 2, T, bw + .6, ph);
+    }
     // thresholds
     ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
     ctx.strokeStyle = soil; ctx.beginPath(); ctx.moveTo(L, y(S.dry)); ctx.lineTo(W_ - R, y(S.dry)); ctx.stroke();
     ctx.strokeStyle = water; ctx.beginPath(); ctx.moveTo(L, y(S.wet)); ctx.lineTo(W_ - R, y(S.wet)); ctx.stroke();
     ctx.setLineDash([]);
-    // line (bucket by pixel when dense)
-    ctx.beginPath();
+    // lines (bucket by pixel when dense)
     const cols = Math.min(n, Math.floor(pw));
-    for (let c = 0; c < cols; c++) {
-      const a = s + Math.floor(c * n / cols), b = Math.max(a + 1, s + Math.floor((c + 1) * n / cols));
-      let sum = 0; for (let i = a; i < b; i++) sum += M[i];
-      const X = x((a + b - 1) / 2), Y = y(sum / (b - a));
-      c ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
-    }
-    ctx.strokeStyle = ink; ctx.lineWidth = span > DAY ? 1.4 : 2; ctx.lineJoin = 'round'; ctx.stroke();
-    ctx.beginPath(); ctx.arc(x(end - 1), y(M[end - 1]), 3.5, 0, Math.PI * 2); ctx.fillStyle = ink; ctx.fill();
+    series.forEach((sr) => {
+      const D = sr.data;
+      ctx.beginPath();
+      for (let c = 0; c < cols; c++) {
+        const a = s + Math.floor(c * n / cols), b = Math.max(a + 1, s + Math.floor((c + 1) * n / cols));
+        let sum = 0; for (let i = a; i < b; i++) sum += D[i];
+        const X = x((a + b - 1) / 2), Y = y(sum / (b - a));
+        c ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+      }
+      ctx.strokeStyle = sr.color; ctx.lineWidth = span > DAY ? 1.4 : 2; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x(end - 1), y(D[end - 1]), 3.5, 0, Math.PI * 2); ctx.fillStyle = sr.color; ctx.fill();
+    });
     // hover
     if (opts.hover != null && opts.hover >= s && opts.hover < end) {
       const X = x(opts.hover);
       ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X, T); ctx.lineTo(X, T + ph); ctx.stroke();
-      ctx.beginPath(); ctx.arc(X, y(M[opts.hover]), 4, 0, Math.PI * 2); ctx.fillStyle = water; ctx.fill();
+      series.forEach((sr) => { ctx.beginPath(); ctx.arc(X, y(sr.data[opts.hover]), 4, 0, Math.PI * 2); ctx.fillStyle = sr.color; ctx.fill(); });
     }
     return { s, end, L, pw, span, x, y };
   }
@@ -1089,41 +1120,88 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     drawSeries($('dashChart'), 144);
   }
 
-  function renderSim() {
-    $('caption').innerHTML = captionHTML();
-    let active = [1, 2];
-    if (S.mode === 'auto' && !S.lockout) {
-      if (S.stage === 'triggered') active = [3];
-      else if (S.stage === 'watering') active = [4];
-      else if (S.stage === 'reached') active = [5];
-    } else if (S.pump) active = [4];
-    $$('#stepper li').forEach((li) => {
-      const n = +li.dataset.step;
-      li.classList.toggle('active', active.includes(n));
-      li.classList.toggle('done', !active.includes(n) && n < Math.min.apply(null, active));
-    });
+  function renderSim() { /* the 3D story drives its own captions */ }
+
+  // ----- history: series selection -----
+  let histSel = ['main'];
+  const COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5'];
+  function getSeries(key) {
+    if (key === 'main') return { key, label: 'Dashboard plant', data: M, pump: P, W, cur: S.cur };
+    const sr = plantsUI.series(+key.slice(1));
+    return Object.assign({ key, label: 'Plant ' + key.slice(1) }, sr);
   }
+  function statsFor(sr, span) {
+    const n = sr.data.length, s = Math.max(0, n - span);
+    let sum = 0, mn = 100, mx = 0, good = 0, pt = 0;
+    for (let i = s; i < n; i++) { const v = sr.data[i]; sum += v; mn = Math.min(mn, v); mx = Math.max(mx, v); if (v >= S.dry && v <= S.wet + 15) good++; pt += sr.pump[i]; }
+    const waterings = sr.W.filter((w) => w.start >= s).length + (sr.cur && sr.cur.start >= s ? 1 : 0);
+    return { avg: sum / (n - s), min: mn, max: mx, waterings, pumpMin: pt * TICK, good: good / (n - s) };
+  }
+  const fmtPump = (m) => m >= 120 ? (m / 60).toFixed(1) + ' h' : m + ' min';
+  function buildChips() {
+    const keys = ['main'].concat(Array.from({ length: 12 }, (_, i) => 'p' + (i + 1)));
+    $('seriesChips').innerHTML = keys.map((k) => '<button data-series="' + k + '" aria-pressed="false"><i></i>' + (k === 'main' ? 'Dashboard plant' : 'Plant ' + k.slice(1)) + '</button>').join('');
+  }
+  buildChips();
+  $('seriesChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-series]'); if (!b) return;
+    const k = b.dataset.series, at = histSel.indexOf(k);
+    if (at >= 0) { if (histSel.length > 1) histSel.splice(at, 1); }
+    else if (histSel.length >= 5) { $('pickNote').textContent = 'You can compare up to 5 at a time. Remove one first.'; $('pickNote').style.color = 'var(--crit)'; return; }
+    else histSel.push(k);
+    $('pickNote').textContent = 'Pick one plant, or up to 5 to compare'; $('pickNote').style.color = '';
+    renderHistory();
+  });
 
   function renderHistory() {
-    const f = analyze(histSpan);
-    $('hAvg').textContent = Math.round(f.avg) + '%';
-    $('hMin').textContent = Math.round(f.min) + '%';
-    $('hMax').textContent = Math.round(f.max) + '%';
-    $('hWater').textContent = f.waterings;
-    $('hPump').textContent = f.pumpMin >= 120 ? (f.pumpMin / 60).toFixed(1) + ' h' : f.pumpMin + ' min';
-    $('hGood').textContent = Math.round(f.pctGood * 100) + '%';
-    histGeom = drawSeries($('histChart'), histSpan, { hover: hoverIdx });
-    const rows = W.slice().reverse().slice(0, 15);
-    if (S.cur) rows.unshift(Object.assign({}, S.cur, { end: null }));
-    const by = { auto: 'Automatic', manual: 'Manual (app)', safety: 'Safety cutoff' };
-    $('wLog').innerHTML = rows.map((w) => {
+    const list = histSel.map((k, i) => Object.assign(getSeries(k), { colorVar: histSel.length === 1 ? '--ink' : COLORS[i] }));
+    list.forEach((sr) => { sr.color = css(sr.colorVar); sr.st = statsFor(sr, histSpan); });
+    $$('#seriesChips button').forEach((b) => {
+      const i = histSel.indexOf(b.dataset.series);
+      b.setAttribute('aria-pressed', i >= 0);
+      b.style.color = i >= 0 && histSel.length > 1 ? 'var(' + COLORS[i] + ')' : '';
+      b.querySelector('i').style.background = i >= 0 ? (histSel.length > 1 ? 'var(' + COLORS[i] + ')' : 'var(--ink)') : '';
+    });
+    const single = list.length === 1;
+    $('hstats').hidden = !single; $('cmpWrap').hidden = single;
+    if (single) {
+      const f = list[0].st;
+      $('hAvg').textContent = Math.round(f.avg) + '%';
+      $('hMin').textContent = Math.round(f.min) + '%';
+      $('hMax').textContent = Math.round(f.max) + '%';
+      $('hWater').textContent = f.waterings;
+      $('hPump').textContent = fmtPump(f.pumpMin);
+      $('hGood').textContent = Math.round(f.good * 100) + '%';
+    } else {
+      const sign = (v, u) => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v) + (u || '');
+      let html = list.map((sr) => '<tr><td><span class="sw" style="background:var(' + sr.colorVar + ')"></span>' + sr.label + '</td><td>' + Math.round(sr.st.avg) + '%</td><td>' + Math.round(sr.st.min) + '%</td><td>' + Math.round(sr.st.max) + '%</td><td>' + sr.st.waterings + '</td><td>' + fmtPump(sr.st.pumpMin) + '</td><td>' + Math.round(sr.st.good * 100) + '%</td></tr>').join('');
+      if (list.length === 2) {
+        const a = list[0].st, b = list[1].st;
+        html += '<tr class="diff"><td>Difference (' + list[0].label.replace('Dashboard plant', 'Dashboard') + ' − ' + list[1].label.replace('Dashboard plant', 'Dashboard') + ')</td><td>' + sign(Math.round(a.avg - b.avg), '%') + '</td><td>' + sign(Math.round(a.min - b.min), '%') + '</td><td>' + sign(Math.round(a.max - b.max), '%') + '</td><td>' + sign(a.waterings - b.waterings) + '</td><td>' + sign(a.pumpMin - b.pumpMin, ' min') + '</td><td>' + sign(Math.round((a.good - b.good) * 100), '%') + '</td></tr>';
+      }
+      $('cmpBody').innerHTML = html;
+    }
+    $('histLegend').innerHTML = list.map((sr) => '<span><i class="ln" style="border-color:var(' + sr.colorVar + ')"></i>' + sr.label + '</span>').join('') +
+      (single ? '<span><i class="box"></i>Pump running</span>' : '') +
+      '<span><i style="border-color:var(--soil); border-top-style:dashed"></i>Start watering (' + S.dry + '%)</span><span><i style="border-color:var(--water); border-top-style:dashed"></i>Stop watering (' + S.wet + '%)</span>';
+    histList = list;
+    histGeom = drawSeries($('histChart'), histSpan, { hover: hoverIdx, series: list });
+    // watering log for the selected plants
+    const rows = [];
+    list.forEach((sr) => {
+      sr.W.slice(-15).forEach((w) => rows.push(Object.assign({ who: sr.label, colorVar: sr.colorVar, data: sr.data }, w)));
+      if (sr.cur) rows.push(Object.assign({ who: sr.label, colorVar: sr.colorVar, data: sr.data }, sr.cur, { end: null }));
+    });
+    rows.sort((a, b) => b.start - a.start);
+    const by = { auto: 'Automatic', manual: 'Manual', safety: 'Safety cutoff' };
+    $('wLog').innerHTML = rows.slice(0, 20).map((w) => {
       const d = tAt(w.start);
       const dur = w.end == null ? 'running' : (w.end - w.start) * TICK + ' min';
-      const to = w.end == null ? Math.round(S.m) + '%…' : Math.round(w.to) + '%';
-      return '<tr><td>' + dayStr(d) + ', ' + hhmm(d) + '</td><td>' + by[w.by] + '</td><td>' + dur + '</td><td>' + Math.round(w.from) + '% → ' + to + '</td><td>' + (w.end == null ? '—' : by[w.stop]) + '</td></tr>';
-    }).join('') || '<tr><td colspan="5" class="muted">No waterings yet.</td></tr>';
+      const to = w.end == null ? Math.round(w.data[w.data.length - 1]) + '%…' : Math.round(w.to) + '%';
+      return '<tr><td><span class="sw" style="background:var(' + (single ? '--ink' : w.colorVar) + ')"></span>' + w.who + '</td><td>' + dayStr(d) + ', ' + hhmm(d) + '</td><td>' + by[w.by] + '</td><td>' + dur + '</td><td>' + Math.round(w.from) + '% → ' + to + '</td><td>' + (w.end == null ? '—' : by[w.stop]) + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="muted">No waterings in this period.</td></tr>';
   }
-  let histGeom = null;
+  let histGeom = null, histList = [];
   const hc = $('histChart');
   hc.addEventListener('mousemove', (e) => {
     if (!histGeom) return;
@@ -1132,9 +1210,13 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     hoverIdx = clamp(Math.round(histGeom.s + rel * (histGeom.span - 1)), histGeom.s, histGeom.end - 1);
     const tip = $('tip'); tip.hidden = false;
     const d = tAt(hoverIdx);
-    tip.textContent = dayStr(d) + ' ' + hhmm(d) + ' · ' + Math.round(M[hoverIdx]) + '%' + (P[hoverIdx] ? ' · pump on' : '');
-    tip.style.left = clamp(histGeom.x(hoverIdx), 80, r.width - 80) + 'px';
-    tip.style.top = histGeom.y(M[hoverIdx]) + 'px';
+    const vals = histList.map((sr) => Math.round(sr.data[hoverIdx]));
+    let txt = dayStr(d) + ' ' + hhmm(d) + ' · ' + histList.map((sr, i) => (histList.length > 1 ? sr.label.replace('Dashboard plant', 'Dashboard') + ' ' : '') + vals[i] + '%').join(' · ');
+    if (histList.length === 1 && histList[0].pump[hoverIdx]) txt += ' · pump on';
+    if (histList.length === 2) txt += ' · Δ ' + Math.abs(vals[0] - vals[1]) + '%';
+    tip.textContent = txt;
+    tip.style.left = clamp(histGeom.x(hoverIdx), 120, r.width - 120) + 'px';
+    tip.style.top = Math.max(40, histGeom.y(Math.max.apply(null, vals))) + 'px';
     renderHistory();
   });
   hc.addEventListener('mouseleave', () => { hoverIdx = null; $('tip').hidden = true; renderHistory(); });
@@ -1300,19 +1382,86 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; }
   })();
 
-  // ---------------- 3D simulation ----------------
+  // ---------------- 3D simulation (scroll-driven story) ----------------
+  const STEPS = [
+    { title: 'The soil dries out', text: 'Sun and air pull water out of the soil. Moisture falls from 62% towards the 35% threshold, the surface cracks and the plant starts to droop.' },
+    { title: 'The sensor detects it', text: 'The capacitive sensor in the root zone measures the soil. Its reading drops to 31%, which is below the 35% threshold.' },
+    { title: 'The ESP32 decides', text: 'The reading travels down the wire to the ESP32. It compares 31% with the 35% threshold and decides the plant needs water.' },
+    { title: 'Data goes to the app', text: 'Over Wi-Fi the ESP32 sends the reading to the cloud, and your phone shows "Moisture low: watering started".' },
+    { title: 'The pump switches on', text: 'The ESP32 sets its output pin high. The relay clicks closed and the mini pump starts spinning.' },
+    { title: 'Water flows to the drippers', text: 'The pump pulls water from the tank and pushes it through the pipe into the drip line above the soil.' },
+    { title: 'Drips raise the moisture', text: 'Each dripper releases slow drops right above the roots. The wet zone spreads down through the soil and moisture climbs from 31% to 60%.' },
+    { title: 'Target reached, pump off', text: 'The sensor reads 61%, above the 60% stop level. The ESP32 opens the relay, the pump stops, the drips end and the app shows the plant is watered.' }
+  ];
   const sim3d = (function () {
-    let ready = false, failed = false, renderer, scene, camera, controls, clock;
-    const R = {};
-    const labels = [];
-    const packets = [];
-    const drops = [];
-    const beads = [];
-    let disp = S.m, ring = null, ringT = 1;
+    let ready = false, failed = false, started = false, renderer, scene, camera;
+    const R = {}, labels = {};
+    let prog = 0, lastK = -1, playing = false, playY = 0, screenKey = '', last = performance.now(), time = 0;
+    const ease = (x) => x * x * (3 - 2 * x);
+    const c01 = (x) => clamp(x, 0, 1);
+    const SOIL_B = 0.08, SOIL_H = 1.6, TOP = SOIL_B + SOIL_H, DRIP_Y = TOP + 0.6, LINE_Z = 0.15;
+    const EMIT = [-0.25, -0.9, -1.55, -2.2];
+    const KEYS = [
+      { p: [5.2, 5.0, 7.6], t: [-0.9, 1.5, 0] },
+      { p: [1.6, 3.1, 4.4], t: [-0.3, 1.4, 0.4] },
+      { p: [5.6, 2.8, 4.6], t: [2.4, 0.7, 1.0] },
+      { p: [9.5, 8.6, 9.6], t: [3.0, 3.4, -0.6] },
+      { p: [6.6, 2.6, 2.2], t: [3.6, 0.4, -0.9] },
+      { p: [6.4, 5.4, 6.6], t: [1.4, 1.9, -0.4] },
+      { p: [-0.9, 2.8, 5.0], t: [-1.0, 1.35, 0] },
+      { p: [7.8, 6.6, 10.6], t: [1.4, 1.9, 0] }
+    ];
+
+    function story(p) {
+      p = clamp(p, 0, 8);
+      let k = Math.floor(p), t = p - k;
+      if (k > 7) { k = 7; t = 1; }
+      const s = { k, t };
+      s.m = k === 0 ? 62 - 31 * ease(t) : k < 6 ? 31 : k === 6 ? 31 + 30 * ease(t) : 61;
+      s.stress = k === 0 ? 0.85 * ease(t) : k < 6 ? 0.85 : k === 6 ? 0.85 * (1 - ease(t)) : 0;
+      s.crack = k === 0 ? c01((t - 0.3) / 0.6) : k < 6 ? 1 : k === 6 ? 1 - c01(t * 2) : 0;
+      s.evap = k === 0 && t < 0.97;
+      s.sense = k === 1 || (k === 7 && t < 0.45);
+      s.wireT = k === 2 ? c01(t / 0.5) : (k === 7 && t < 0.4 ? c01(t / 0.3) : -1);
+      s.espMsg = k === 2 && t > 0.45 ? '31% < 35%  →  water' : k === 7 && t > 0.2 && t < 0.8 ? '61% ≥ 60%  →  stop' : '';
+      s.netT = k === 3 ? t : k === 7 ? c01((t - 0.35) / 0.65) : -1;
+      s.relayT = k === 4 ? c01(t / 0.55) : -1;
+      s.relayOn = (k === 4 && t >= 0.4) || k === 5 || k === 6 || (k === 7 && t < 0.35);
+      s.pumpOn = (k === 4 && t >= 0.55) || k === 5 || k === 6 || (k === 7 && t < 0.35);
+      s.fill = k < 5 ? 0 : k === 5 ? ease(c01(t / 0.9)) : k === 6 ? 1 : c01(1 - (t - 0.35) / 0.4);
+      s.drip = (k === 5 && t > 0.88) || k === 6 || (k === 7 && t < 0.4);
+      s.wet = k < 5 ? 0 : k === 5 ? (t > 0.9 ? (t - 0.9) * 0.4 : 0) : k === 6 ? 0.04 + 0.96 * ease(t) : 1;
+      s.screen = (k < 3 || (k === 3 && t < 0.65)) ? 'ok' : (k === 3 || (k === 4 && t < 0.55)) ? 'low' : (k < 7 || t < 0.35) ? 'water' : 'done';
+      s.hot = [['soil'], ['sensor'], ['sensor', 'esp'], ['esp', 'cloud', 'app'], ['esp', 'relay', 'pump'], ['pump', 'drip'], ['drip', 'soil'], ['sensor', 'app']][k];
+      return s;
+    }
+
+    function setHdr() { const h = document.querySelector('.topbar').offsetHeight; document.documentElement.style.setProperty('--hdr', h + 'px'); return h; }
+    function geom() {
+      const hdr = setHdr() + 8;
+      const r = $('story').getBoundingClientRect();
+      const stageH = $('simStage').offsetHeight;
+      const total = Math.max(1, r.height - stageH);
+      return { total, startY: window.scrollY + r.top - hdr, prog: c01((hdr - r.top) / total) * 8 };
+    }
+    function jump(i) { const g = geom(); stopPlay(); window.scrollTo({ top: g.startY + (i === 0 ? 0.02 : i + 0.5) / 8 * g.total, behavior: 'smooth' }); }
+    function startPlay() {
+      const g = geom();
+      if (g.prog >= 7.95) window.scrollTo(0, g.startY);
+      else if (g.prog <= 0.01) window.scrollTo(0, g.startY + 2);
+      playY = window.scrollY; playing = true; $('storyPlay').textContent = '❚❚ Pause';
+    }
+    function stopPlay() { playing = false; const b = $('storyPlay'); if (b) b.textContent = '▶ Play'; }
+    $('storyPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+    $('storyReplay').addEventListener('click', () => { const g = geom(); window.scrollTo(0, g.startY); setTimeout(startPlay, 350); });
+    ['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { if (playing) stopPlay(); }, { passive: true }));
+    $('storyRail').innerHTML = STEPS.map((s, i) => '<li><button data-step="' + i + '" aria-label="Step ' + (i + 1) + ': ' + s.title + '"><span>' + (i + 1) + '. ' + s.title + '</span></button></li>').join('');
+    $('storyRail').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) jump(+b.dataset.step); });
 
     function fail() { failed = true; $('simFallback').hidden = false; }
-
     function init() {
+      setHdr();
+      if (!started) { started = true; requestAnimationFrame(frame); }
       if (ready || failed) { if (ready) resize(); return; }
       if (!window.THREE) return fail();
       const canvas = $('simCanvas');
@@ -1322,28 +1471,18 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.outputEncoding = THREE.sRGBEncoding;
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-      clock = new THREE.Clock();
-      if (THREE.OrbitControls) {
-        controls = new THREE.OrbitControls(camera, canvas);
-        controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false;
-        controls.minDistance = 7; controls.maxDistance = 22; controls.maxPolarAngle = 1.45;
-      }
-      resetView();
+      camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+      R.camPos = new THREE.Vector3().fromArray(KEYS[0].p);
+      R.camTgt = new THREE.Vector3().fromArray(KEYS[0].t);
+      R.v = new THREE.Vector3(); R.v2 = new THREE.Vector3();
+      camera.position.copy(R.camPos); camera.lookAt(R.camTgt);
       build();
       applyTheme();
       ready = true;
       new ResizeObserver(resize).observe($('simStage'));
       resize();
-      requestAnimationFrame(loop);
     }
-
-    function resetView() {
-      if (!camera) return;
-      camera.position.set(8.2, 7.4, 12.2);
-      if (controls) { controls.target.set(1.6, 2.3, 0); controls.update(); } else camera.lookAt(1.6, 2.3, 0);
-    }
-
+    function resetView() {}
     function resize() {
       if (!renderer) return;
       const r = $('simStage').getBoundingClientRect();
@@ -1354,51 +1493,67 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
     const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7, metalness: 0.05 }, o || {}));
     function mesh(geo, m, shadow) { const x = new THREE.Mesh(geo, m); if (shadow !== false) { x.castShadow = true; x.receiveShadow = true; } return x; }
-    function tube(points, r, color, o) {
-      const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(p[0], p[1], p[2])));
-      const m = mesh(new THREE.TubeGeometry(curve, 64, r, 8, false), mat(color, o));
-      scene.add(m); return curve;
-    }
-    function label(text, pos, key) {
+    const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+    function curveOf(points) { return new THREE.CatmullRomCurve3(points.map(V)); }
+    function tube(curve, r, color, o, segs) { const m = mesh(new THREE.TubeGeometry(curve, segs || 64, r, 10, false), mat(color, o)); scene.add(m); return m; }
+    function label(key, text, pos) {
       const el = document.createElement('span'); el.textContent = text;
       $('simLabels').appendChild(el);
-      const l = { el, pos: new THREE.Vector3(pos[0], pos[1], pos[2]) };
-      labels.push(l); if (key) R['lbl_' + key] = l;
-      return l;
+      labels[key] = { el, pos: V(pos) };
     }
 
-    const SOIL_B = 0.08, SOIL_H = 1.6, TOP = SOIL_B + SOIL_H;
+    function crackTexture() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 384;
+      const g = c.getContext('2d'); const rnd = mulberry(7);
+      g.strokeStyle = 'rgba(70,45,25,0.9)'; g.lineCap = 'round';
+      for (let n = 0; n < 26; n++) {
+        let x = rnd() * 512, y = rnd() * 384, a = rnd() * Math.PI * 2;
+        g.lineWidth = 1 + rnd() * 2.5; g.beginPath(); g.moveTo(x, y);
+        for (let j = 0; j < 9; j++) { a += (rnd() - 0.5) * 1.1; x += Math.cos(a) * 18; y += Math.sin(a) * 18; g.lineTo(x, y); }
+        g.stroke();
+      }
+      const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; return tex;
+    }
 
     function build() {
-      cDry = new THREE.Color(0xc9a06f); cDamp = new THREE.Color(0x6e4c33); cHealthy = new THREE.Color(0x3f9b4b); cSick = new THREE.Color(0xb8a03c);
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x4a5a50, 0.75));
-      const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-      sun.position.set(6, 12, 7); sun.castShadow = true;
-      sun.shadow.mapSize.set(1024, 1024);
-      Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
-      scene.add(sun);
+      R.hemi = new THREE.HemisphereLight(0xffffff, 0x4a5a50, 0.75); scene.add(R.hemi);
+      R.sunLight = new THREE.DirectionalLight(0xffffff, 0.85);
+      R.sunLight.position.set(6, 12, 7); R.sunLight.castShadow = true;
+      R.sunLight.shadow.mapSize.set(1024, 1024);
+      Object.assign(R.sunLight.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+      scene.add(R.sunLight);
+      R.sun = mesh(new THREE.SphereGeometry(0.55, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffc43d }), false);
+      R.sun.position.set(-4.5, 7.5, -5); scene.add(R.sun);
 
       R.ground = mesh(new THREE.PlaneGeometry(60, 60), mat(0xdde4df, { roughness: 0.95 }));
       R.ground.rotation.x = -Math.PI / 2; R.ground.castShadow = false; scene.add(R.ground);
       R.table = mesh(new THREE.BoxGeometry(11, 0.12, 6.4), mat(0xb98d62, { roughness: 0.8 }));
       R.table.position.set(1.6, -0.06, -0.2); scene.add(R.table);
 
-      // planter: glass box with soil layers
-      const glass = mesh(new THREE.BoxGeometry(3.2, 2.1, 2.4), mat(0xbfd8ea, { transparent: true, opacity: 0.16, roughness: 0.1, depthWrite: false }), false);
-      glass.position.set(-1, 1.05, 0); scene.add(glass);
-      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.2, 2.1, 2.4)), new THREE.LineBasicMaterial({ color: 0x7f97a8 }));
-      edges.position.copy(glass.position); scene.add(edges);
-      const base = mesh(new THREE.BoxGeometry(3.2, 0.08, 2.4), mat(0x6f7f88)); base.position.set(-1, 0.04, 0); scene.add(base);
-      R.wetMat = mat(0x3a2a1f, { roughness: 0.95 });
-      R.dryMat = mat(0xc49a6c, { roughness: 1 });
-      R.wet = mesh(new THREE.BoxGeometry(3.1, 1, 2.3), R.wetMat); R.wet.position.x = -1; scene.add(R.wet);
-      R.dry = mesh(new THREE.BoxGeometry(3.1, 1, 2.3), R.dryMat); R.dry.position.x = -1; scene.add(R.dry);
-      // waterline glow at the boundary
-      R.front = mesh(new THREE.PlaneGeometry(3.1, 0.04), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0.8 }), false);
-      R.front.position.set(-1, 1, 1.151); scene.add(R.front);
+      // planter: wooden back and sides, glass front so the soil layers show
+      const wood = mat(0x8a5a33, { roughness: 0.85 });
+      const back = mesh(new THREE.BoxGeometry(3.3, 2.0, 0.08), wood); back.position.set(-1, 1.0, -1.22); scene.add(back);
+      [-2.62, 0.62].forEach((x) => { const side = mesh(new THREE.BoxGeometry(0.08, 2.0, 2.5), wood); side.position.set(x, 1.0, 0); scene.add(side); });
+      const base = mesh(new THREE.BoxGeometry(3.3, 0.08, 2.5), wood); base.position.set(-1, 0.04, 0); scene.add(base);
+      const glass = mesh(new THREE.PlaneGeometry(3.2, 2.0), mat(0xcfe3f2, { transparent: true, opacity: 0.14, roughness: 0.05, depthWrite: false }), false);
+      glass.position.set(-1, 1.0, 1.21); scene.add(glass);
+      const rim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.2, 2.0)), new THREE.LineBasicMaterial({ color: 0x7f97a8 }));
+      rim.position.copy(glass.position); scene.add(rim);
+
+      R.lowMat = mat(0x6e4c33, { roughness: 1 });
+      R.low = mesh(new THREE.BoxGeometry(3.16, 1, 2.36), R.lowMat); R.low.position.x = -1; scene.add(R.low);
+      R.wetBox = mesh(new THREE.BoxGeometry(3.16, 1, 2.36), mat(0x30221a, { roughness: 0.9 })); R.wetBox.position.x = -1; scene.add(R.wetBox);
+      R.front = mesh(new THREE.PlaneGeometry(3.16, 0.035), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0.85 }), false);
+      R.front.position.set(-1, 1, 1.185); scene.add(R.front);
+      R.cracks = mesh(new THREE.PlaneGeometry(3.16, 2.36), new THREE.MeshBasicMaterial({ map: crackTexture(), transparent: true, opacity: 0, depthWrite: false }), false);
+      R.cracks.rotation.x = -Math.PI / 2; R.cracks.position.set(-1, TOP + 0.004, 0); scene.add(R.cracks);
+      R.spots = EMIT.map((x) => {
+        const s = mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x24180f, transparent: true, opacity: 0.75, depthWrite: false }), false);
+        s.rotation.x = -Math.PI / 2; s.position.set(x, TOP + 0.006, LINE_Z); scene.add(s); return s;
+      });
 
       // plant
-      R.plant = new THREE.Group(); R.plant.position.set(-1.7, TOP, -0.45); R.plant.scale.setScalar(1.35); scene.add(R.plant);
+      R.plant = new THREE.Group(); R.plant.position.set(-1.7, TOP, -0.55); R.plant.scale.setScalar(1.35); scene.add(R.plant);
       const stem = mesh(new THREE.CylinderGeometry(0.045, 0.07, 1.9, 8), mat(0x4f7a3a)); stem.position.y = 0.95; R.plant.add(stem);
       R.leafMat = mat(0x3f9b4b, { roughness: 0.6, side: THREE.DoubleSide });
       R.leaves = [];
@@ -1413,17 +1568,16 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const bud = mesh(new THREE.SphereGeometry(0.12, 12, 10), mat(0x6cbf5a)); bud.position.y = 1.95; R.plant.add(bud);
 
       // sensor
-      const sx = -0.15, sz = 0.55;
-      const pcb = mesh(new THREE.BoxGeometry(0.5, 0.6, 0.05), mat(0x1c1f22, { roughness: 0.5 }));
-      pcb.position.set(sx, TOP + 0.45, sz); scene.add(pcb);
-      [-0.14, 0.14].forEach((dx) => {
-        const prong = mesh(new THREE.BoxGeometry(0.1, 1.0, 0.04), mat(0x23272b)); prong.position.set(sx + dx, TOP - 0.35, sz); scene.add(prong);
-      });
+      const sx = -0.15, sz = 0.6;
+      const pcb = mesh(new THREE.BoxGeometry(0.5, 0.6, 0.05), mat(0x1c1f22, { roughness: 0.5 })); pcb.position.set(sx, TOP + 0.45, sz); scene.add(pcb);
+      [-0.14, 0.14].forEach((dx) => { const prong = mesh(new THREE.BoxGeometry(0.1, 1.0, 0.04), mat(0x23272b)); prong.position.set(sx + dx, TOP - 0.35, sz); scene.add(prong); });
       const chip = mesh(new THREE.BoxGeometry(0.18, 0.14, 0.03), mat(0x111111)); chip.position.set(sx, TOP + 0.55, sz + 0.035); scene.add(chip);
       R.sensorLed = mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: 0.3 }), false);
       R.sensorLed.position.set(sx + 0.16, TOP + 0.66, sz + 0.035); scene.add(R.sensorLed);
-      ring = mesh(new THREE.TorusGeometry(0.3, 0.025, 8, 40), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0 }), false);
-      ring.rotation.x = Math.PI / 2; ring.position.set(sx, TOP - 0.5, sz); scene.add(ring);
+      R.rings = [0, 1, 2].map(() => {
+        const r = mesh(new THREE.TorusGeometry(0.3, 0.022, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0 }), false);
+        r.rotation.x = Math.PI / 2; r.position.set(sx, TOP - 0.55, sz); scene.add(r); return r;
+      });
 
       // ESP32
       const ex = 3.0, ez = 1.3;
@@ -1431,13 +1585,17 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const shield = mesh(new THREE.BoxGeometry(0.62, 0.1, 0.52), mat(0xb9c0c8, { metalness: 0.8, roughness: 0.3 })); shield.position.set(ex - 0.25, 0.13, ez); scene.add(shield);
       const ant = mesh(new THREE.BoxGeometry(0.22, 0.02, 0.5), mat(0xc9a227, { metalness: 0.6 })); ant.position.set(ex - 0.66, 0.1, ez); scene.add(ant);
       [-1, 1].forEach((k) => { const pins = mesh(new THREE.BoxGeometry(1.3, 0.12, 0.07), mat(0x111111)); pins.position.set(ex + 0.05, 0.1, ez + k * 0.33); scene.add(pins); });
+      const usb = mesh(new THREE.BoxGeometry(0.16, 0.08, 0.22), mat(0x9aa3ab, { metalness: 0.7 })); usb.position.set(ex + 0.72, 0.1, ez); scene.add(usb);
       R.espLed = mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0x2f8bff, emissive: 0x2f8bff, emissiveIntensity: 0.4 }), false);
       R.espLed.position.set(ex + 0.55, 0.12, ez + 0.2); scene.add(R.espLed);
+      R.espGlow = mesh(new THREE.BoxGeometry(1.62, 0.02, 0.87), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0 }), false);
+      R.espGlow.position.set(ex, 0.005, ez); scene.add(R.espGlow);
 
       // relay
       const rx = 3.0, rz = -0.7;
       const relay = mesh(new THREE.BoxGeometry(0.75, 0.35, 0.55), mat(0x2a6ad1, { roughness: 0.4 })); relay.position.set(rx, 0.175, rz); scene.add(relay);
       const term = mesh(new THREE.BoxGeometry(0.2, 0.18, 0.5), mat(0x2e8b57)); term.position.set(rx + 0.32, 0.26, rz); scene.add(term);
+      R.arm = mesh(new THREE.BoxGeometry(0.28, 0.04, 0.08), mat(0xd8dde2, { metalness: 0.6 })); R.arm.position.set(rx - 0.08, 0.37, rz - 0.1); scene.add(R.arm);
       R.relayLed = mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff453a, emissive: 0xff453a, emissiveIntensity: 0.05 }), false);
       R.relayLed.position.set(rx - 0.2, 0.37, rz + 0.15); scene.add(R.relayLed);
 
@@ -1445,72 +1603,86 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const tank = mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.0, 32, 1, true), mat(0xcfe3f2, { transparent: true, opacity: 0.22, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }), false);
       tank.position.set(5.6, 1.0, -1.4); scene.add(tank);
       const tankBase = mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.06, 32), mat(0x7a8a95)); tankBase.position.set(5.6, 0.03, -1.4); scene.add(tankBase);
-      R.water = mesh(new THREE.CylinderGeometry(0.74, 0.74, 1.4, 32), mat(0x2f7fd6, { transparent: true, opacity: 0.55, roughness: 0.1 }), false);
+      R.water = mesh(new THREE.CylinderGeometry(0.74, 0.74, 1, 32), mat(0x2f7fd6, { transparent: true, opacity: 0.55, roughness: 0.1 }), false);
       R.water.position.set(5.6, 0.76, -1.4); scene.add(R.water);
       R.pump = new THREE.Group(); R.pump.position.set(4.35, 0.24, -1.1); scene.add(R.pump);
       const pb = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 20), mat(0x2b2f33, { roughness: 0.4 })); pb.rotation.z = Math.PI / 2; R.pump.add(pb);
-      const pc = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.1, 20), mat(0x3b82c4)); pc.rotation.z = Math.PI / 2; pc.position.x = -0.3; R.pump.add(pc);
-      tube([[4.62, 0.24, -1.1], [4.95, 0.22, -1.25], [5.15, 0.25, -1.35]], 0.05, 0x9fb3c2);
+      R.impeller = new THREE.Group(); R.impeller.position.x = -0.31; R.pump.add(R.impeller);
+      const cap = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 20), mat(0x3b82c4)); cap.rotation.z = Math.PI / 2; R.impeller.add(cap);
+      for (let j = 0; j < 4; j++) { const blade = mesh(new THREE.BoxGeometry(0.02, 0.36, 0.06), mat(0xe8eef3)); blade.position.x = -0.04; blade.rotation.x = j * Math.PI / 4; R.impeller.add(blade); }
+      tube(curveOf([[4.62, 0.24, -1.1], [4.95, 0.22, -1.25], [5.15, 0.25, -1.35]]), 0.05, 0x9fb3c2);
 
-      // delivery pipe + nozzle
-      R.pipe = tube([[4.05, 0.3, -1.1], [3.85, 1.8, -1.1], [2.6, 3.25, -0.7], [0.4, 3.35, -0.25], [-0.75, 2.95, 0.05]], 0.065, 0xa9d1f0, { transparent: true, opacity: 0.75, roughness: 0.15 });
-      const noz = mesh(new THREE.ConeGeometry(0.13, 0.28, 14), mat(0x4b5a66)); noz.position.set(-0.8, 2.82, 0.07); noz.rotation.x = Math.PI; scene.add(noz);
-      R.nozzle = new THREE.Vector3(-0.8, 2.66, 0.07);
+      // delivery pipe + drip line on stakes
+      R.pipeCurve = curveOf([[4.05, 0.3, -1.1], [3.9, 1.6, -1.1], [2.9, 2.75, -0.6], [1.5, 2.85, -0.1], [0.85, DRIP_Y + 0.25, LINE_Z], [0.55, DRIP_Y, LINE_Z]]);
+      R.lineCurve = new THREE.LineCurve3(V([0.55, DRIP_Y, LINE_Z]), V([-2.45, DRIP_Y, LINE_Z]));
+      tube(R.pipeCurve, 0.07, 0xb7d8f2, { transparent: true, opacity: 0.45, roughness: 0.1, depthWrite: false }, 120);
+      tube(R.lineCurve, 0.06, 0x2b2f33, { transparent: true, opacity: 0.55, roughness: 0.3, depthWrite: false }, 60);
+      R.pipeWater = tube(R.pipeCurve, 0.045, 0x1f78ff, { roughness: 0.2, emissive: 0x0a3d8f, emissiveIntensity: 0.4 }, 120);
+      R.lineWater = tube(R.lineCurve, 0.04, 0x1f78ff, { roughness: 0.2, emissive: 0x0a3d8f, emissiveIntensity: 0.4 }, 60);
+      R.pipeIdx = R.pipeWater.geometry.index.count; R.lineIdx = R.lineWater.geometry.index.count;
+      const endCap = mesh(new THREE.SphereGeometry(0.065, 12, 10), mat(0x2b2f33)); endCap.position.set(-2.45, DRIP_Y, LINE_Z); scene.add(endCap);
+      [0.3, -1.25, -2.4].forEach((x) => { const st = mesh(new THREE.CylinderGeometry(0.02, 0.02, DRIP_Y - TOP + 0.3, 6), mat(0x3a3f44)); st.position.set(x, (DRIP_Y + TOP - 0.3) / 2, LINE_Z - 0.07); scene.add(st); });
+      R.emitters = EMIT.map((x) => {
+        const g = new THREE.Group(); g.position.set(x, DRIP_Y - 0.06, LINE_Z);
+        g.add(mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.1, 12), mat(0x1d2124)));
+        const tip = mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 8), mat(0x6b7480)); tip.position.y = -0.08; g.add(tip);
+        scene.add(g); return g;
+      });
+      R.drops = EMIT.map((x, j) => {
+        const d = mesh(new THREE.SphereGeometry(0.05, 12, 10), mat(0x4aa3ff, { roughness: 0.05, transparent: true, opacity: 0.92 }), false);
+        d.scale.set(1, 1.3, 1); d.visible = false; scene.add(d);
+        const ring = mesh(new THREE.TorusGeometry(0.12, 0.012, 6, 32), new THREE.MeshBasicMaterial({ color: 0x8cc8ff, transparent: true, opacity: 0 }), false);
+        ring.rotation.x = Math.PI / 2; ring.position.set(x, TOP + 0.01, LINE_Z); scene.add(ring);
+        return { x, d, ring, state: 'idle', a: 0, y: 0, v: 0, delay: j * 0.17 };
+      });
+      R.beads = [];
+      for (let k = 0; k < 18; k++) {
+        const b = mesh(new THREE.SphereGeometry(0.03, 8, 6), new THREE.MeshBasicMaterial({ color: 0xbfe2ff }), false);
+        b.visible = false; scene.add(b); R.beads.push({ b, u: k / 18 });
+      }
+      R.vapor = [];
+      for (let k = 0; k < 28; k++) {
+        const v = mesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }), false);
+        v.visible = false; scene.add(v);
+        R.vapor.push({ v, ph: Math.random(), x: -2.4 + Math.random() * 2.8, z: -1 + Math.random() * 2 });
+      }
 
       // wires
-      R.wSense = tube([[-0.15, TOP + 0.76, 0.55], [0.5, 2.9, 0.9], [1.9, 1.6, 1.5], [2.5, 0.25, 1.4], [2.6, 0.12, 1.3]], 0.025, 0xd2453a);
-      R.wRelay = tube([[3.0, 0.12, 0.9], [3.15, 0.3, 0.2], [3.0, 0.3, -0.4]], 0.025, 0xe2b93b);
-      R.wPump = tube([[3.38, 0.24, -0.75], [3.85, 0.35, -0.95], [4.15, 0.3, -1.1]], 0.025, 0xe07b39);
+      R.wSense = curveOf([[-0.15, TOP + 0.76, 0.6], [0.5, 2.9, 0.95], [1.9, 1.6, 1.5], [2.5, 0.25, 1.4], [2.6, 0.12, 1.3]]); tube(R.wSense, 0.025, 0xd2453a);
+      R.wRelay = curveOf([[3.0, 0.12, 0.9], [3.15, 0.3, 0.2], [3.0, 0.3, -0.4]]); tube(R.wRelay, 0.025, 0xe2b93b);
+      R.wPump = curveOf([[3.38, 0.24, -0.75], [3.85, 0.35, -0.95], [4.15, 0.3, -1.1]]); tube(R.wPump, 0.025, 0xe07b39);
 
-      // cloud
+      // cloud + phone
       R.cloud = new THREE.Group(); R.cloud.position.set(1.2, 5.6, -2.4); scene.add(R.cloud);
-      R.cloudMat = mat(0xf2f6fa, { roughness: 0.95 });
+      R.cloudMat = mat(0xf2f6fa, { roughness: 0.95, emissive: 0x5ea9ff, emissiveIntensity: 0 });
       [[0, 0, 0, 0.7], [0.75, -0.1, 0.1, 0.55], [-0.7, -0.12, 0, 0.5], [0.25, 0.35, -0.1, 0.5]].forEach((c) => {
         const s = mesh(new THREE.SphereGeometry(c[3], 20, 16), R.cloudMat, false); s.position.set(c[0], c[1], c[2]); R.cloud.add(s);
       });
-
-      // phone with live screen
       R.phone = new THREE.Group(); R.phone.position.set(6.0, 4.1, 1.6); R.phone.rotation.set(-0.08, -0.6, 0); scene.add(R.phone);
       R.phone.add(mesh(new THREE.BoxGeometry(1.0, 1.95, 0.09), mat(0x111417, { roughness: 0.3 })));
       R.screenCanvas = document.createElement('canvas'); R.screenCanvas.width = 256; R.screenCanvas.height = 500;
       R.screenTex = new THREE.CanvasTexture(R.screenCanvas); R.screenTex.encoding = THREE.sRGBEncoding;
       const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.76), new THREE.MeshBasicMaterial({ map: R.screenTex }));
       scr.position.z = 0.047; R.phone.add(scr);
-      drawScreen();
+      R.pEspCloud = curveOf([[3.3, 0.3, 1.3], [3.4, 2.6, 0.4], [1.9, 5.3, -2.2]]);
+      R.pCloudPhone = curveOf([[1.9, 5.7, -2.2], [4.2, 6.0, -0.6], [5.9, 4.6, 1.5]]);
+      const dot = (c, r) => { const m = mesh(new THREE.SphereGeometry(r, 12, 10), new THREE.MeshBasicMaterial({ color: c }), false); m.visible = false; scene.add(m); return m; };
+      R.netDots = [0, 1, 2].map(() => dot(0x5ea9ff, 0.1));
+      R.wireDots = [0, 1, 2].map(() => dot(0xffd23f, 0.07));
+      R.relayDot = dot(0xffd23f, 0.08);
 
-      // data paths
-      const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
-      R.pEspCloud = new THREE.CatmullRomCurve3([V([3.3, 0.3, 1.3]), V([3.4, 2.6, 0.4]), V([1.9, 5.3, -2.2])]);
-      R.pCloudPhone = new THREE.CatmullRomCurve3([V([1.9, 5.7, -2.2]), V([4.2, 6.0, -0.6]), V([5.9, 4.6, 1.5])]);
-      R.pPhoneCloud = new THREE.CatmullRomCurve3(R.pCloudPhone.points.slice().reverse());
-      R.pCloudEsp = new THREE.CatmullRomCurve3(R.pEspCloud.points.slice().reverse());
-      for (let k = 0; k < 16; k++) {
-        const m = mesh(new THREE.SphereGeometry(0.09, 12, 10), new THREE.MeshBasicMaterial({ color: 0x5ea9ff }), false);
-        m.visible = false; scene.add(m); packets.push({ m, curve: null, t: 0, next: null });
-      }
-      for (let k = 0; k < 60; k++) {
-        const m = mesh(new THREE.SphereGeometry(0.045, 8, 6), mat(0x4aa3ff, { roughness: 0.2, transparent: true, opacity: 0.9 }), false);
-        m.visible = false; scene.add(m); drops.push({ m, v: new THREE.Vector3() });
-      }
-      for (let k = 0; k < 14; k++) {
-        const m = mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x1f78ff }), false);
-        m.visible = false; scene.add(m); beads.push({ m, t: k / 14 });
-      }
-      R.signals = [];
-      for (let k = 0; k < 6; k++) {
-        const m = mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffd23f }), false);
-        m.visible = false; scene.add(m); R.signals.push({ m, curve: null, t: 0, next: null });
-      }
-
-      label('Soil moisture sensor', [-0.15, TOP + 1.0, 0.55], 'sensor');
-      label('ESP32', [3.0, 0.65, 1.3], 'esp');
-      label('Relay', [3.0, 0.8, -0.7], 'relay');
-      label('Pump', [4.35, 0.8, -1.1], 'pump');
-      label('Water tank', [5.6, 2.35, -1.4]);
-      label('Cloud', [1.2, 6.65, -2.4], 'cloud');
-      label('Mobile app', [6.0, 5.35, 1.6], 'app');
-      R.soilLabel = label('48%', [-1, 2.35, 1.25]);
-      R.plantLabel = label('Plant', [-1.7, TOP + 3.0, -0.45]);
+      label('soil', 'Soil', [-1, 0.45, 1.3]);
+      label('sensor', 'Moisture sensor', [-0.15, TOP + 1.0, 0.6]);
+      label('esp', 'ESP32', [3.0, 0.7, 1.3]);
+      label('think', '', [3.0, 1.25, 1.3]);
+      label('relay', 'Relay', [3.0, 0.85, -0.7]);
+      label('pump', 'Pump', [4.35, 0.8, -1.1]);
+      label('tank', 'Water tank', [5.6, 2.35, -1.4]);
+      label('drip', 'Drip line', [0.35, DRIP_Y + 0.32, LINE_Z]);
+      label('cloud', 'Cloud', [1.2, 6.65, -2.4]);
+      label('app', 'Mobile app', [6.0, 5.35, 1.6]);
+      label('plant', 'Plant', [-1.7, TOP + 3.0, -0.55]);
+      labels.think.el.className = 'think';
     }
 
     function applyTheme() {
@@ -1521,112 +1693,167 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       R.table.material.color.set(dark ? 0x5b4632 : 0xb98d62);
     }
 
-    function drawScreen() {
-      const c = R.screenCanvas, g = c.getContext('2d');
+    function drawScreen(s) {
+      const key = s.screen + Math.round(s.m);
+      if (key === screenKey) return; screenKey = key;
+      const g = R.screenCanvas.getContext('2d');
       g.fillStyle = '#0f1b18'; g.fillRect(0, 0, 256, 500);
-      g.fillStyle = '#93a69f'; g.font = '500 16px "IBM Plex Mono", monospace'; g.fillText(hhmm(tAt(M.length - 1)), 18, 30);
-      g.fillStyle = '#e2ece8'; g.font = '800 26px "Bricolage Grotesque", sans-serif'; g.fillText('AquaSense', 18, 72);
-      const cx = 128, cy = 185, r = 78, p = S.m / 100;
+      g.fillStyle = '#e2ece8'; g.font = '800 26px "Bricolage Grotesque", sans-serif'; g.textAlign = 'left'; g.fillText('AquaSense', 18, 48);
+      const banner = { ok: ['#1f3a33', '#93a69f', 'Monitoring'], low: ['#5a1f1a', '#ffb4a8', 'Moisture low!'], water: ['#123a6b', '#9fd0ff', 'Watering · pump ON'], done: ['#16442b', '#a6f0c1', 'Watered · pump OFF'] }[s.screen];
+      g.fillStyle = banner[0]; g.fillRect(14, 66, 228, 46);
+      g.fillStyle = banner[1]; g.font = '600 18px "IBM Plex Sans", sans-serif'; g.fillText(banner[2], 26, 96);
+      const cx = 128, cy = 245, r = 78, p = s.m / 100;
       g.lineWidth = 16; g.strokeStyle = '#263a34'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
-      g.strokeStyle = '#5ea9ff'; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.stroke();
-      g.fillStyle = '#e2ece8'; g.font = '800 46px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(Math.round(S.m) + '%', cx, cy + 14);
+      g.strokeStyle = s.m < 35 ? '#e0a64a' : '#5ea9ff'; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.stroke();
+      g.fillStyle = '#e2ece8'; g.font = '800 46px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(Math.round(s.m) + '%', cx, cy + 14);
       g.fillStyle = '#93a69f'; g.font = '500 14px "IBM Plex Mono", monospace'; g.fillText('MOISTURE', cx, cy + 40);
       g.textAlign = 'left';
-      const row = (y, k, v, col) => { g.fillStyle = '#13201d'; g.fillRect(14, y, 228, 52); g.fillStyle = '#93a69f'; g.font = '500 15px "IBM Plex Sans", sans-serif'; g.fillText(k, 28, y + 32); g.fillStyle = col || '#e2ece8'; g.font = '600 17px "IBM Plex Sans", sans-serif'; g.textAlign = 'right'; g.fillText(v, 228, y + 32); g.textAlign = 'left'; };
-      row(300, 'Pump', S.lockout ? 'Locked' : S.pump ? 'RUNNING' : 'Off', S.pump ? '#5ea9ff' : S.lockout ? '#ef7565' : null);
-      row(360, 'Mode', S.mode === 'auto' ? 'Automatic' : 'Manual');
-      row(420, 'Range', S.dry + '–' + S.wet + '%');
+      const row = (y, k, v, col) => { g.fillStyle = '#13201d'; g.fillRect(14, y, 228, 50); g.fillStyle = '#93a69f'; g.font = '500 15px "IBM Plex Sans", sans-serif'; g.fillText(k, 28, y + 31); g.fillStyle = col || '#e2ece8'; g.font = '600 17px "IBM Plex Sans", sans-serif'; g.textAlign = 'right'; g.fillText(v, 228, y + 31); g.textAlign = 'left'; };
+      row(352, 'Pump', s.screen === 'water' ? 'RUNNING' : 'Off', s.screen === 'water' ? '#5ea9ff' : null);
+      row(410, 'Range', '35–60%');
       R.screenTex.needsUpdate = true;
     }
 
-    function send(curve, next, color, pool) {
-      const p = (pool || packets).find((x) => !x.curve);
-      if (!p) return;
-      p.curve = curve; p.t = 0; p.next = next || null; p.m.visible = true;
-      if (color) p.m.material.color.set(color);
+    function updateDOM(s) {
+      if (s.k !== lastK) {
+        lastK = s.k;
+        $('scStep').textContent = 'Step ' + (s.k + 1) + ' of 8';
+        $('scTitle').textContent = STEPS[s.k].title;
+        $('scText').textContent = STEPS[s.k].text;
+        $('hudStep').textContent = (s.k + 1) + ' / 8';
+        $$('#storyRail button').forEach((b) => { const i = +b.dataset.step; b.classList.toggle('active', i === s.k); b.classList.toggle('done', i < s.k); });
+      }
+      $('scBar').style.width = (s.t * 100).toFixed(1) + '%';
+      const mt = Math.round(s.m) + '%'; if ($('hudM').textContent !== mt) $('hudM').textContent = mt;
+      const pt = s.pumpOn ? 'On' : 'Off'; if ($('hudPump').textContent !== pt) $('hudPump').textContent = pt;
+      $('scrollCue').hidden = prog > 0.05;
     }
 
-    // engine hooks
-    hooks.tick.push(() => {
-      if (!ready) return;
-      ringT = 0; // sensing pulse
-      send(R.wSense, null, 0xffd23f, R.signals);
-      setTimeout(() => send(R.pEspCloud, R.pCloudPhone, 0x5ea9ff), 180);
-      drawScreen();
-    });
-    hooks.pump.push(() => { if (!ready) return; send(R.wRelay, R.wPump, 0xffd23f, R.signals); drawScreen(); });
-    hooks.command.push(() => { if (!ready) return; send(R.pPhoneCloud, R.pCloudEsp, 0xffa53f); drawScreen(); });
+    function update3D(s, dt) {
+      const k = s.k, t = s.t;
+      // camera
+      const nk = Math.min(k + 1, 7), a = ease(c01((t - 0.6) / 0.4));
+      R.v.fromArray(KEYS[k].p).lerp(R.v2.fromArray(KEYS[nk].p), a);
+      R.camPos.lerp(R.v, 1 - Math.exp(-dt * 3.5));
+      R.v.fromArray(KEYS[k].t).lerp(R.v2.fromArray(KEYS[nk].t), a);
+      R.camTgt.lerp(R.v, 1 - Math.exp(-dt * 3.5));
+      camera.position.copy(R.camPos); camera.lookAt(R.camTgt);
 
-    let cDry, cDamp, cHealthy, cSick;
+      // soil
+      const wetH = SOIL_H * 0.92 * s.wet, lowH = Math.max(0.001, SOIL_H - wetH);
+      R.low.scale.y = lowH; R.low.position.y = SOIL_B + lowH / 2;
+      R.wetBox.visible = wetH > 0.002; R.wetBox.scale.y = Math.max(0.001, wetH); R.wetBox.position.y = SOIL_B + lowH + wetH / 2;
+      R.lowMat.color.setHex(0xcfa673).lerp(new THREE.Color(0x6e4c33), c01((s.m - 28) / 34));
+      R.front.visible = s.wet > 0.01 && s.wet < 0.99; R.front.position.y = SOIL_B + lowH;
+      R.front.material.opacity = 0.5 + 0.4 * Math.sin(time * 5) ** 2;
+      R.cracks.material.opacity = 0.85 * s.crack;
+      R.spots.forEach((sp) => { sp.visible = s.wet > 0; const r = 0.06 + 0.42 * Math.min(1, s.wet * 1.4); sp.scale.set(r, r, 1); });
+      // sun + evaporation
+      R.sun.scale.setScalar(k === 0 ? 1.25 + 0.08 * Math.sin(time * 3) : 1);
+      R.sunLight.intensity = k === 0 ? 1.05 : 0.85;
+      R.vapor.forEach((p) => {
+        p.ph = (p.ph + dt * 0.35) % 1;
+        p.v.visible = s.evap;
+        if (s.evap) { p.v.position.set(p.x + Math.sin(time + p.z * 5) * 0.06, TOP + p.ph * 1.5, p.z); p.v.material.opacity = (1 - p.ph) * 0.45 * Math.min(1, t * 4); }
+      });
+      // plant
+      R.leafMat.color.setHex(0x3f9b4b).lerp(new THREE.Color(0xb8a03c), s.stress);
+      R.leaves.forEach((pz, j) => { pz.rotation.z += ((-0.12 - s.stress * 0.8 + Math.sin(time * 1.3 + j) * 0.03) - pz.rotation.z) * Math.min(1, dt * 4); });
+      // sensor
+      R.rings.forEach((r, j) => {
+        const ph = (time * 0.9 + j / 3) % 1;
+        r.visible = s.sense; r.scale.setScalar(0.5 + ph * 2.6); r.material.opacity = (1 - ph) * 0.85;
+      });
+      R.sensorLed.material.emissiveIntensity = s.sense && Math.sin(time * 14) > 0 ? 2.5 : 0.3;
+      // ESP32
+      const thinking = k === 2 || k === 3 || (k === 7 && t < 0.8);
+      R.espLed.material.emissiveIntensity = thinking && Math.sin(time * 18) > 0 ? 2.4 : 0.4;
+      R.espGlow.material.opacity = thinking ? 0.35 + 0.2 * Math.sin(time * 6) : 0;
+      // relay + pump
+      R.relayLed.material.emissiveIntensity = s.relayOn ? 2.4 : 0.05;
+      R.arm.rotation.z += ((s.relayOn ? -0.28 : 0) - R.arm.rotation.z) * Math.min(1, dt * 18);
+      R.pump.position.y = 0.24 + (s.pumpOn ? Math.sin(time * 70) * 0.008 : 0);
+      if (s.pumpOn) R.impeller.rotation.x += dt * 25;
+      const used = c01((prog - 4.5) / 3.2);
+      const wh = 1.4 * (1 - 0.2 * used); R.water.scale.y = wh; R.water.position.y = 0.06 + wh / 2;
+      // water in pipe + line
+      const f1 = c01(s.fill / 0.8), f2 = c01((s.fill - 0.8) / 0.2);
+      R.pipeWater.visible = f1 > 0; R.lineWater.visible = f2 > 0;
+      R.pipeWater.geometry.setDrawRange(0, Math.floor(f1 * R.pipeIdx / 6) * 6);
+      R.lineWater.geometry.setDrawRange(0, Math.floor(f2 * R.lineIdx / 6) * 6);
+      R.beads.forEach((bd) => {
+        bd.u = (bd.u + dt * (s.pumpOn ? 0.28 : 0)) % 1;
+        const vis = s.pumpOn && s.fill > 0 && bd.u <= s.fill;
+        bd.b.visible = vis;
+        if (vis) { if (bd.u < 0.8) R.pipeCurve.getPoint(bd.u / 0.8, bd.b.position); else R.lineCurve.getPoint((bd.u - 0.8) / 0.2, bd.b.position); }
+      });
+      // drips
+      R.drops.forEach((dp) => {
+        dp.delay -= dt;
+        if (dp.state === 'idle') {
+          if (s.drip && dp.delay <= 0) { dp.state = 'grow'; dp.a = 0; dp.d.visible = true; dp.d.position.set(dp.x, DRIP_Y - 0.17, LINE_Z); }
+        } else if (dp.state === 'grow') {
+          dp.a += dt / 0.5; dp.d.scale.set(0.3 + 0.7 * dp.a, (0.3 + 0.7 * dp.a) * 1.3, 0.3 + 0.7 * dp.a);
+          if (!s.drip && dp.a < 0.5) { dp.state = 'idle'; dp.d.visible = false; }
+          else if (dp.a >= 1) { dp.state = 'fall'; dp.v = 0; }
+        } else if (dp.state === 'fall') {
+          dp.v += 9.8 * dt; dp.d.position.y -= dp.v * dt;
+          if (dp.d.position.y <= TOP + 0.03) { dp.state = 'splash'; dp.a = 0; dp.d.visible = false; }
+        } else if (dp.state === 'splash') {
+          dp.a += dt / 0.45; dp.ring.scale.setScalar(0.4 + 1.6 * dp.a); dp.ring.material.opacity = (1 - dp.a) * 0.85;
+          if (dp.a >= 1) { dp.state = 'idle'; dp.ring.material.opacity = 0; dp.delay = 0.15 + Math.random() * 0.4; }
+        }
+      });
+      // signals
+      R.wireDots.forEach((d, j) => {
+        const u = s.wireT - j * 0.07;
+        d.visible = s.wireT >= 0 && u >= 0 && u < 1;
+        if (d.visible) R.wSense.getPoint(u, d.position);
+      });
+      R.netDots.forEach((d, j) => {
+        const u = s.netT * 1.2 - j * 0.1;
+        d.visible = s.netT >= 0 && u >= 0 && u < 1;
+        if (d.visible) { if (u < 0.5) R.pEspCloud.getPoint(u * 2, d.position); else R.pCloudPhone.getPoint((u - 0.5) * 2, d.position); }
+      });
+      R.cloudMat.emissiveIntensity = s.netT > 0.35 && s.netT < 0.75 ? 0.35 : 0;
+      R.relayDot.visible = s.relayT >= 0 && s.relayT < 1;
+      if (R.relayDot.visible) { if (s.relayT < 0.73) R.wRelay.getPoint(s.relayT / 0.73, R.relayDot.position); else R.wPump.getPoint((s.relayT - 0.73) / 0.27, R.relayDot.position); }
+      R.cloud.position.y = 5.6 + Math.sin(time * 0.8) * 0.06;
+      drawScreen(s);
 
-    function loop() {
-      requestAnimationFrame(loop);
-      if (view !== 'simulation') { clock.getDelta(); return; }
-      const dt = Math.min(clock.getDelta(), 0.05);
-      const t = clock.elapsedTime;
-      disp += (S.m - disp) * Math.min(1, dt * 2.2);
-      const f = clamp(disp / 100, 0.01, 0.99);
-      const wetH = SOIL_H * f, dryH = SOIL_H - wetH;
-      R.wet.scale.y = wetH; R.wet.position.y = SOIL_B + wetH / 2;
-      R.dry.scale.y = dryH; R.dry.position.y = SOIL_B + wetH + dryH / 2;
-      R.dryMat.color.copy(cDry).lerp(cDamp, clamp((disp - 15) / 70, 0, 1));
-      R.front.position.y = SOIL_B + wetH;
-      R.front.material.opacity = 0.35 + 0.35 * Math.sin(t * 3) ** 2;
-      // plant reacts to stress
-      R.leafMat.color.copy(cHealthy).lerp(cSick, S.stress);
-      R.leaves.forEach((pz, j) => { pz.rotation.z += ((-0.12 - S.stress * 0.75 + Math.sin(t * 1.3 + j) * 0.03) - pz.rotation.z) * Math.min(1, dt * 3); });
-      // sensor pulse
-      ringT = Math.min(1, ringT + dt * 1.4);
-      ring.scale.setScalar(0.6 + ringT * 2.2); ring.material.opacity = (1 - ringT) * 0.8;
-      R.sensorLed.material.emissiveIntensity = ringT < 0.3 ? 2 : 0.3;
-      R.espLed.material.emissiveIntensity = 0.4 + (Math.sin(t * 6) > 0.6 ? 1.6 : 0);
-      R.relayLed.material.emissiveIntensity = S.pump ? 2.2 : 0.05;
-      R.pump.position.y = 0.24 + (S.pump ? Math.sin(t * 60) * 0.008 : 0);
-      // water through the pipe
-      beads.forEach((b) => {
-        b.m.visible = S.pump;
-        if (S.pump) { b.t = (b.t + dt * 0.45) % 1; R.pipe.getPoint(b.t, b.m.position); }
-      });
-      // droplets
-      drops.forEach((d, k) => {
-        if (!d.m.visible) {
-          if (S.pump && Math.random() < dt * 14) {
-            d.m.visible = true; d.m.position.copy(R.nozzle);
-            d.v.set((Math.random() - 0.5) * 0.6, -0.5 - Math.random() * 0.4, (Math.random() - 0.5) * 0.6);
-          }
-          return;
-        }
-        d.v.y -= 9.8 * dt; d.m.position.addScaledVector(d.v, dt);
-        if (d.m.position.y < TOP) d.m.visible = false;
-      });
-      // packets and wire signals
-      [packets, R.signals].forEach((pool) => pool.forEach((p) => {
-        if (!p.curve) return;
-        p.t += dt * (pool === packets ? 0.9 : 1.6);
-        if (p.t >= 1) {
-          const nx = p.next, col = p.m.material.color.getHex();
-          p.curve = null; p.m.visible = false;
-          if (nx) send(nx, null, col, pool);
-          return;
-        }
-        p.curve.getPoint(p.t, p.m.position);
-      }));
-      R.cloud.position.y = 5.6 + Math.sin(t * 0.8) * 0.06;
-      // labels
-      R.soilLabel.el.textContent = 'Soil ' + Math.round(disp) + '%';
-      R.plantLabel.el.textContent = S.stress > 0.3 ? 'Plant: thirsty' : 'Plant: healthy';
-      if (R.lbl_pump) R.lbl_pump.el.classList.toggle('hot', S.pump);
-      if (R.lbl_relay) R.lbl_relay.el.classList.toggle('hot', S.pump);
-      if (controls) controls.update();
       renderer.render(scene, camera);
+      // labels
+      labels.sensor.el.textContent = k >= 1 ? 'Sensor reads ' + Math.round(s.m) + '%' : 'Moisture sensor';
+      labels.soil.el.textContent = 'Soil ' + Math.round(s.m) + '%';
+      labels.plant.el.textContent = s.stress > 0.4 ? 'Plant: thirsty' : 'Plant: healthy';
+      labels.think.el.textContent = s.espMsg;
+      labels.relay.el.textContent = s.relayOn ? 'Relay ON' : 'Relay';
+      labels.pump.el.textContent = s.pumpOn ? 'Pump ON' : 'Pump';
       const r = $('simStage').getBoundingClientRect();
-      const v = new THREE.Vector3();
-      labels.forEach((l) => {
-        v.copy(l.pos).project(camera);
-        const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
+      Object.keys(labels).forEach((key) => {
+        const l = labels[key];
+        R.v.copy(l.pos).project(camera);
+        const vis = R.v.z < 1 && Math.abs(R.v.x) < 1.05 && Math.abs(R.v.y) < 1.05 && (key !== 'think' || !!s.espMsg);
         l.el.style.display = vis ? '' : 'none';
-        if (vis) { l.el.style.left = ((v.x + 1) / 2 * r.width) + 'px'; l.el.style.top = ((1 - v.y) / 2 * r.height) + 'px'; }
+        if (key !== 'think') l.el.classList.toggle('hot', s.hot.includes(key));
+        if (vis) { l.el.style.left = ((R.v.x + 1) / 2 * r.width) + 'px'; l.el.style.top = ((1 - R.v.y) / 2 * r.height) + 'px'; }
       });
+    }
+
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now; time += dt;
+      if (view !== 'simulation') { if (playing) stopPlay(); return; }
+      if (playing) {
+        const g = geom();
+        playY += g.total / 8 / 4.5 * dt;
+        window.scrollTo(0, playY);
+        if (g.prog >= 7.98) stopPlay();
+      }
+      prog = geom().prog;
+      const s = story(prog);
+      updateDOM(s);
+      if (ready) update3D(s, dt);
     }
 
     return { init, resetView, applyTheme };
@@ -1654,17 +1881,18 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     const prand = mulberry(42);
     const plants = ORDER.map((soil, i) => ({
       id: i + 1, soil, m: 38 + prand() * 32, mode: 'auto', pump: false, power: 70, timing: 60,
-      burst: 0, soak: 0, watering: false, hist: [], predicted: null, alertLow: false, alertHigh: false, dryObs: [], effObs: []
+      burst: 0, soak: 0, watering: false, hist: [], predicted: null, alertLow: false, alertHigh: false, dryObs: [], effObs: [],
+      full: [], fullP: [], W: [], cur: null, prevPump: false
     }));
     const alerts = [];
     const fmtSec = (t) => t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : '');
     const mlPerBurst = (p, t) => Math.round(25 * p / 100 * t); // 1.5 L/min at 100%
     const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
     const effAt = (pl, power) => { const s = SOILS[pl.soil], p = power / 100; return Math.max(0, s.eff - s.runoff * p * p); };
-    function dayK() { const d = tAt(M.length - 1); const h = d.getHours() + d.getMinutes() / 60; return 0.6 + 0.6 * Math.max(0, Math.sin(Math.PI * (h - 6) / 12)); }
+    function dayK(i) { const d = tAt(i == null ? M.length - 1 : i); const h = d.getHours() + d.getMinutes() / 60; return 0.6 + 0.6 * Math.max(0, Math.sin(Math.PI * (h - 6) / 12)); }
 
-    function step(pl, live) {
-      const s = SOILS[pl.soil], k = dayK();
+    function step(pl, live, idx) {
+      const s = SOILS[pl.soil], k = dayK(idx);
       if (pl.mode === 'auto') {
         if (pl.burst > 0) pl.pump = true;
         else {
@@ -1693,9 +1921,15 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       if (pl.dryObs.length > 40) pl.dryObs.shift();
       if (pl.effObs.length > 20) pl.effObs.shift();
       pl.hist.push(pl.m); if (pl.hist.length > 72) pl.hist.shift();
+      // full history + watering log, aligned with the dashboard readings
+      const i = pl.full.length;
+      if (pl.pump && !pl.prevPump) pl.cur = { start: i, from: pl.m, by: pl.mode };
+      if (!pl.pump && pl.prevPump && pl.cur) { pl.W.push(Object.assign(pl.cur, { end: i, to: pl.m, stop: pl.mode })); pl.cur = null; }
+      pl.prevPump = pl.pump;
+      pl.full.push(pl.m); pl.fullP.push(pl.pump ? 1 : 0);
       if (live) checkAlerts(pl);
     }
-    for (let k = 0; k < 72; k++) plants.forEach((pl) => step(pl, false));
+    for (let k = 0; k < M.length; k++) plants.forEach((pl) => step(pl, false, k));
     // two example plants left in manual mode so the alerts can be seen working
     Object.assign(plants[3], { mode: 'manual', pump: true, m: 86, burst: 0, soak: 0 });
     Object.assign(plants[8], { mode: 'manual', pump: false, m: 11, burst: 0, soak: 0 });
@@ -1746,7 +1980,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       if (mode === 'auto') pl.pump = false;
       checkAlerts(pl);
     }
-    hooks.tick.push(() => plants.forEach((pl) => step(pl, true)));
+    hooks.tick.push(() => plants.forEach((pl) => step(pl, true, M.length - 1)));
 
     const activeCount = () => plants.filter((p) => p.alertLow || p.alertHigh).length;
     function badge() { const n = activeCount(), b = $('navBadge'); b.hidden = n === 0; b.textContent = n; }
@@ -1967,7 +2201,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     setTimeout(setAdvBadge, 0);
     setTimeout(setAdvBadge, 11000);
 
-    return { renderPlants, renderPumps, badge, activeCount };
+    function series(id) { const pl = plants[id - 1]; return { data: pl.full, pump: pl.fullP, W: pl.W, cur: pl.cur }; }
+    return { renderPlants, renderPumps, badge, activeCount, series };
   })();
 
   // theme changes
