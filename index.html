@@ -396,7 +396,10 @@ select { font: 500 .9rem var(--font-body); color: var(--ink); background: var(--
 .install-btn { flex-shrink: 0; }
 .get-app-card { padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
 .ga-text { display: grid; gap: 12px; min-width: 0; }
+.ga-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .ga-actions .pump-btn { width: auto; padding: 12px 22px; }
+.apk-btn { padding: 11px 18px; font-size: .95rem; font-weight: 600; border-color: var(--ok); color: var(--ok); }
+.is-app .get-app .note { display: none; }
 .ga-status { color: var(--ok); font-weight: 600; }
 .ga-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .ga-steps > div { background: var(--sunk); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; font-size: .86rem; border: 1px solid transparent; }
@@ -512,7 +515,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <div class="ga-status" id="gaStatus" hidden>✓ You're using the installed app.</div>
             <div class="ga-actions">
               <button class="pump-btn" data-install id="gaInstall">⬇ Install AquaSense</button>
+              <a class="btn apk-btn" id="apkLink" href="https://github.com/aquasense-vit/aquasense-android/releases/latest/download/AquaSense.apk" rel="noopener">🤖 Download Android app (APK)</a>
             </div>
+            <p class="note" id="apkNote">Android APK: open the download on your phone and tap Install. If Android asks, allow installing apps from your browser.</p>
             <div class="ga-steps">
               <div data-os="android"><b>Android (Chrome)</b><span>Tap <i>Install AquaSense</i>, or open the ⋮ menu and choose <i>Install app</i>.</span></div>
               <div data-os="ios"><b>iPhone / iPad (Safari)</b><span>Tap the Share button, then <i>Add to Home Screen</i>.</span></div>
@@ -981,7 +986,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 (function () {
   let deferred = null;
   const btns = Array.from(document.querySelectorAll('[data-install]'));
-  const isApp = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isApp = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true || /AquaSenseAndroid/.test(navigator.userAgent);
   const ua = navigator.userAgent;
   const os = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document) ? 'ios' : /android/i.test(ua) ? 'android' : 'desktop';
   function refresh() {
