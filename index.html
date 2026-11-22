@@ -1,7 +1,16 @@
+<!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <title>AquaSense</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1667c4">
+<link rel="icon" type="image/png" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AquaSense">
 <meta name="description" content="AquaSense: an IoT-based smart irrigation system. EDI Project 1, CS-C Group 10, VIT Pune.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -383,6 +392,29 @@ select { font: 500 .9rem var(--font-body); color: var(--ink); background: var(--
 .all-check { display: flex; align-items: center; gap: 8px; font-size: .84rem; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--line); cursor: pointer; }
 .modal .acts { display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ---------- app ---------- */
+.install-btn { flex-shrink: 0; }
+.get-app-card { padding: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; }
+.ga-text { display: grid; gap: 12px; min-width: 0; }
+.ga-actions .pump-btn { width: auto; padding: 12px 22px; }
+.ga-status { color: var(--ok); font-weight: 600; }
+.ga-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ga-steps > div { background: var(--sunk); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; font-size: .86rem; border: 1px solid transparent; }
+.ga-steps > div.mine { border-color: var(--water); }
+.ga-steps span { color: var(--muted); }
+.ga-steps i { font-style: normal; color: var(--ink); font-weight: 600; }
+.ga-qr { display: grid; justify-items: center; gap: 8px; text-align: center; }
+#qr { background: #fff; padding: 10px; border-radius: 12px; line-height: 0; min-width: 180px; min-height: 180px; }
+#qr img, #qr canvas { width: 160px; height: 160px; }
+@media (max-width: 820px) { .get-app-card { grid-template-columns: 1fr; } .ga-steps { grid-template-columns: 1fr; } }
+.is-app .get-app .ga-qr, .is-app .get-app .ga-steps, .is-app .get-app .ga-actions { display: none; }
+@media (max-width: 760px) {
+  .is-app .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--bg); }
+  .is-app .topbar nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line); padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); gap: 2px; }
+  .is-app .topbar nav a { font-size: .78rem; padding: 8px 10px; }
+  .is-app main, .is-app footer { padding-bottom: 72px; }
+  .install-btn { display: none; }
+}
 footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: .88rem; }
 footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; }
 </style>
@@ -406,6 +438,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <span class="dot" id="liveDot"></span>
       <b data-bind="m">48%</b>·<span data-bind="pumpShort">Pump off</span>·<span data-bind="modeShort">Auto</span>
     </div>
+    <button class="btn primary install-btn" id="installBtn" data-install hidden>⬇ Install app</button>
   </div>
 </header>
 
@@ -468,6 +501,29 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <p>Weather-based watering advice, common moisture settings, and fixes for problems like clogged drippers.</p>
           <span class="go">Open →</span>
         </a>
+      </div>
+
+      <div class="ov-block get-app" id="getApp">
+        <div class="panel get-app-card">
+          <div class="ga-text">
+            <span class="label">AquaSense app</span>
+            <h2>Get the app on your phone or computer</h2>
+            <p class="muted">The same AquaSense, installed like a normal app: its own icon, full screen, quick to open, and it still opens when you're offline.</p>
+            <div class="ga-status" id="gaStatus" hidden>✓ You're using the installed app.</div>
+            <div class="ga-actions">
+              <button class="pump-btn" data-install id="gaInstall">⬇ Install AquaSense</button>
+            </div>
+            <div class="ga-steps">
+              <div data-os="android"><b>Android (Chrome)</b><span>Tap <i>Install AquaSense</i>, or open the ⋮ menu and choose <i>Install app</i>.</span></div>
+              <div data-os="ios"><b>iPhone / iPad (Safari)</b><span>Tap the Share button, then <i>Add to Home Screen</i>.</span></div>
+              <div data-os="desktop"><b>Windows / Mac (Chrome or Edge)</b><span>Click <i>Install AquaSense</i>, or the install icon at the right of the address bar.</span></div>
+            </div>
+          </div>
+          <div class="ga-qr">
+            <div id="qr" aria-label="QR code for aquasense-vit.github.io"></div>
+            <span class="note">Scan with your phone camera to open<br><b class="mono">aquasense-vit.github.io</b></span>
+          </div>
+        </div>
       </div>
 
       <div class="ov-block">
@@ -919,6 +975,36 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// installable app: install prompt, QR code, offline support
+(function () {
+  let deferred = null;
+  const btns = Array.from(document.querySelectorAll('[data-install]'));
+  const isApp = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const ua = navigator.userAgent;
+  const os = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document) ? 'ios' : /android/i.test(ua) ? 'android' : 'desktop';
+  function refresh() {
+    const app = isApp();
+    document.documentElement.classList.toggle('is-app', app);
+    const st = document.getElementById('gaStatus'); if (st) st.hidden = !app;
+    document.getElementById('installBtn').hidden = app || !deferred;
+    const ga = document.getElementById('gaInstall'); if (ga) ga.hidden = app || (os === 'ios');
+    document.querySelectorAll('.ga-steps [data-os]').forEach((d) => d.classList.toggle('mine', d.dataset.os === os));
+  }
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; refresh(); });
+  window.addEventListener('appinstalled', () => { deferred = null; refresh(); });
+  btns.forEach((b) => b.addEventListener('click', async () => {
+    if (deferred) { deferred.prompt(); try { await deferred.userChoice; } catch (e) { /* dismissed */ } deferred = null; refresh(); return; }
+    const steps = document.querySelector('.ga-steps'); if (location.hash !== '#overview' && location.hash !== '') location.hash = 'overview';
+    setTimeout(() => { const s = document.querySelector('.ga-steps'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
+  }));
+  window.matchMedia('(display-mode: standalone)').addEventListener && window.matchMedia('(display-mode: standalone)').addEventListener('change', refresh);
+  try { if (window.QRCode) new QRCode(document.getElementById('qr'), { text: 'https://aquasense-vit.github.io/', width: 160, height: 160, colorDark: '#10231f', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch (e) { /* QR is optional */ }
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});
+  refresh();
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function () {
