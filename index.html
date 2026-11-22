@@ -283,6 +283,14 @@ tr:last-child td { border-bottom: 0; }
 .factors { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .factors li { display: flex; justify-content: space-between; gap: 10px; font-size: .88rem; }
 .factors li span:first-child { color: var(--muted); }
+.wx-now { display: flex; align-items: center; gap: 14px; min-height: 56px; color: var(--muted); }
+.wx-now .wx-ico { font-size: 2.4rem; line-height: 1; }
+.wx-now b { display: block; font: 800 2rem/1 var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.wx-now span { font-size: .84rem; }
+.wx-days { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.wx-days > div { background: var(--sunk); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.wx-days b { font: 600 1.05rem var(--font-body); }
+.wx-days small { font: .72rem var(--font-mono); color: var(--muted); }
 .predict { background: var(--water-soft); border-radius: 10px; padding: 12px 14px; font-size: .92rem; }
 
 /* ---------- Your plants ---------- */
@@ -456,8 +464,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         </a>
         <a class="panel feature" href="#assistant">
           <span class="label">AI Assistant</span>
-          <span class="live" data-bind="healthLabel">Healthy</span>
-          <p>Ask for a summary, a plant health check, or when the soil will need water next.</p>
+          <span class="live" data-bind="wxShort">Weather</span>
+          <p>Weather-based watering advice, common moisture settings, and fixes for problems like clogged drippers.</p>
           <span class="go">Open →</span>
         </a>
       </div>
@@ -659,7 +667,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <div class="panel plant-pick" id="plantPick" role="listbox" aria-label="Choose a plant"></div>
         <div class="side">
           <div class="panel panel-pad editor">
-            <div class="row"><h3 id="edTitle" style="font-size:1.35rem">Plant 1</h3><span class="pill lock" id="edDirty" hidden>Unsaved changes</span></div>
+            <div class="row"><h3 id="edTitle" style="font-size:1.35rem">Plant 1</h3><span style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end"><span class="pill lock" id="edDirty" hidden>Unsaved changes</span><span class="pill off" id="edHealth">Health —</span></span></div>
             <span class="label ed-sec">Pump</span>
             <div class="setting">
               <div class="head"><label for="pPower">Pump power</label><span class="big-v"><span id="pPowerV">70</span>%</span></div>
@@ -716,7 +724,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           </div>
         </div>
         <div class="panel chat">
-          <div class="chat-head"><h3>Pump advisor</h3><span class="pill off" id="advBadge">Built-in analysis</span></div>
+          <div class="chat-head"><h3>Plant advisor</h3><span class="pill off" id="advBadge">Built-in analysis</span></div>
           <div class="msgs" id="advMsgs" aria-live="polite"></div>
           <div class="chat-foot">
             <div class="advisor-pick">
@@ -725,12 +733,15 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
               <button class="btn primary" id="advAnalyze">Predict soil &amp; suggest</button>
             </div>
             <div class="chips">
+              <button data-aq="health">How healthy is this plant?</button>
+              <button data-aq="thresholds">What thresholds suit it?</button>
+              <button data-aq="next">When will it need water?</button>
+              <button data-aq="current">Is its pump setting OK?</button>
               <button data-aq="all">Suggest for all plants</button>
               <button data-aq="explain">What do power and timing do?</button>
-              <button data-aq="current">Is my current setting OK?</button>
             </div>
             <form class="chat-form" id="advForm">
-              <input id="advInput" type="text" autocomplete="off" placeholder="Ask about soil, power or timing…" aria-label="Message to pump advisor">
+              <input id="advInput" type="text" autocomplete="off" placeholder="Ask about this plant's health, thresholds or pump…" aria-label="Message to plant advisor">
               <button class="btn primary" type="submit">Send</button>
             </form>
           </div>
@@ -840,8 +851,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <div class="view-head">
         <div>
           <span class="label">AI assistant</span>
-          <h2>Ask about your plant</h2>
-          <p>The assistant reads the moisture history and pump log, then summarizes them, rates plant health and predicts when the soil will need water next.</p>
+          <h2>Weather, settings and fixes</h2>
+          <p>Ask how the weather affects watering, which moisture settings work for most plants, or how to fix a problem such as clogged drippers. For one plant's health and thresholds, use the plant advisor in Settings.</p>
         </div>
       </div>
       <div class="assist">
@@ -850,31 +861,34 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <div class="msgs" id="msgs" aria-live="polite"></div>
           <div class="chat-foot">
             <div class="chips">
-              <button data-q="Give me a summary of the last 24 hours.">Summary</button>
-              <button data-q="How healthy is my plant?">Plant health</button>
-              <button data-q="When will the soil need water next?">Next watering</button>
-              <button data-q="Are there any problems I should know about?">Any problems?</button>
-              <button data-q="Are my threshold settings good for this plant?">Check my settings</button>
+              <button data-q="What's the weather, and should I change my watering?">Weather &amp; watering</button>
+              <button data-q="What moisture settings should I use for most plants?">Common settings</button>
+              <button data-q="Run a system check">System check</button>
+              <button data-q="My drippers are clogged. How do I fix it?">Clogged drippers</button>
+              <button data-q="The pump runs but no water comes out.">Pump runs, no water</button>
+              <button data-q="The relay clicks but the pump does not start.">Relay clicks, no pump</button>
+              <button data-q="The sensor readings look wrong or jump around.">Wrong sensor readings</button>
+              <button data-q="The app is not updating.">App not updating</button>
             </div>
             <form class="chat-form" id="chatForm">
-              <input id="chatInput" type="text" autocomplete="off" placeholder="Ask about moisture, watering or plant health…" aria-label="Message">
+              <input id="chatInput" type="text" autocomplete="off" placeholder="Ask about weather, settings or a problem…" aria-label="Message">
               <button class="btn primary" type="submit">Send</button>
             </form>
           </div>
         </div>
         <div class="side">
           <div class="panel panel-pad">
-            <div class="row"><h3>Plant health</h3><span class="label">last 24 h</span></div>
-            <div class="ring" id="healthRing"><div><div><div class="num" id="healthNum">—</div><span class="label" data-bind="healthLabel">—</span></div></div></div>
-            <ul class="factors" id="factors"></ul>
+            <div class="row"><h3>Weather</h3><select id="city" aria-label="City"></select></div>
+            <div class="wx-now" id="wxNow">Loading forecast…</div>
+            <div class="wx-days" id="wxDays"></div>
+            <p class="predict" id="wxAdvice">—</p>
+            <span class="note" id="wxSrc">Forecast: Open-Meteo</span>
           </div>
           <div class="panel panel-pad">
-            <h3>Prediction</h3>
-            <p class="predict" id="predict">—</p>
-            <ul class="factors">
-              <li><span>Drying rate</span><b class="mono" id="pRate">—</b></li>
-              <li><span>Change, last 6 h</span><b class="mono" id="pTrend">—</b></li>
-            </ul>
+            <div class="row"><h3>Suggested common settings</h3><span class="pill off" id="climTag">—</span></div>
+            <ul class="factors" id="commonSet"></ul>
+            <p class="hint" id="commonWhy">—</p>
+            <button class="btn" id="applyCommon">Apply to all 12 plants</button>
           </div>
         </div>
       </div>
@@ -1145,7 +1159,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       dry: S.dry, wet: S.wet, maxRun: S.maxRun,
       run: (S.pump ? S.runFor : 0) + ' / ' + S.maxRun + ' min',
       clock: hhmm(tAt(M.length - 1)), date: dayStr(tAt(M.length - 1)),
-      water24: f.waterings, healthLabel: f.label, pumpHint: pumpHint(),
+      water24: f.waterings, healthLabel: f.label, pumpHint: pumpHint(), wxShort: generalUI.short(),
       plantAlerts: plantsUI.activeCount() + (plantsUI.activeCount() === 1 ? ' alert' : ' alerts')
     };
     plantsUI.badge();
@@ -1169,7 +1183,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     if (view === 'dashboard') renderDashboard();
     else if (view === 'simulation') renderSim();
     else if (view === 'history') renderHistory();
-    else if (view === 'assistant') renderHealth(f);
+    else if (view === 'assistant') generalUI.render();
     else if (view === 'plants') plantsUI.renderPlants();
     else if (view === 'pumps') plantsUI.renderPumps();
   }
@@ -1298,22 +1312,6 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     const when = 'in about ' + fmtH(f.hoursToDry) + ' (around ' + hhmm(f.nextWateringAt) + ')';
     return f.mode === 'auto' ? 'The soil will reach ' + f.dry + '% ' + when + '. The pump will start by itself then.' : 'The soil will reach ' + f.dry + '% ' + when + '. You\'re in manual mode, so water it yourself then.';
   }
-  function renderHealth(f) {
-    const ring = $('healthRing');
-    ring.style.setProperty('--p', f.score);
-    ring.style.setProperty('--c', f.score >= 80 ? 'var(--ok)' : f.score >= 55 ? 'var(--warn)' : 'var(--crit)');
-    $('healthNum').textContent = f.score;
-    $('factors').innerHTML = [
-      ['Time in healthy range', Math.round(f.pctGood * 100) + '%'],
-      ['Dry readings', Math.round(f.pctDry * 100) + '%'],
-      ['Waterlogged readings', Math.round(f.pctSoggy * 100) + '%'],
-      ['Safety cutoffs', f.cutoffs],
-      ['Leaf stress', f.stress < .15 ? 'None' : f.stress < .5 ? 'Mild' : 'High']
-    ].map((r) => '<li><span>' + r[0] + '</span><b class="mono">' + r[1] + '</b></li>').join('');
-    $('predict').textContent = predictionText(f);
-    $('pRate').textContent = f.dryingRatePerHour != null && !f.pumpOn ? f.dryingRatePerHour.toFixed(1) + ' %/h' : '—';
-    $('pTrend').textContent = (f.trend6h >= 0 ? '+' : '') + f.trend6h.toFixed(1) + '%';
-  }
 
   // ---------------- controls ----------------
   function schedule() { clearInterval(timer); if (!paused) timer = setInterval(tick, speed === 1 ? 800 : 200); }
@@ -1353,100 +1351,192 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     renderHistory();
   }));
 
-  // ---------------- assistant ----------------
+  // ---------------- general assistant: weather, common settings, troubleshooting ----------------
   let sampler = null;
-  const chat = [];
-  function addMsg(role, text, src) {
-    const el = document.createElement('div');
-    el.className = 'msg ' + role;
-    el.textContent = text;
-    if (src) { const s = document.createElement('span'); s.className = 'src'; s.textContent = src; el.appendChild(s); }
-    $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight;
-    return el;
-  }
-  function localAnswer(q, f) {
-    q = q.toLowerCase();
-    const r = (v) => Math.round(v);
-    const summary = 'Last 24 hours: moisture averaged ' + r(f.avg) + '% (low ' + r(f.min) + '%, high ' + r(f.max) + '%). The pump ran ' + f.waterings + ' time' + (f.waterings === 1 ? '' : 's') + ' for ' + f.pumpMin + ' min in total. The soil was in the healthy range ' + r(f.pctGood * 100) + '% of the time. Right now it reads ' + r(f.moisture) + '% in ' + (f.mode === 'auto' ? 'automatic' : 'manual') + ' mode.';
-    const health = 'Plant health score: ' + f.score + '/100 (' + f.label + '). ' +
-      (f.pctDry > 0.05 ? 'The soil was dry ' + r(f.pctDry * 100) + '% of the time, which can stress the roots. ' : 'The roots have rarely been dry. ') +
-      (f.pctSoggy > 0.05 ? 'It was waterlogged ' + r(f.pctSoggy * 100) + '% of the time, so there is a risk of root rot. ' : '') +
-      (f.stress > 0.3 ? 'The leaves are showing stress, so water soon. ' : 'No leaf stress at the moment. ') +
-      'If conditions stay like this, the plant should stay ' + (f.score >= 80 ? 'healthy.' : 'under some stress until watering becomes more regular.');
-    if (/health|plant|leaf|leaves|okay|fine|alive|growing/.test(q)) return health;
-    if (/predict|next|when|forecast|tomorrow|dry out|need water/.test(q)) return predictionText(f) + (f.dryingRatePerHour && !f.pumpOn ? ' Right now the soil is drying at about ' + f.dryingRatePerHour.toFixed(1) + '% per hour.' : '');
-    if (/problem|issue|wrong|alert|warn|cutoff|error/.test(q)) {
-      const issues = [];
-      if (f.cutoffs) issues.push(f.cutoffs + ' safety cutoff' + (f.cutoffs > 1 ? 's' : '') + '. The pump ran too long, so check the tank and tubing');
-      if (f.pctDry > 0.05) issues.push('the soil was dry ' + r(f.pctDry * 100) + '% of the time');
-      if (f.pctSoggy > 0.05) issues.push('the soil was waterlogged ' + r(f.pctSoggy * 100) + '% of the time');
-      if (f.mode === 'manual' && f.moisture < f.dry) issues.push('you are in manual mode and the soil is below ' + f.dry + '%');
-      return issues.length ? 'Things to look at: ' + issues.join('; ') + '.' : 'No problems found. Readings are steady, the pump stops on time and there were no safety cutoffs.';
+  const generalUI = (function () {
+    const CITIES = [['Pune', 18.52, 73.86], ['Mumbai', 19.08, 72.88], ['Delhi', 28.61, 77.21], ['Bengaluru', 12.97, 77.59], ['Chennai', 13.08, 80.27], ['Hyderabad', 17.39, 78.49], ['Kolkata', 22.57, 88.36], ['Nagpur', 21.15, 79.09], ['Ahmedabad', 23.02, 72.57], ['Jaipur', 26.91, 75.79]];
+    const WMO = (c) => c === 0 ? ['Clear sky', '☀'] : c <= 2 ? ['Partly cloudy', '⛅'] : c === 3 ? ['Overcast', '☁'] : c <= 48 ? ['Fog', '🌫'] : c <= 57 ? ['Drizzle', '🌦'] : c <= 67 ? ['Rain', '🌧'] : c <= 77 ? ['Snow', '❄'] : c <= 82 ? ['Rain showers', '🌦'] : ['Thunderstorm', '⛈'];
+    let wx = null, wxErr = false, city = CITIES[0];
+    const cache = {};
+    const chat = [];
+
+    // knowledge base of common problems
+    const KB = [
+      { id: 'clog', title: 'Clogged drippers', kw: ['clog', 'block', 'drip', 'dripper', 'emitter', 'uneven', 'some plants dry', 'not dripping', 'slow drip', 'no drops'],
+        causes: ['Hard-water minerals (white crust) building up inside the emitters', 'Algae growing in the tank or pipe, especially if the tank lets light in', 'Soil, sand or debris pulled in by the pump', 'Roots growing into an emitter'],
+        fix: ['Open the end cap of the drip line and run the pump for 1–2 minutes to flush it', 'Remove blocked emitters and soak them in vinegar or citric acid water for about an hour, then rinse', 'Fit an inline filter (about 120 mesh) between the pump and the drip line', 'Use an opaque, covered tank so algae cannot grow, and clean it every few weeks', 'Check each emitter by timing its drops; replace any that stay slow'],
+        tip: 'AquaSense hint: if a plant keeps watering for a long time but its moisture barely rises, or safety cutoffs happen, a clog is the usual cause.' },
+      { id: 'nowater', title: 'Pump runs but no water comes out', kw: ['no water', 'runs but', 'running but', 'dry run', 'air lock', 'airlock', 'pump runs', 'pump is running', 'nothing comes'],
+        causes: ['The tank is empty or the pump inlet is above the water line', 'An air lock in the pump or pipe', 'A kinked, pinched or disconnected tube', 'The inlet filter is blocked', 'The pump is too weak to lift water to the drip line height'],
+        fix: ['Check the water level and keep a submersible pump fully under water', 'Switch off, tilt the pump under water to let air escape, then restart', 'Straighten the tube and check every joint', 'Clean the inlet screen', 'Keep the lift height within the pump rating (a mini 3–6 V pump lifts only about 40–110 cm)'],
+        tip: 'Never let a mini pump run dry for long. It overheats and wears out quickly.' },
+      { id: 'relay', title: 'Relay clicks but the pump does not start', kw: ['relay', 'click', 'pump not start', 'pump does not start', "pump doesn't start", 'pump wont', "pump won't", 'pump not working', 'pump dead'],
+        causes: ['The pump is wired to the wrong relay terminals (NC instead of NO)', 'The pump power supply is off, too weak or not connected', 'A loose wire in the screw terminals', 'The pump motor is jammed or burnt out'],
+        fix: ['Wire the pump supply through COM and NO on the relay', 'Measure the voltage across the pump while the relay is on (it should match the pump rating, e.g. 5 V)', 'Tighten the screw terminals', 'Test the pump directly on its supply. If it still does not run, replace it', 'If the relay does not click at all, check the GPIO pin in the code, and whether the relay module needs 5 V logic or is active-low'],
+        tip: 'Power the pump from its own supply, not the ESP32 3.3 V pin, and connect the grounds together.' },
+      { id: 'sensor', title: 'Sensor readings are wrong or jumpy', kw: ['sensor', 'reading', 'readings', 'wrong value', 'jump', 'jumpy', 'noisy', 'stuck', 'always 0', 'always 100', '0%', '100%', 'calibrat', 'inaccurate'],
+        causes: ['The dry and wet calibration values do not match your sensor and soil', 'Air gaps around the probe, or the probe is too shallow', 'The sensor is on an ADC2 pin, which stops working when ESP32 Wi-Fi is on', 'Electrical noise from the pump or long wires', 'A corroded resistive probe (capacitive probes last much longer)'],
+        fix: ['Recalibrate: note the raw value in dry air and in a glass of water, then put those numbers in the code', 'Push the probe firmly into the root zone and press the soil around it', 'Use an ADC1 pin (GPIO 32–39) for the sensor', 'Average 10–20 readings and ignore sudden spikes', 'Keep sensor wires short and away from the pump wires'],
+        tip: 'A reading stuck at exactly 0% or 100% usually means a wiring or pin problem, not the soil.' },
+      { id: 'app', title: 'App or website not updating', kw: ['app', 'not updating', 'offline', 'wifi', 'wi-fi', 'internet', 'sync', 'cloud', 'database', 'not showing', 'disconnect'],
+        causes: ['The ESP32 lost Wi-Fi (weak signal, or a 5 GHz-only network)', 'No reconnect logic in the firmware', 'Wrong cloud database rules or expired sign-in', 'The ESP32 browned out and restarted when the pump switched on'],
+        fix: ['Use a 2.4 GHz network and keep the ESP32 within good range', 'Add code that reconnects Wi-Fi and the database automatically', 'Check the database rules and that the device is signed in', 'Look at the serial monitor for reset messages; see "ESP32 restarts" for the power fix'],
+        tip: 'The pump keeps working in automatic mode even when Wi-Fi is down, because the decision is made on the ESP32.' },
+      { id: 'reset', title: 'ESP32 restarts when the pump starts', kw: ['restart', 'reboot', 'reset', 'brownout', 'brown out', 'crash', 'freez'],
+        causes: ['The pump pulls a current spike that drops the supply voltage (brownout)', 'The ESP32 and pump share a weak supply', 'Electrical noise from the motor'],
+        fix: ['Power the pump from a separate supply, with the grounds connected', 'Add a 470–1000 µF capacitor across the ESP32 supply', 'Put a flyback diode across the pump motor', 'Use a relay module with an optocoupler'],
+        tip: 'A USB port often cannot supply both the ESP32 and the pump.' },
+      { id: 'soggy', title: 'Soil stays soggy or waterlogged', kw: ['soggy', 'waterlog', 'too wet', 'overwater', 'over water', 'root rot', 'mould', 'mold', 'fungus', 'yellow leaves'],
+        causes: ['The stop level is set too high', 'Bursts are too long for the soil', 'The pot drains poorly', 'Rain or cool, humid weather on top of watering'],
+        fix: ['Lower the stop level to 55–60% in Settings', 'Shorten the pump timing so water can soak in between bursts', 'Make sure the pot has drainage holes and is not standing in water', 'Lower the levels by about 5% when rain is forecast'],
+        tip: 'The plant advisor in Settings can suggest levels for a specific plant.' },
+      { id: 'dryfast', title: 'Soil dries out too fast', kw: ['dries fast', 'dry fast', 'dries too fast', 'drying fast', 'too dry', 'wilting', 'wilt', 'droop', 'thirsty'],
+        causes: ['Sandy or light soil that drains quickly', 'Hot, sunny or windy weather', 'The sensor sits in a spot that dries first'],
+        fix: ['Raise the start level to about 40% in Settings', 'Use shorter, more frequent bursts', 'Add mulch (pebbles, bark or dry leaves) to slow evaporation', 'Move the sensor into the main root zone'],
+        tip: 'Hot afternoons dry soil 2–3 times faster than nights.' },
+      { id: 'leak', title: 'Leaks at pipe joints', kw: ['leak', 'leaking', 'drip from joint', 'spray', 'burst', 'connector'],
+        causes: ['Loose barbed fittings', 'Tubing that does not match the fitting size', 'Too much pump pressure for the fittings'],
+        fix: ['Use hose clamps or zip ties on every joint', 'Match the tube inner diameter to the fittings', 'Lower the pump power in Settings'],
+        tip: 'Check the joints after the first few waterings.' },
+      { id: 'cutoff', title: 'Safety cutoff keeps triggering', kw: ['cutoff', 'cut off', 'safety', 'lockout', 'runtime', 'max runtime'],
+        causes: ['Low water flow from a clog, kink or empty tank', 'Pump power set too low', 'The stop level is set higher than the soil can reach'],
+        fix: ['Check the tank and flush the drip line first', 'Raise the pump power a little', 'Lower the stop level', 'Only raise the max runtime once the flow is fine'],
+        tip: 'The cutoff protects the pump and the plant. Find the cause before you raise the limit.' }
+    ];
+
+    function climate() {
+      if (!wx) return { key: 'normal', tag: 'Standard', dry: 35, wet: 60, low: 5, high: 95, why: 'Weather is unavailable, so these are the standard levels that suit most potted plants.' };
+      const d = wx.daily;
+      const rainSoon = Math.max(d.precipitation_probability_max[0] || 0, d.precipitation_probability_max[1] || 0) >= 60 || (d.precipitation_sum[0] || 0) + (d.precipitation_sum[1] || 0) >= 5;
+      const hot = d.temperature_2m_max[0] >= 34 || (d.et0_fao_evapotranspiration[0] || 0) >= 5;
+      const humid = wx.current.relative_humidity_2m >= 80 && d.temperature_2m_max[0] < 30;
+      if (rainSoon) return { key: 'rain', tag: 'Rain expected', dry: 30, wet: 55, low: 5, high: 90, why: 'Rain will add water to outdoor plants, so let the soil get a little drier before the pump starts and stop lower to avoid waterlogging.' };
+      if (hot) return { key: 'hot', tag: 'Hot & dry', dry: 40, wet: 65, low: 10, high: 95, why: 'Heat and strong sun dry soil fast. Starting earlier keeps the roots from drying out. Water early in the morning if you can.' };
+      if (humid) return { key: 'humid', tag: 'Cool & humid', dry: 30, wet: 55, low: 5, high: 90, why: 'Cool, humid air slows drying. Lower levels stop the soil staying wet, which can cause fungus and root rot.' };
+      return { key: 'normal', tag: 'Mild', dry: 35, wet: 60, low: 5, high: 95, why: 'Mild weather: the standard range works for most potted plants.' };
     }
-    if (/threshold|setting|recommend|should|good for/.test(q)) {
-      const gap = f.wet - f.dry;
-      let t = 'Current settings: start watering below ' + f.dry + '% and stop at ' + f.wet + '%, with a ' + f.maxRunMin + ' min safety limit. ';
-      if (f.dry < 30) t += 'A start level under 30% is quite dry for most potted plants; 30–40% is safer. ';
-      if (f.wet > 75) t += 'Stopping above 75% can waterlog the soil. ';
-      if (gap > 35) t += 'The gap is wide, so each watering will be long. ';
-      if (f.cutoffs) t += 'There were safety cutoffs, so raise the max runtime a little or check the pump flow. ';
-      return t + (f.dry >= 30 && f.wet <= 75 && !f.cutoffs ? 'These settings look good for most potted plants.' : '');
-    }
-    if (/pump|water|usage|how much|run/.test(q)) return 'The pump ran ' + f.waterings + ' time' + (f.waterings === 1 ? '' : 's') + ' in the last 24 hours, ' + f.pumpMin + ' min in total. It is ' + (f.pumpOn ? 'on' : 'off') + ' now, in ' + (f.mode === 'auto' ? 'automatic' : 'manual') + ' mode.';
-    return summary + ' ' + health.split('. ')[0] + '.';
-  }
-  function factsForAI(f) {
-    const n = M.length;
-    const hourly = [];
-    for (let k = Math.max(0, n - DAY); k < n; k += 12) hourly.push(hhmm(tAt(k)) + ' ' + Math.round(M[k]) + '%' + (P[k] ? ' (pump on)' : ''));
-    return {
-      currentTime: hhmm(f.now), moisturePct: +f.moisture.toFixed(1), mode: f.mode, pumpOn: f.pumpOn, safetyLockoutMin: f.lockoutMin,
-      thresholds: { startBelowPct: f.dry, stopAtPct: f.wet, maxRuntimeMin: f.maxRunMin },
-      last24h: { avgPct: +f.avg.toFixed(1), minPct: +f.min.toFixed(1), maxPct: +f.max.toFixed(1), waterings: f.waterings, pumpMinutes: f.pumpMin, safetyCutoffs: f.cutoffs,
-                 timeHealthyPct: Math.round(f.pctGood * 100), timeDryPct: Math.round(f.pctDry * 100), timeWaterloggedPct: Math.round(f.pctSoggy * 100) },
-      leafStress0to1: +f.stress.toFixed(2), healthScore: f.score, healthLabel: f.label,
-      dryingRatePctPerHour: f.dryingRatePerHour != null ? +f.dryingRatePerHour.toFixed(2) : null,
-      predictedHoursUntilStartThreshold: f.hoursToDry != null ? +f.hoursToDry.toFixed(1) : null,
-      predictedNextWateringTime: f.nextWateringAt ? hhmm(f.nextWateringAt) : null,
-      change6hPct: +f.trend6h.toFixed(1), hourlyReadingsLast24h: hourly
-    };
-  }
-  async function ask(q) {
-    q = q.trim(); if (!q) return;
-    addMsg('user', q); chat.push({ role: 'user', text: q });
-    const f = analyze(DAY);
-    if (sampler) {
-      const el = addMsg('bot', 'Thinking…');
-      const prompt = 'You are the AquaSense plant-care assistant inside a smart irrigation app (ESP32 + capacitive soil moisture sensor + relay-driven pump; automatic mode waters below the start threshold and stops at the stop threshold; manual mode lets the user switch the pump). ' +
-        'Answer the user using ONLY the sensor facts below. Be specific with numbers, friendly and brief (under 110 words, plain text, no markdown). When asked about health, give the score and the reasons; when asked to predict, use the drying rate and predicted time. Suggest an action if one is useful.\n\n' +
-        'Sensor facts (JSON):\n' + JSON.stringify(factsForAI(f)) + '\n\n' +
-        'Conversation so far:\n' + chat.slice(-7, -1).map((c) => (c.role === 'user' ? 'User: ' : 'Assistant: ') + c.text).join('\n') + '\n\nUser: ' + q;
+
+    async function loadWeather() {
+      const key = city[0];
+      if (cache[key]) { wx = cache[key]; wxErr = false; render(); return; }
+      $('wxNow').textContent = 'Loading forecast…';
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + city[1] + '&longitude=' + city[2] +
+        '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,et0_fao_evapotranspiration' +
+        '&timezone=auto&forecast_days=3';
       try {
-        const out = await sampler(prompt, { cache: false, modelTier: 'quick', onText: ({ text }) => { el.firstChild.textContent = text; $('msgs').scrollTop = $('msgs').scrollHeight; } });
-        el.firstChild.textContent = out.text;
-        const s = document.createElement('span'); s.className = 'src'; s.textContent = 'AI · based on live readings'; el.appendChild(s);
-        chat.push({ role: 'assistant', text: out.text });
-        return;
-      } catch (err) {
-        el.remove();
-        if (err && err.code === 'not_granted') { sampler = null; setBadge(); }
-      }
+        const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 8000);
+        const r = await fetch(url, { signal: ctrl.signal }); clearTimeout(tm);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        wx = cache[key] = await r.json(); wxErr = false;
+      } catch (e) { wx = null; wxErr = true; }
+      render();
     }
-    const a = localAnswer(q, f);
-    addMsg('bot', a, 'Built-in analysis');
-    chat.push({ role: 'assistant', text: a });
-  }
-  function setBadge() {
-    const b = $('engineBadge');
-    b.textContent = sampler ? 'AI on' : 'Built-in analysis';
-    b.className = 'pill ' + (sampler ? 'on' : 'off');
-  }
-  $('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('chatInput').value; $('chatInput').value = ''; ask(v); });
-  $$('.chips button').forEach((b) => b.addEventListener('click', () => ask(b.dataset.q)));
-  addMsg('bot', 'Hi! I watch your soil moisture and pump. Ask me for a summary, a plant health check or when the next watering will be.');
-  (async () => {
-    try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; }
+
+    function weatherText() {
+      if (!wx) return 'I could not load the weather forecast right now (it needs an internet connection). In general: water more often in hot, sunny, windy weather, and less before rain or in cool, humid weather.';
+      const c = wx.current, d = wx.daily, cl = climate();
+      const days = [0, 1, 2].map((i) => (i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : new Date(d.time[i]).toLocaleDateString('en-IN', { weekday: 'long' })) + ': ' + WMO(d.weather_code[i])[0].toLowerCase() + ', ' + Math.round(d.temperature_2m_min[i]) + '–' + Math.round(d.temperature_2m_max[i]) + '°C, ' + (d.precipitation_probability_max[i] || 0) + '% chance of rain' + (d.et0_fao_evapotranspiration[i] != null ? ', evaporation ' + d.et0_fao_evapotranspiration[i].toFixed(1) + ' mm' : ''));
+      return 'Weather in ' + city[0] + ' now: ' + WMO(c.weather_code)[0].toLowerCase() + ', ' + Math.round(c.temperature_2m) + '°C, humidity ' + c.relative_humidity_2m + '%, wind ' + Math.round(c.wind_speed_10m) + ' km/h.\n\n' + days.join('\n') +
+        '\n\nWhat to do: ' + cl.why + ' Suggested levels: start watering below ' + cl.dry + '%, stop at ' + cl.wet + '%.';
+    }
+    function settingsText() {
+      const cl = climate();
+      return 'Settings that work for most plants:\n' +
+        '• Start watering below 30–40% (35% is a safe default)\n• Stop watering at 55–65% (60% default)\n• Keep at least 10% between the two so the pump does not switch on and off constantly\n• Alert limits: below 5–10% and above 90–95%\n• Pump: about 60–70% power with 45–60 s bursts\n\n' +
+        'Adjust for the soil: sandy soil 35–55%, loamy 35–60%, clay or peat 30–55%.\n\n' +
+        'Right now in ' + city[0] + ' (' + cl.tag.toLowerCase() + '): start below ' + cl.dry + '%, stop at ' + cl.wet + '%, alerts below ' + cl.low + '% and above ' + cl.high + '%. ' + cl.why +
+        '\n\nYou can apply these to all plants with the button on the right, or fine-tune one plant in Settings.';
+    }
+    function kbText(item) {
+      return item.title + '\n\nLikely causes:\n' + item.causes.map((c) => '• ' + c).join('\n') + '\n\nHow to fix it:\n' + item.fix.map((f, i) => (i + 1) + '. ' + f).join('\n') + '\n\n' + item.tip;
+    }
+    function systemCheck() {
+      const list = plantsUI.all(), out = [];
+      const alerting = list.filter((p) => p.alertLow || p.alertHigh);
+      if (alerting.length) out.push('Active alerts on ' + alerting.map((p) => 'Plant ' + p.id + (p.alertLow ? ' (too dry)' : ' (too wet)')).join(', ') + '. Open Your Plants to fix them.');
+      const manual = list.filter((p) => p.mode === 'manual');
+      if (manual.length) out.push(manual.length + ' plant' + (manual.length > 1 ? 's are' : ' is') + ' in manual mode (' + manual.map((p) => p.id).join(', ') + '). They will not be watered automatically.');
+      const zero = list.filter((p) => p.power < 25);
+      if (zero.length) out.push('Very low pump power on ' + zero.map((p) => 'Plant ' + p.id + ' (' + p.power + '%)').join(', ') + '. These plants may never reach their stop level.');
+      const weak = list.filter((p) => p.effObs.length >= 4 && p.effObs.reduce((a, b) => a + b, 0) / p.effObs.length < 0.55);
+      if (weak.length) out.push('Water is not soaking in well on ' + weak.map((p) => 'Plant ' + p.id).join(', ') + '. Over half the water runs off, so lower the power or check for a clog.');
+      const cut = S.cutoffs.filter((i) => i >= M.length - DAY).length;
+      if (cut) out.push('The dashboard plant had ' + cut + ' safety cutoff' + (cut > 1 ? 's' : '') + ' in 24 h. Check the tank and flush the drip line.');
+      const cl = climate();
+      if (cl.key === 'rain') out.push('Rain is expected in ' + city[0] + '. For outdoor plants, consider lowering the levels to ' + cl.dry + '–' + cl.wet + '%.');
+      if (cl.key === 'hot') out.push('Hot weather in ' + city[0] + '. Plants will dry faster than usual; consider raising the levels to ' + cl.dry + '–' + cl.wet + '%.');
+      return out.length ? 'System check, ' + list.length + ' plants + dashboard plant:\n\n' + out.map((t) => '• ' + t).join('\n') : 'System check: everything looks fine. No active alerts, all plants are watering normally, pump power is sensible and there were no safety cutoffs in the last 24 hours.';
+    }
+    function helpText() {
+      return 'I can help with:\n• Weather in your city and how it should change watering\n• Moisture settings that work for most plants\n• Fixing problems: clogged drippers, the pump running with no water, the relay clicking but no pump, wrong sensor readings, the app not updating, the ESP32 restarting, soggy soil, leaks, safety cutoffs\n• A system check across all plants\n\nFor one plant\'s health or thresholds, ask the plant advisor on the Settings page.';
+    }
+    function route(q) {
+      const s = q.toLowerCase();
+      let best = null, score = 0;
+      KB.forEach((k) => { const n = k.kw.filter((w) => s.includes(w)).length; if (n > score) { score = n; best = k; } });
+      if (/system check|check (my|the) system|anything wrong|any problems?|status of (the )?system|check everything/.test(s)) return { kind: 'check', text: systemCheck() };
+      if (best && score >= 1 && !/^what('s| is) the weather/.test(s)) return { kind: 'kb', text: kbText(best), item: best };
+      if (/weather|rain|forecast|temperature|hot|sunny|cloud|humid|wind|today|tomorrow|should i water/.test(s)) return { kind: 'weather', text: weatherText() };
+      if (/setting|threshold|moisture level|what moisture|common|recommend|range|percent|%|start|stop|limit/.test(s)) return { kind: 'settings', text: settingsText() };
+      if (/problem|issue|not working|broken|fix|help|error/.test(s)) return { kind: 'help', text: 'Which part is giving trouble? Here are the common problems I can walk you through:\n\n' + KB.map((k) => '• ' + k.title).join('\n') + '\n\nYou can also ask me to "run a system check".' };
+      return { kind: 'help', text: helpText() };
+    }
+    function addMsg(role, text, src) {
+      const el = document.createElement('div'); el.className = 'msg ' + role; el.textContent = text;
+      if (src) { const s = document.createElement('span'); s.className = 'src'; s.textContent = src; el.appendChild(s); }
+      $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight; return el;
+    }
+    async function ask(q) {
+      q = (q || '').trim(); if (!q) return;
+      addMsg('user', q); chat.push({ role: 'user', text: q });
+      const r = route(q);
+      if (sampler) {
+        const el = addMsg('bot', 'Thinking…');
+        const facts = { city: city[0], weatherNow: wx ? wx.current : null, forecast: wx ? wx.daily : null, suggestedCommonSettings: climate(), knownProblems: KB.map((k) => k.title) };
+        const prompt = 'You are the AquaSense general assistant for a smart drip-irrigation system (ESP32, capacitive soil moisture sensors, relay-driven mini pumps, drip line, cloud database, 12 plants). You give general advice: weather and how it affects watering, sensible moisture settings for most plants, and troubleshooting hardware and software problems such as clogged drippers. ' +
+          'Use the facts and the expert draft below. Keep the draft\'s concrete numbers and steps. Plain text, friendly, under 170 words, short bullet lines allowed with "•".\n\nFacts (JSON):\n' + JSON.stringify(facts) + '\n\nExpert draft:\n' + r.text +
+          '\n\nConversation so far:\n' + chat.slice(-7, -1).map((c) => (c.role === 'user' ? 'User: ' : 'Assistant: ') + c.text).join('\n') + '\n\nUser: ' + q;
+        try {
+          const out = await sampler(prompt, { cache: false, modelTier: 'quick', onText: ({ text }) => { el.firstChild.textContent = text; $('msgs').scrollTop = $('msgs').scrollHeight; } });
+          el.firstChild.textContent = out.text;
+          const s = document.createElement('span'); s.className = 'src'; s.textContent = 'AI'; el.appendChild(s);
+          chat.push({ role: 'assistant', text: out.text }); return;
+        } catch (err) { el.remove(); if (err && err.code === 'not_granted') { sampler = null; setBadge(); } }
+      }
+      addMsg('bot', r.text, 'Built-in knowledge');
+      chat.push({ role: 'assistant', text: r.text });
+    }
+    function render() {
+      const cl = climate();
+      if (wx) {
+        const c = wx.current, d = wx.daily, w = WMO(c.weather_code);
+        $('wxNow').innerHTML = '<span class="wx-ico" aria-hidden="true">' + w[1] + '</span><div><b>' + Math.round(c.temperature_2m) + '°C</b><span>' + w[0] + ' · humidity ' + c.relative_humidity_2m + '% · wind ' + Math.round(c.wind_speed_10m) + ' km/h</span></div>';
+        $('wxDays').innerHTML = [0, 1, 2].map((i) => '<div><span class="label">' + (i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : new Date(d.time[i]).toLocaleDateString('en-IN', { weekday: 'short' })) + '</span><b>' + WMO(d.weather_code[i])[1] + ' ' + Math.round(d.temperature_2m_max[i]) + '°</b><small>💧 ' + (d.precipitation_probability_max[i] || 0) + '% · ' + (d.precipitation_sum[i] || 0).toFixed(1) + ' mm</small></div>').join('');
+        $('wxAdvice').textContent = cl.why;
+      } else {
+        $('wxNow').textContent = wxErr ? 'Weather unavailable. Check your internet connection.' : 'Loading forecast…';
+        $('wxDays').innerHTML = '';
+        $('wxAdvice').textContent = cl.why;
+      }
+      $('climTag').textContent = cl.tag;
+      $('commonSet').innerHTML = [['Start watering below', cl.dry + '%'], ['Stop watering at', cl.wet + '%'], ['Alert if below', cl.low + '%'], ['Alert if above', cl.high + '%']].map((r) => '<li><span>' + r[0] + '</span><b class="mono">' + r[1] + '</b></li>').join('');
+      $('commonWhy').textContent = 'For ' + city[0] + ' today.';
+    }
+    function short() { return wx ? Math.round(wx.current.temperature_2m) + '°C · ' + city[0] : city[0]; }
+    function setBadge() { const b = $('engineBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
+
+    $('city').innerHTML = CITIES.map((c, i) => '<option value="' + i + '">' + c[0] + '</option>').join('');
+    $('city').addEventListener('change', (e) => { city = CITIES[+e.target.value]; loadWeather(); });
+    $('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('chatInput').value; $('chatInput').value = ''; ask(v); });
+    $$('[data-q]').forEach((b) => b.addEventListener('click', () => ask(b.dataset.q)));
+    $('applyCommon').addEventListener('click', () => { const cl = climate(); plantsUI.applyAll({ dry: cl.dry, wet: cl.wet, lowLim: cl.low, highLim: cl.high }, cl.tag); });
+    addMsg('bot', 'Hi! I am the general AquaSense assistant. Ask me about the weather and watering, good moisture settings, or how to fix a problem such as clogged drippers. Try "Run a system check" to scan all your plants.');
+    loadWeather();
+    (async () => { try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; } })();
+    return { render, short, climate };
   })();
+  function setBadge() { const b = $('engineBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
 
   // ---------------- 3D simulation (scroll-driven story) ----------------
   const STEPS = [
@@ -2361,6 +2451,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         b.querySelector('small').textContent = (pl.mode === 'auto' ? 'Auto' : 'Manual') + ' · ' + pl.dry + '–' + pl.wet + '%' + (al ? ' · ⚠ alert' : '');
       });
       $('zNow').style.left = clamp(plants[sel - 1].m, 0, 100) + '%';
+      const hh = plantHealth(plants[sel - 1]), hp = $('edHealth');
+      hp.textContent = 'Health ' + hh.score + '/100';
+      hp.style.color = hh.score >= 80 ? 'var(--ok)' : hh.score >= 55 ? 'var(--warn)' : 'var(--crit)';
       $('setTable').innerHTML = plants.map((pl) => '<tr data-row="' + pl.id + '"' + (pl.id === sel ? ' class="sel"' : '') + '><td>Plant ' + pl.id + '</td><td>' + (pl.mode === 'auto' ? 'Auto' : 'Manual') + '</td><td>' + pl.power + '%</td><td>' + fmtSec(pl.timing) + '</td><td>' + pl.dry + '–' + pl.wet + '%</td><td>&lt;' + pl.lowLim + '% · &gt;' + pl.highLim + '%</td><td>' + (pl.predicted ? SOILS[pl.predicted].name : '<span class="muted">—</span>') + '</td></tr>').join('');
     }
 
@@ -2443,12 +2536,71 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       });
       el.appendChild(document.createElement('br')); el.appendChild(b);
     }
-    async function aiPolish(localText, facts, el) {
+    // ---- plant-specific analysis: health, thresholds, next watering ----
+    const TREC = {
+      sandy: { dry: 35, wet: 55, why: 'Sand drains fast, so start watering a little earlier and stop lower. Extra water just drains past the roots.' },
+      loamy: { dry: 35, wet: 60, why: 'Loam holds water evenly, so the standard 35–60% range works well.' },
+      clay: { dry: 30, wet: 55, why: 'Clay holds water for a long time and gets waterlogged easily, so let it dry a bit more and stop lower.' },
+      potting: { dry: 35, wet: 60, why: 'Potting mix dries fairly quickly but drains well, so the standard range suits it.' },
+      silty: { dry: 30, wet: 55, why: 'Silt holds moisture well but packs down. A lower stop level avoids pooling on top.' },
+      peaty: { dry: 30, wet: 55, why: 'Peat soaks up water like a sponge, so lower levels prevent soggy roots.' }
+    };
+    function plantHealth(pl) {
+      const n = pl.full.length, s = Math.max(0, n - DAY);
+      let dry = 0, soggy = 0, sum = 0, mn = 100, mx = 0;
+      for (let i = s; i < n; i++) { const v = pl.full[i]; sum += v; mn = Math.min(mn, v); mx = Math.max(mx, v); if (v < pl.dry) dry++; else if (v > pl.wet + 15) soggy++; }
+      const cnt = n - s, pd = dry / cnt, ps = soggy / cnt, al = pl.alertLow || pl.alertHigh;
+      const score = Math.round(clamp(100 - 220 * pd - 90 * ps - (al ? 20 : 0) - (pl.power < 10 ? 30 : 0), 0, 100));
+      const waterings = pl.W.filter((w) => w.start >= s).length + (pl.cur && pl.cur.start >= s ? 1 : 0);
+      return { score, label: score >= 80 ? 'Healthy' : score >= 55 ? 'Needs attention' : 'At risk', pd, ps, avg: sum / cnt, min: mn, max: mx, waterings, al };
+    }
+    function nextText(pl) {
+      if (pl.pump) return 'Plant ' + pl.id + ' is being watered right now' + (pl.mode === 'manual' ? ' (manual mode, so turn it off yourself near ' + pl.wet + '%)' : ' and will stop at ' + pl.wet + '%') + '.';
+      const rate = pl.dryObs.length ? avg(pl.dryObs) * dayK() * 12 : null;
+      if (!rate || rate < 0.05) return 'Plant ' + pl.id + ' is barely drying right now, so no watering is due soon.';
+      if (pl.m <= pl.dry) return 'Plant ' + pl.id + ' is already at its ' + pl.dry + '% start level' + (pl.mode === 'manual' ? '. It is in manual mode, so water it now.' : ', so it will be watered on the next check.');
+      const h = (pl.m - pl.dry) / rate, at = tAt(M.length - 1 + Math.round(h * 60 / TICK));
+      return 'Plant ' + pl.id + ' is at ' + Math.round(pl.m) + '% and drying about ' + rate.toFixed(1) + '% per hour, so it will reach its ' + pl.dry + '% start level in about ' + (h < 1 ? Math.round(h * 60) + ' min' : h.toFixed(1) + ' h') + ' (around ' + hhmm(at) + '). ' +
+        (pl.mode === 'auto' ? 'The pump will start by itself then.' : 'It is in manual mode, so you will need to water it yourself.');
+    }
+    function healthText(pl) {
+      const h = plantHealth(pl);
+      let t = 'Plant ' + pl.id + ' health: ' + h.score + '/100 (' + h.label + ').\n\nIn the last 24 hours its moisture averaged ' + Math.round(h.avg) + '% (low ' + Math.round(h.min) + '%, high ' + Math.round(h.max) + '%), and it was watered ' + h.waterings + ' time' + (h.waterings === 1 ? '' : 's') + '. ';
+      t += h.pd > 0.05 ? 'It spent ' + Math.round(h.pd * 100) + '% of the time below its ' + pl.dry + '% start level, which stresses the roots. ' : 'It was rarely below its ' + pl.dry + '% start level. ';
+      if (h.ps > 0.05) t += 'It was waterlogged (above ' + (pl.wet + 15) + '%) ' + Math.round(h.ps * 100) + '% of the time, which risks root rot. ';
+      if (pl.alertLow) t += '\n\n⚠ It has an active alert: it is below ' + pl.lowLim + '% with the pump off. Turn its pump on or switch it to automatic. ';
+      if (pl.alertHigh) t += '\n\n⚠ It has an active alert: it is above ' + pl.highLim + '% with the pump on. Turn the pump off now. ';
+      if (pl.power < 10) t += '\n\nIts pump power is ' + pl.power + '%, which moves almost no water. ';
+      return t + '\n\n' + nextText(pl);
+    }
+    function thresholdAdvice(pl) {
+      const inf = infer(pl); pl.predicted = inf.soil;
+      const r = TREC[inf.soil], low = Math.max(5, r.dry - 20), high = Math.min(95, r.wet + 30);
+      const same = pl.dry === r.dry && pl.wet === r.wet && pl.lowLim === low && pl.highLim === high;
+      const text = 'Plant ' + pl.id + ' looks like ' + SOILS[inf.soil].name.toLowerCase() + ' soil (' + inf.conf + ' confidence).\n\nSuggested levels:\n• Start watering below ' + r.dry + '%\n• Stop watering at ' + r.wet + '%\n• Alert if below ' + low + '% or above ' + high + '%\n\n' + r.why +
+        '\n\nCurrent: ' + pl.dry + '–' + pl.wet + '%, alerts below ' + pl.lowLim + '% / above ' + pl.highLim + '%. ' + (same ? 'That already matches the suggestion.' : 'Press the button to load the suggestion, then Save.');
+      return { text, t: { dry: r.dry, wet: r.wet, lowLim: low, highLim: high }, soil: inf.soil, same };
+    }
+    function thrBtn(el, id, t) {
+      const b = document.createElement('button'); b.className = 'btn apply'; b.textContent = 'Use these levels for Plant ' + id;
+      b.addEventListener('click', () => {
+        if (id !== sel) loadDraft(id);
+        Object.assign(draft, t); syncDraft(); render();
+        toastOk('Levels loaded for Plant ' + id, 'Waters ' + t.dry + '–' + t.wet + '%, alerts below ' + t.lowLim + '% / above ' + t.highLim + '%. Press "Save for Plant ' + id + '" to keep them.');
+      });
+      el.appendChild(document.createElement('br')); el.appendChild(b);
+    }
+    function plantFacts(pl) {
+      const h = plantHealth(pl), inf = infer(pl);
+      return { plant: pl.id, moisturePct: +pl.m.toFixed(1), mode: pl.mode, pumpOn: pl.pump, powerPct: pl.power, timingSec: pl.timing, startBelowPct: pl.dry, stopAtPct: pl.wet, alertBelowPct: pl.lowLim, alertAbovePct: pl.highLim,
+        activeAlert: pl.alertLow ? 'too dry' : pl.alertHigh ? 'too wet' : null, health: h, predictedSoil: SOILS[inf.soil].name, soilConfidence: inf.conf, dryingPctPerHour: inf.dryPerHour && +inf.dryPerHour.toFixed(1), runoffPct: inf.runoffPct, nextWatering: nextText(pl) };
+    }
+    async function aiPolish(localText, facts, el, question) {
       if (!sampler) return false;
       el.firstChild.textContent = 'Thinking…';
       try {
-        const out = await sampler('You are the AquaSense pump advisor. A smart irrigation system has 12 plants, each with its own pump. Pump power is 0–100% (1.5 L/min at 100%) and timing is the length of each watering burst (10 s–2 min 30 s). ' +
-          'Using ONLY the facts below, explain your prediction of the soil type and how it behaves with water, and give the recommended power and timing exactly as provided. Plain text, friendly, under 110 words, no markdown.\n\nFacts (JSON):\n' + JSON.stringify(facts) + '\n\nDraft answer to improve:\n' + localText,
+        const out = await sampler('You are the AquaSense plant advisor. You answer questions about ONE specific plant in a 12-plant smart drip-irrigation system: its health, its moisture thresholds and alert limits, its soil type, its pump power (0–100%, 1.5 L/min at 100%) and burst timing (10 s–2 min 30 s), and when it needs water next. ' +
+          'Using ONLY the facts below, answer the user. Keep any recommended numbers exactly as in the draft. Plain text, friendly, under 120 words.\n\nFacts (JSON):\n' + JSON.stringify(facts) + '\n\nDraft answer:\n' + localText + (question ? '\n\nUser question: ' + question : ''),
           { cache: false, modelTier: 'quick', onText: ({ text }) => { el.firstChild.textContent = text; } });
         el.firstChild.textContent = out.text; return true;
       } catch (err) { if (err && err.code === 'not_granted') { sampler = null; setAdvBadge(); } el.firstChild.textContent = localText; return false; }
@@ -2463,6 +2615,17 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         const ok = await aiPolish(a.text, { plant: pl.id, currentPower: pl.power, currentTimingSec: pl.timing, predictedSoil: SOILS[a.inf.soil].name, confidence: a.inf.conf, dryingPctPerHour: a.inf.dryPerHour && +a.inf.dryPerHour.toFixed(1), runoffPctAtCurrentPower: a.inf.runoffPct, recommendedPower: a.rec.power, recommendedTimingSec: a.rec.timing, reason: a.rec.why }, el);
         const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : 'Built-in analysis'; el.appendChild(s);
         applyBtn(el, 'Use for Plant ' + pl.id, a.rec, a.ids);
+      } else if (kind === 'health' || kind === 'next') {
+        const text = kind === 'health' ? healthText(pl) : nextText(pl);
+        const el = addAdv('bot', text);
+        const ok = await aiPolish(text, plantFacts(pl), el, question);
+        const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : 'Built-in analysis'; el.appendChild(s);
+      } else if (kind === 'thresholds') {
+        const a = thresholdAdvice(pl);
+        const el = addAdv('bot', a.text);
+        const ok = await aiPolish(a.text, Object.assign(plantFacts(pl), { suggestedLevels: a.t }), el, question);
+        const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : 'Built-in analysis'; el.appendChild(s);
+        if (!a.same) thrBtn(el, pl.id, a.t);
       } else if (kind === 'all') {
         const a = adviceAll();
         const el = addAdv('bot', a.text, 'Built-in analysis');
@@ -2486,15 +2649,28 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       e.preventDefault(); const q = $('advInput').value.trim(); if (!q) return; $('advInput').value = '';
       const m = q.match(/plant\s*(\d{1,2})/i);
       if (m && +m[1] >= 1 && +m[1] <= 12) $('advPlant').value = m[1];
-      const kind = /all|every/i.test(q) ? 'all' : /what (do|does|is)|explain|meaning|mean/i.test(q) ? 'explain' : /current|ok|okay|good|right/i.test(q) ? 'current' : 'plant';
+      if (m && +m[1] >= 1 && +m[1] <= 12 && +m[1] !== sel) pick(+m[1]);
+      const kind = /all plants|every plant|all of/i.test(q) ? 'all'
+        : /health|healthy|sick|dying|leaf|leaves|how is|how's|doing|status/i.test(q) ? 'health'
+        : /threshold|start|stop|alert|limit|level|range|moisture setting|what %|percent/i.test(q) ? 'thresholds'
+        : /when|next|predict|dry out|need water|forecast/i.test(q) ? 'next'
+        : /what do|explain|meaning|power and timing/i.test(q) ? 'explain'
+        : /current|ok\b|okay|good|right/i.test(q) ? 'current' : 'plant';
       advAsk(kind, q);
     });
-    addAdv('bot', 'Pick a plant and press "Predict soil & suggest". I will work out its soil type from how fast it dries and how much water it absorbs, then suggest a pump power and timing.');
+    addAdv('bot', 'I answer questions about one plant at a time. Pick a plant on the left (or in the menu below), then ask about its health, its moisture thresholds and alert limits, when it needs water next, or press "Predict soil & suggest" for pump power and timing.');
     setTimeout(setAdvBadge, 0);
     setTimeout(setAdvBadge, 11000);
 
     function series(id) { const pl = plants[id - 1]; return { data: pl.full, pump: pl.fullP, W: pl.W, cur: pl.cur, dry: pl.dry, wet: pl.wet }; }
-    return { renderPlants, renderPumps, badge, activeCount, series };
+    function applyAll(t, why) {
+      plants.forEach((pl) => { Object.assign(pl, t); pl.watering = pl.watering && pl.m < pl.wet; checkAlerts(pl); });
+      loadDraft(sel);
+      toastOk('Applied to all 12 plants', 'Waters ' + t.dry + '–' + t.wet + '%, alerts below ' + t.lowLim + '% / above ' + t.highLim + '% (' + why + ' weather). Pump power and timing were not changed.');
+      render();
+    }
+    const all = () => plants;
+    return { renderPlants, renderPumps, badge, activeCount, series, applyAll, all, health: plantHealth };
   })();
 
   // theme changes
