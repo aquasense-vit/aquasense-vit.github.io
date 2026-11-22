@@ -326,12 +326,34 @@ tr:last-child td { border-bottom: 0; }
 .toast .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 @keyframes tin { from { transform: translateY(-8px); opacity: .3; } to { transform: none; opacity: 1; } }
 
-/* ---------- Pump settings ---------- */
-.pumps { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 960px) { .pumps { grid-template-columns: 1fr; } }
+/* ---------- Settings ---------- */
+.pumps { display: grid; grid-template-columns: 210px minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1200px) { .pumps { grid-template-columns: 210px minmax(0, 1fr); } .pumps > .chat { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .pumps { grid-template-columns: 1fr; } }
+.plant-pick { display: grid; gap: 4px; padding: 8px; position: sticky; top: calc(var(--hdr, 64px) + 12px); }
+.plant-pick button { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; text-align: left; border: 1px solid transparent; background: transparent; color: var(--ink); border-radius: 10px; padding: 8px 10px; cursor: pointer; font: inherit; }
+.plant-pick button:hover { background: var(--sunk); }
+.plant-pick button b { font: 600 .95rem var(--font-body); }
+.plant-pick button .pm { font: 600 .9rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.plant-pick button small { grid-column: 1 / -1; font: .72rem var(--font-mono); color: var(--muted); }
+.plant-pick button[aria-selected="true"] { background: var(--water-soft); border-color: var(--water); }
+.plant-pick button .al { color: var(--crit); }
+@media (max-width: 760px) { .plant-pick { position: static; grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; } }
+.editor .ed-sec { padding-top: 10px; border-top: 1px solid var(--line); margin-top: 4px; color: var(--ink); }
+.setting label { font-weight: 500; }
+.ed-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.ed-acts .pump-btn { width: auto; flex: 1 1 200px; }
+.zones-wrap { display: grid; gap: 6px; }
+.zones { position: relative; height: 14px; border-radius: 7px; }
+.zones i { position: absolute; top: -4px; bottom: -4px; width: 3px; border-radius: 2px; background: var(--ink); transform: translateX(-50%); }
+.zone-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .76rem; color: var(--muted); }
+.zone-key span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; background: var(--c); vertical-align: -1px; }
+.set-table tbody tr { cursor: pointer; }
+.set-table tbody tr:hover td { background: var(--sunk); }
+.set-table tbody tr.sel td { background: var(--water-soft); }
 .setting { display: grid; gap: 8px; }
 .setting .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.setting .big-v { font: 800 2rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.setting .big-v { font: 800 1.7rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
 .setting .scale { display: flex; justify-content: space-between; font: .72rem var(--font-mono); color: var(--muted); }
 .preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .preview > div { background: var(--sunk); border-radius: 10px; padding: 10px 12px; min-width: 0; }
@@ -367,7 +389,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <a href="#overview" data-nav="overview">Overview</a>
       <a href="#dashboard" data-nav="dashboard">Dashboard</a>
       <a href="#plants" data-nav="plants">Your Plants<span class="nav-badge" id="navBadge" hidden>0</span></a>
-      <a href="#pumps" data-nav="pumps">Pump Settings</a>
+      <a href="#pumps" data-nav="pumps">Settings</a>
       <a href="#simulation" data-nav="simulation">3D Simulation</a>
       <a href="#history" data-nav="history">History</a>
       <a href="#assistant" data-nav="assistant">Assistant</a>
@@ -415,9 +437,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#pumps">
-          <span class="label">Pump Settings</span>
-          <span class="live">0–100%</span>
-          <p>Set pump power and watering time, with an AI advisor that predicts how each soil takes water.</p>
+          <span class="label">Settings</span>
+          <span class="live">Per plant</span>
+          <p>Set each plant's pump power, watering time, moisture thresholds and alert limits, with an AI advisor that predicts how its soil takes water.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#simulation">
@@ -602,7 +624,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <div>
           <span class="label">Your plants</span>
           <h2>Every plant, its own pump</h2>
-          <p>Each plant waters itself automatically. Switch any plant to manual to take over its pump. In manual mode you get an alert if a plant drops below 5% with its pump off, or goes above 95% with its pump on.</p>
+          <p>Each plant waters itself automatically. Switch any plant to manual to take over its pump. In manual mode you get an alert if a plant drops below its low limit with its pump off, or goes above its high limit with its pump on. The limits are 5% and 95% unless you change them in Settings.</p>
         </div>
       </div>
       <div class="panel pl-bar">
@@ -623,26 +645,29 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     </div>
   </section>
 
-  <!-- ================= PUMP SETTINGS ================= -->
+  <!-- ================= SETTINGS ================= -->
   <section data-view="pumps" id="view-pumps" hidden>
     <div class="wrap">
       <div class="view-head">
         <div>
-          <span class="label">Pump settings</span>
-          <h2>Power and watering time</h2>
-          <p>Choose how hard the pump pushes water and how long each watering burst lasts. Press Save to pick which plants get the setting.</p>
+          <span class="label">Settings</span>
+          <h2>Plant settings</h2>
+          <p>Pick a plant to change its pump power and timing, the moisture levels where it starts and stops watering, and the levels that trigger an alert.</p>
         </div>
       </div>
       <div class="pumps">
+        <div class="panel plant-pick" id="plantPick" role="listbox" aria-label="Choose a plant"></div>
         <div class="side">
-          <div class="panel panel-pad">
+          <div class="panel panel-pad editor">
+            <div class="row"><h3 id="edTitle" style="font-size:1.35rem">Plant 1</h3><span class="pill lock" id="edDirty" hidden>Unsaved changes</span></div>
+            <span class="label ed-sec">Pump</span>
             <div class="setting">
-              <div class="head"><label for="pPower"><h3>Pump power</h3></label><span class="big-v"><span id="pPowerV">70</span>%</span></div>
+              <div class="head"><label for="pPower">Pump power</label><span class="big-v"><span id="pPowerV">70</span>%</span></div>
               <input type="range" id="pPower" min="0" max="100" step="5" value="70">
               <div class="scale"><span>0% off</span><span>50%</span><span>100% full</span></div>
             </div>
             <div class="setting">
-              <div class="head"><label for="pTime"><h3>Pump timing</h3></label><span class="big-v" id="pTimeV">1 min</span></div>
+              <div class="head"><label for="pTime">Pump timing (each burst)</label><span class="big-v" id="pTimeV">1 min</span></div>
               <input type="range" id="pTime" min="10" max="150" step="5" value="60">
               <div class="scale"><span>10 s</span><span>1 min 20 s</span><span>2 min 30 s</span></div>
             </div>
@@ -651,14 +676,40 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
               <div><span class="label">Flow rate</span><b id="pvFlow">—</b></div>
               <div><span class="label">Run time</span><b id="pvRun">—</b></div>
             </div>
+            <span class="label ed-sec">Soil moisture thresholds</span>
+            <div class="setting">
+              <div class="head"><label for="eDry">Start watering below</label><span class="big-v"><span id="eDryV">35</span>%</span></div>
+              <input type="range" id="eDry" min="10" max="60" step="1" value="35">
+            </div>
+            <div class="setting">
+              <div class="head"><label for="eWet">Stop watering at</label><span class="big-v"><span id="eWetV">60</span>%</span></div>
+              <input type="range" id="eWet" min="30" max="90" step="1" value="60">
+            </div>
+            <span class="label ed-sec">Alert limits (manual mode)</span>
+            <div class="setting">
+              <div class="head"><label for="eLow">Alert if below (pump off)</label><span class="big-v"><span id="eLowV">5</span>%</span></div>
+              <input type="range" id="eLow" min="0" max="30" step="1" value="5">
+            </div>
+            <div class="setting">
+              <div class="head"><label for="eHigh">Alert if above (pump on)</label><span class="big-v"><span id="eHighV">95</span>%</span></div>
+              <input type="range" id="eHigh" min="65" max="100" step="1" value="95">
+            </div>
+            <div class="zones-wrap">
+              <div class="zones" id="zones" aria-hidden="true"><i id="zNow"></i></div>
+              <div class="zone-key" id="zoneKey"></div>
+            </div>
             <p class="warn-box" id="pvWarn" hidden></p>
-            <button class="pump-btn" id="saveSettings">Save…</button>
+            <div class="ed-acts">
+              <button class="pump-btn" id="saveSettings">Save for Plant 1</button>
+              <button class="btn" id="copySettings">Copy to other plants…</button>
+              <button class="btn" id="resetSettings">Reset to defaults</button>
+            </div>
           </div>
           <div class="panel">
-            <div style="padding:16px 18px"><h3>Current settings by plant</h3></div>
+            <div style="padding:16px 18px"><h3>All plants</h3></div>
             <div class="table-wrap">
-              <table style="min-width:480px">
-                <thead><tr><th>Plant</th><th>Mode</th><th>Power</th><th>Timing</th><th>Soil (predicted)</th></tr></thead>
+              <table style="min-width:620px" class="set-table">
+                <thead><tr><th>Plant</th><th>Mode</th><th>Power</th><th>Timing</th><th>Water</th><th>Alerts</th><th>Soil (predicted)</th></tr></thead>
                 <tbody id="setTable"></tbody>
               </table>
             </div>
@@ -1021,8 +1072,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     }
     // thresholds
     ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
-    ctx.strokeStyle = soil; ctx.beginPath(); ctx.moveTo(L, y(S.dry)); ctx.lineTo(W_ - R, y(S.dry)); ctx.stroke();
-    ctx.strokeStyle = water; ctx.beginPath(); ctx.moveTo(L, y(S.wet)); ctx.lineTo(W_ - R, y(S.wet)); ctx.stroke();
+    const tDry = opts.dry !== undefined ? opts.dry : S.dry, tWet = opts.wet !== undefined ? opts.wet : S.wet;
+    if (tDry != null) { ctx.strokeStyle = soil; ctx.beginPath(); ctx.moveTo(L, y(tDry)); ctx.lineTo(W_ - R, y(tDry)); ctx.stroke(); }
+    if (tWet != null) { ctx.strokeStyle = water; ctx.beginPath(); ctx.moveTo(L, y(tWet)); ctx.lineTo(W_ - R, y(tWet)); ctx.stroke(); }
     ctx.setLineDash([]);
     // lines (bucket by pixel when dense)
     const cols = Math.min(n, Math.floor(pw));
@@ -1137,14 +1189,14 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   let histSel = ['main'];
   const COLORS = ['--s1', '--s2', '--s3', '--s4', '--s5'];
   function getSeries(key) {
-    if (key === 'main') return { key, label: 'Dashboard plant', data: M, pump: P, W, cur: S.cur };
+    if (key === 'main') return { key, label: 'Dashboard plant', data: M, pump: P, W, cur: S.cur, dry: S.dry, wet: S.wet };
     const sr = plantsUI.series(+key.slice(1));
     return Object.assign({ key, label: 'Plant ' + key.slice(1) }, sr);
   }
   function statsFor(sr, span) {
     const n = sr.data.length, s = Math.max(0, n - span);
     let sum = 0, mn = 100, mx = 0, good = 0, pt = 0;
-    for (let i = s; i < n; i++) { const v = sr.data[i]; sum += v; mn = Math.min(mn, v); mx = Math.max(mx, v); if (v >= S.dry && v <= S.wet + 15) good++; pt += sr.pump[i]; }
+    for (let i = s; i < n; i++) { const v = sr.data[i]; sum += v; mn = Math.min(mn, v); mx = Math.max(mx, v); if (v >= sr.dry && v <= sr.wet + 15) good++; pt += sr.pump[i]; }
     const waterings = sr.W.filter((w) => w.start >= s).length + (sr.cur && sr.cur.start >= s ? 1 : 0);
     return { avg: sum / (n - s), min: mn, max: mx, waterings, pumpMin: pt * TICK, good: good / (n - s) };
   }
@@ -1193,10 +1245,13 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       $('cmpBody').innerHTML = html;
     }
     $('histLegend').innerHTML = list.map((sr) => '<span><i class="ln" style="border-color:var(' + sr.colorVar + ')"></i>' + sr.label + '</span>').join('') +
-      (single ? '<span><i class="box"></i>Pump running</span>' : '') +
-      '<span><i style="border-color:var(--soil); border-top-style:dashed"></i>Start watering (' + S.dry + '%)</span><span><i style="border-color:var(--water); border-top-style:dashed"></i>Stop watering (' + S.wet + '%)</span>';
+      (single ? '<span><i class="box"></i>Pump running</span>' : '');
+    const same = list.every((sr) => sr.dry === list[0].dry && sr.wet === list[0].wet);
+    const thDry = same ? list[0].dry : null, thWet = same ? list[0].wet : null;
+    if (same) $('histLegend').innerHTML += '<span><i style="border-color:var(--soil); border-top-style:dashed"></i>Start watering (' + thDry + '%)</span><span><i style="border-color:var(--water); border-top-style:dashed"></i>Stop watering (' + thWet + '%)</span>';
+    else $('histLegend').innerHTML += '<span>These plants have different thresholds, so the threshold lines are hidden.</span>';
     histList = list;
-    histGeom = drawSeries($('histChart'), histSpan, { hover: hoverIdx, series: list });
+    histGeom = drawSeries($('histChart'), histSpan, { hover: hoverIdx, series: list, dry: thDry, wet: thWet });
     // watering log for the selected plants
     const rows = [];
     list.forEach((sr) => {
@@ -2052,7 +2107,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     const plants = ORDER.map((soil, i) => ({
       id: i + 1, soil, m: 38 + prand() * 32, mode: 'auto', pump: false, power: 70, timing: 60,
       burst: 0, soak: 0, watering: false, hist: [], predicted: null, alertLow: false, alertHigh: false, dryObs: [], effObs: [],
-      full: [], fullP: [], W: [], cur: null, prevPump: false
+      full: [], fullP: [], W: [], cur: null, prevPump: false,
+      dry: 35, wet: 60, lowLim: 5, highLim: 95
     }));
     const alerts = [];
     const fmtSec = (t) => t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : '');
@@ -2067,9 +2123,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         if (pl.burst > 0) pl.pump = true;
         else {
           pl.pump = false;
-          if (pl.m >= S.wet) pl.watering = false;
+          if (pl.m >= pl.wet) pl.watering = false;
           if (pl.soak > 0) pl.soak--;
-          else if (pl.m < S.dry || (pl.watering && pl.m < S.wet)) { pl.watering = true; pl.burst = Math.max(1, Math.round(pl.timing / 30)); pl.pump = true; }
+          else if (pl.m < pl.dry || (pl.watering && pl.m < pl.wet)) { pl.watering = true; pl.burst = Math.max(1, Math.round(pl.timing / 30)); pl.pump = true; }
         }
       }
       let gain = 0;
@@ -2105,16 +2161,16 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     Object.assign(plants[8], { mode: 'manual', pump: false, m: 11, burst: 0, soak: 0 });
 
     function checkAlerts(pl) {
-      const low = pl.mode === 'manual' && !pl.pump && pl.m < 5;
-      const high = pl.mode === 'manual' && pl.pump && pl.m > 95;
+      const low = pl.mode === 'manual' && !pl.pump && pl.m < pl.lowLim;
+      const high = pl.mode === 'manual' && pl.pump && pl.m > pl.highLim;
       if (low && !pl.alertLow) raise(pl, 'low');
       if (high && !pl.alertHigh) raise(pl, 'high');
       pl.alertLow = low; pl.alertHigh = high;
     }
     function alertText(pl, type) {
       return type === 'low'
-        ? { title: 'Plant ' + pl.id + ': moisture below 5%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is off (manual mode).', act: 'Turn pump on' }
-        : { title: 'Plant ' + pl.id + ': moisture above 95%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is still on (manual mode).', act: 'Turn pump off' };
+        ? { title: 'Plant ' + pl.id + ': moisture below ' + pl.lowLim + '%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is off (manual mode).', act: 'Turn pump on' }
+        : { title: 'Plant ' + pl.id + ': moisture above ' + pl.highLim + '%', body: 'Plant ' + pl.id + ' is at ' + pl.m.toFixed(1) + '% and its pump is still on (manual mode).', act: 'Turn pump off' };
     }
     function raise(pl, type) {
       const a = alertText(pl, type);
@@ -2178,8 +2234,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const w = r.width, h = r.height, y = (v) => 2 + (1 - v / 100) * (h - 4);
       g.clearRect(0, 0, w, h);
       g.setLineDash([3, 3]); g.lineWidth = 1;
-      g.strokeStyle = css('--soil'); g.beginPath(); g.moveTo(0, y(S.dry)); g.lineTo(w, y(S.dry)); g.stroke();
-      g.strokeStyle = css('--water'); g.beginPath(); g.moveTo(0, y(S.wet)); g.lineTo(w, y(S.wet)); g.stroke();
+      g.strokeStyle = css('--soil'); g.beginPath(); g.moveTo(0, y(pl.dry)); g.lineTo(w, y(pl.dry)); g.stroke();
+      g.strokeStyle = css('--water'); g.beginPath(); g.moveTo(0, y(pl.wet)); g.lineTo(w, y(pl.wet)); g.stroke();
       g.setLineDash([]);
       g.beginPath(); pl.hist.forEach((v, i) => { const X = (i / 71) * w; i ? g.lineTo(X, y(v)) : g.moveTo(X, y(v)); });
       g.strokeStyle = css('--ink'); g.lineWidth = 1.6; g.stroke();
@@ -2191,11 +2247,11 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         const alerting = pl.alertLow || pl.alertHigh;
         c.classList.toggle('alerting', alerting);
         const al = f('alert'); al.hidden = !alerting;
-        if (alerting) al.textContent = pl.alertLow ? '⚠ Below 5% and pump is off' : '⚠ Above 95% and pump is on';
+        if (alerting) al.textContent = pl.alertLow ? '⚠ Below ' + pl.lowLim + '% and pump is off' : '⚠ Above ' + pl.highLim + '% and pump is on';
         f('m').textContent = Math.round(pl.m) + '%';
         f('soil').textContent = pl.predicted ? SOILS[pl.predicted].name + ' (predicted)' : 'Soil not analyzed';
-        const bar = f('bar'); bar.style.width = pl.m + '%'; bar.classList.toggle('dry', pl.m < S.dry);
-        f('tDry').style.left = S.dry + '%'; f('tWet').style.left = S.wet + '%';
+        const bar = f('bar'); bar.style.width = pl.m + '%'; bar.classList.toggle('dry', pl.m < pl.dry);
+        f('tDry').style.left = pl.dry + '%'; f('tWet').style.left = pl.wet + '%';
         const pill = f('pill'); pill.className = 'pill ' + (pl.pump ? 'on' : 'off'); pill.textContent = pl.pump ? 'Pump on' : 'Pump off';
         c.querySelector('[data-pact="auto"]').setAttribute('aria-pressed', pl.mode === 'auto');
         c.querySelector('[data-pact="manual"]').setAttribute('aria-pressed', pl.mode === 'manual');
@@ -2203,7 +2259,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         pb.disabled = pl.mode !== 'manual';
         pb.textContent = pl.mode !== 'manual' ? (pl.pump ? 'Watering (automatic)' : 'Automatic') : pl.pump ? 'Turn pump off' : 'Turn pump on';
         pb.classList.toggle('stop', pl.mode === 'manual' && pl.pump);
-        f('set').textContent = 'Power ' + pl.power + '% · ' + fmtSec(pl.timing);
+        f('set').textContent = 'Power ' + pl.power + '% · ' + fmtSec(pl.timing) + ' · waters ' + pl.dry + '–' + pl.wet + '%';
         spark(f('spark'), pl);
       });
       $('plWatering').textContent = plants.filter((p) => p.pump).length;
@@ -2213,7 +2269,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         const pl = plants[a.pid - 1];
         const still = a.type === 'low' ? pl.alertLow : pl.alertHigh;
         return '<li class="' + (still ? '' : 'cleared') + '"><span class="t">' + a.t + '</span><span>' + a.text + (still ? '' : ' · resolved') + '</span><a href="#plants" data-goto="' + a.pid + '">View</a></li>';
-      }).join('') || '<li class="muted">No alerts. Alerts appear here when a plant in manual mode drops below 5% with its pump off, or goes above 95% with its pump on.</li>';
+      }).join('') || '<li class="muted">No alerts. Alerts appear here when a plant in manual mode drops below its low alert limit with its pump off, or goes above its high alert limit with its pump on. Change the limits in Settings.</li>';
     }
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pact]');
@@ -2230,23 +2286,82 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     });
     $('clearAlerts').addEventListener('click', () => { alerts.length = 0; render(); });
 
-    // ----- pump settings -----
-    const draft = { power: 70, timing: 60 };
+    // ----- settings: one plant at a time -----
+    const DEFAULTS = { power: 70, timing: 60, dry: 35, wet: 60, lowLim: 5, highLim: 95 };
+    const FIELDS = Object.keys(DEFAULTS);
+    let sel = 1;
+    const draft = Object.assign({}, DEFAULTS);
+    function loadDraft(id) { sel = id; const pl = plants[id - 1]; FIELDS.forEach((k) => { draft[k] = pl[k]; }); syncDraft(); }
+    const isDirty = () => FIELDS.some((k) => draft[k] !== plants[sel - 1][k]);
     function syncDraft() {
       $('pPower').value = draft.power; $('pTime').value = draft.timing;
+      $('eDry').value = draft.dry; $('eWet').value = draft.wet; $('eLow').value = draft.lowLim; $('eHigh').value = draft.highLim;
       $('pPowerV').textContent = draft.power; $('pTimeV').textContent = fmtSec(draft.timing);
+      $('eDryV').textContent = draft.dry; $('eWetV').textContent = draft.wet; $('eLowV').textContent = draft.lowLim; $('eHighV').textContent = draft.highLim;
       $('pvWater').textContent = mlPerBurst(draft.power, draft.timing) + ' mL';
       $('pvFlow').textContent = (1.5 * draft.power / 100).toFixed(2) + ' L/min';
       $('pvRun').textContent = fmtSec(draft.timing);
       const w = $('pvWarn');
-      const msg = draft.power === 0 ? 'At 0% power the pump will not move any water.' : draft.power >= 85 && draft.timing >= 120 ? 'High power with a long run can flood small pots and wash soil out.' : '';
+      const msg = draft.power === 0 ? 'At 0% power the pump will not move any water, so this plant will never be watered.'
+        : draft.power >= 85 && draft.timing >= 120 ? 'High power with a long run can flood small pots and wash soil out.'
+        : draft.wet >= 80 ? 'Stopping at ' + draft.wet + '% keeps the soil very wet. Most plants prefer 55–70%.'
+        : draft.dry <= 20 ? 'Starting at ' + draft.dry + '% lets the soil get very dry before watering.' : '';
       w.hidden = !msg; w.textContent = msg;
+      // zone bar: alert | dry | good | wet | alert
+      const z = $('zones');
+      z.style.background = 'linear-gradient(to right, var(--crit) 0 ' + draft.lowLim + '%, var(--soil) ' + draft.lowLim + '% ' + draft.dry + '%, var(--ok) ' + draft.dry + '% ' + draft.wet + '%, var(--water) ' + draft.wet + '% ' + draft.highLim + '%, var(--crit) ' + draft.highLim + '% 100%)';
+      $('zNow').style.left = clamp(plants[sel - 1].m, 0, 100) + '%';
+      $('zoneKey').innerHTML = '<span style="--c:var(--crit)">Alert below ' + draft.lowLim + '%</span><span style="--c:var(--soil)">Waters below ' + draft.dry + '%</span><span style="--c:var(--ok)">Healthy ' + draft.dry + '–' + draft.wet + '%</span><span style="--c:var(--water)">Stops at ' + draft.wet + '%</span><span style="--c:var(--crit)">Alert above ' + draft.highLim + '%</span><span>▍ now ' + Math.round(plants[sel - 1].m) + '%</span>';
+      $('edTitle').textContent = 'Plant ' + sel;
+      $('saveSettings').textContent = 'Save for Plant ' + sel;
+      $('edDirty').hidden = !isDirty();
+      $('advPlant').value = sel;
     }
-    $('pPower').addEventListener('input', (e) => { draft.power = +e.target.value; syncDraft(); });
-    $('pTime').addEventListener('input', (e) => { draft.timing = +e.target.value; syncDraft(); });
-    syncDraft();
+    // keep the values consistent: low alert < start < stop < high alert
+    function fix(changed) {
+      if (changed === 'dry') { if (draft.wet < draft.dry + 10) draft.wet = Math.min(90, draft.dry + 10); }
+      if (changed === 'wet') { if (draft.dry > draft.wet - 10) draft.dry = Math.max(10, draft.wet - 10); }
+      if (draft.lowLim >= draft.dry) { if (changed === 'lowLim') draft.dry = Math.min(60, draft.lowLim + 1); else draft.lowLim = Math.max(0, draft.dry - 1); }
+      if (draft.highLim <= draft.wet) { if (changed === 'highLim') draft.wet = Math.max(30, draft.highLim - 1); else draft.highLim = Math.min(100, draft.wet + 1); }
+      if (draft.wet < draft.dry + 10) draft.dry = Math.max(10, draft.wet - 10);
+    }
+    [['pPower', 'power'], ['pTime', 'timing'], ['eDry', 'dry'], ['eWet', 'wet'], ['eLow', 'lowLim'], ['eHigh', 'highLim']].forEach(([id, k]) => {
+      $(id).addEventListener('input', (e) => { draft[k] = +e.target.value; fix(k); syncDraft(); });
+    });
+    function toastOk(title, body) {
+      const t = document.createElement('div'); t.className = 'toast'; t.style.borderColor = 'var(--ok)';
+      t.innerHTML = '<b></b><p></p>'; t.querySelector('b').textContent = title; t.querySelector('p').textContent = body;
+      $('toasts').prepend(t); setTimeout(() => t.remove(), 5000);
+    }
+    const summary = (d) => 'Power ' + d.power + '% · ' + fmtSec(d.timing) + ' · waters ' + d.dry + '–' + d.wet + '% · alerts below ' + d.lowLim + '% / above ' + d.highLim + '%';
+    function applyTo(ids, pumpOnly) {
+      ids.forEach((id) => {
+        const pl = plants[id - 1];
+        (pumpOnly ? ['power', 'timing'] : FIELDS).forEach((k) => { pl[k] = draft[k]; });
+        pl.watering = pl.watering && pl.m < pl.wet; checkAlerts(pl);
+      });
+    }
+    $('saveSettings').addEventListener('click', () => { applyTo([sel]); syncDraft(); toastOk('Plant ' + sel + ' saved', summary(draft)); render(); });
+    $('resetSettings').addEventListener('click', () => { Object.assign(draft, DEFAULTS); syncDraft(); });
+    $('plantPick').innerHTML = plants.map((pl) => '<button role="option" data-pick="' + pl.id + '"><b>Plant ' + pl.id + '</b><span class="pm">—</span><small>—</small></button>').join('');
+    function pick(id) {
+      if (id === sel) return;
+      if (isDirty()) toastOk('Changes to Plant ' + sel + ' not saved', 'You moved to Plant ' + id + ' without saving.');
+      loadDraft(id); render();
+    }
+    $('plantPick').addEventListener('click', (e) => { const b = e.target.closest('[data-pick]'); if (b) pick(+b.dataset.pick); });
+    $('setTable').addEventListener('click', (e) => { const tr = e.target.closest('[data-row]'); if (tr) { pick(+tr.dataset.row); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
+    loadDraft(1);
     function renderPumps() {
-      $('setTable').innerHTML = plants.map((pl) => '<tr><td>Plant ' + pl.id + '</td><td>' + (pl.mode === 'auto' ? 'Automatic' : 'Manual') + '</td><td>' + pl.power + '%</td><td>' + fmtSec(pl.timing) + '</td><td>' + (pl.predicted ? SOILS[pl.predicted].name : '<span class="muted">—</span>') + '</td></tr>').join('');
+      $$('#plantPick [data-pick]').forEach((b) => {
+        const pl = plants[+b.dataset.pick - 1], al = pl.alertLow || pl.alertHigh;
+        b.setAttribute('aria-selected', pl.id === sel);
+        b.querySelector('.pm').textContent = Math.round(pl.m) + '%';
+        b.querySelector('.pm').className = 'pm' + (al ? ' al' : '');
+        b.querySelector('small').textContent = (pl.mode === 'auto' ? 'Auto' : 'Manual') + ' · ' + pl.dry + '–' + pl.wet + '%' + (al ? ' · ⚠ alert' : '');
+      });
+      $('zNow').style.left = clamp(plants[sel - 1].m, 0, 100) + '%';
+      $('setTable').innerHTML = plants.map((pl) => '<tr data-row="' + pl.id + '"' + (pl.id === sel ? ' class="sel"' : '') + '><td>Plant ' + pl.id + '</td><td>' + (pl.mode === 'auto' ? 'Auto' : 'Manual') + '</td><td>' + pl.power + '%</td><td>' + fmtSec(pl.timing) + '</td><td>' + pl.dry + '–' + pl.wet + '%</td><td>&lt;' + pl.lowLim + '% · &gt;' + pl.highLim + '%</td><td>' + (pl.predicted ? SOILS[pl.predicted].name : '<span class="muted">—</span>') + '</td></tr>').join('');
     }
 
     // save dialog
@@ -2259,12 +2374,14 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       $('saveApply').disabled = n === 0;
       $('saveApply').textContent = n ? 'Apply to ' + n + (n === 1 ? ' plant' : ' plants') : 'Apply';
     }
-    function openSave(preselect) {
+    let savePumpOnly = false;
+    function openSave(preselect, pumpOnly) {
+      savePumpOnly = !!pumpOnly;
       boxes().forEach((b) => { b.checked = !!(preselect && preselect.includes(+b.value)); });
-      $('saveSummary').textContent = 'Power ' + draft.power + '% · timing ' + fmtSec(draft.timing) + ' per watering burst.';
+      $('saveSummary').textContent = pumpOnly ? 'Power ' + draft.power + '% · timing ' + fmtSec(draft.timing) + ' per watering burst. Thresholds and alert limits stay as they are.' : summary(draft) + '.';
       syncAll(); modal.hidden = false; $('saveCancel').focus();
     }
-    $('saveSettings').addEventListener('click', () => openSave());
+    $('copySettings').addEventListener('click', () => openSave([sel]));
     $('plantChecks').addEventListener('change', syncAll);
     $('allPlants').addEventListener('change', (e) => { boxes().forEach((b) => { b.checked = e.target.checked; }); syncAll(); });
     $('saveCancel').addEventListener('click', () => { modal.hidden = true; });
@@ -2272,17 +2389,16 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) modal.hidden = true; });
     $('saveApply').addEventListener('click', () => {
       const ids = boxes().filter((b) => b.checked).map((b) => +b.value);
-      ids.forEach((id) => { plants[id - 1].power = draft.power; plants[id - 1].timing = draft.timing; });
+      applyTo(ids, savePumpOnly);
       modal.hidden = true;
-      const t = document.createElement('div'); t.className = 'toast'; t.style.borderColor = 'var(--ok)';
-      t.innerHTML = '<b>Settings saved</b><p></p>';
-      t.querySelector('p').textContent = 'Power ' + draft.power + '% · ' + fmtSec(draft.timing) + ' applied to ' + (ids.length === plants.length ? 'all plants' : 'Plant ' + ids.join(', '));
-      $('toasts').prepend(t); setTimeout(() => t.remove(), 5000);
+      toastOk('Settings saved', (savePumpOnly ? 'Power ' + draft.power + '% · ' + fmtSec(draft.timing) : summary(draft)) + ' applied to ' + (ids.length === plants.length ? 'all plants' : 'Plant ' + ids.join(', ')));
+      if (ids.includes(sel)) loadDraft(sel);
       render();
     });
 
     // ----- pump advisor -----
     $('advPlant').innerHTML = plants.map((pl) => '<option value="' + pl.id + '">Plant ' + pl.id + '</option>').join('');
+    $('advPlant').addEventListener('change', (e) => pick(+e.target.value));
     function infer(pl) {
       const dr = pl.dryObs.length ? avg(pl.dryObs) : null;
       const ef = pl.effObs.length ? avg(pl.effObs) : null;
@@ -2318,7 +2434,13 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     }
     function applyBtn(el, label, rec, ids) {
       const b = document.createElement('button'); b.className = 'btn apply'; b.textContent = label;
-      b.addEventListener('click', () => { draft.power = rec.power; draft.timing = rec.timing; syncDraft(); openSave(ids); });
+      b.addEventListener('click', () => {
+        if (ids.length === 1) {
+          if (ids[0] !== sel) loadDraft(ids[0]);
+          draft.power = rec.power; draft.timing = rec.timing; syncDraft(); render();
+          toastOk('Suggestion loaded for Plant ' + ids[0], 'Power ' + rec.power + '% · ' + fmtSec(rec.timing) + '. Press "Save for Plant ' + ids[0] + '" to keep it.');
+        } else { draft.power = rec.power; draft.timing = rec.timing; syncDraft(); openSave(ids, true); }
+      });
       el.appendChild(document.createElement('br')); el.appendChild(b);
     }
     async function aiPolish(localText, facts, el) {
@@ -2371,7 +2493,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     setTimeout(setAdvBadge, 0);
     setTimeout(setAdvBadge, 11000);
 
-    function series(id) { const pl = plants[id - 1]; return { data: pl.full, pump: pl.fullP, W: pl.W, cur: pl.cur }; }
+    function series(id) { const pl = plants[id - 1]; return { data: pl.full, pump: pl.fullP, W: pl.W, cur: pl.cur, dry: pl.dry, wet: pl.wet }; }
     return { renderPlants, renderPumps, badge, activeCount, series };
   })();
 
