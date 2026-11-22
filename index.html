@@ -219,7 +219,13 @@ table.cmp tr.diff td { background: var(--sunk); font-family: var(--font-mono); f
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 0; }
 .legend .ln { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 6px; }
 /* 3D story */
-.story { position: relative; height: calc(8 * 75vh + 100vh); }
+.story { position: relative; height: calc(13 * 70vh + 100vh); }
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chapters button { font: 600 .88rem var(--font-body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px 7px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.chapters button b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sunk); font: 600 .75rem var(--font-mono); }
+.chapters button[aria-pressed="true"] { color: var(--ink); border-color: var(--water); }
+.chapters button[aria-pressed="true"] b { background: var(--water); color: #fff; }
+.story-rail li.sep { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .story-stage { position: sticky; top: calc(var(--hdr, 64px) + 8px); height: calc(100vh - var(--hdr, 64px) - 24px); min-height: 420px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--sunk); }
 .story-stage canvas { display: block; width: 100%; height: 100%; }
 .story-card { position: absolute; left: 16px; bottom: 16px; width: min(400px, calc(100% - 96px)); background: color-mix(in srgb, var(--surface) 94%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; box-shadow: 0 10px 30px -16px rgba(0,0,0,.4); }
@@ -688,22 +694,27 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <div class="view-head">
         <div>
           <span class="label">3D virtual simulation</span>
-          <h2>One watering cycle, step by step</h2>
-          <p>Scroll down to move through the eight steps, from dry soil to a watered plant. Scroll back up to rewind, or press Play.</p>
+          <h2>How AquaSense waters a plant</h2>
+          <p>Scroll down to move through each step. Scroll back up to rewind, or press Play. Chapter 1 shows automatic watering. Chapter 2 shows you taking control in manual mode.</p>
         </div>
         <button class="btn primary" id="storyPlay">▶ Play</button>
+      </div>
+      <div class="chapters" role="group" aria-label="Chapters">
+        <button data-chapter="0" aria-pressed="true"><b>1</b> Automatic watering</button>
+        <button data-chapter="8" aria-pressed="false"><b>2</b> Manual control</button>
       </div>
       <div class="story" id="story">
         <div class="story-stage" id="simStage">
           <canvas id="simCanvas" aria-label="3D model of the AquaSense irrigation system"></canvas>
           <div class="sim-labels" id="simLabels"></div>
           <div class="sim-hud">
-            <div><span class="label">Step</span><b id="hudStep">1 / 8</b></div>
+            <div><span class="label">Step</span><b id="hudStep">1 / 13</b></div>
             <div><span class="label">Moisture</span><b id="hudM">62%</b></div>
             <div><span class="label">Pump</span><b id="hudPump">Off</b></div>
+            <div><span class="label">Mode</span><b id="hudMode">Auto</b></div>
           </div>
           <div class="story-card" id="storyCard" aria-live="polite">
-            <span class="label" id="scStep">Step 1 of 8</span>
+            <span class="label" id="scStep">Step 1 of 13</span>
             <h3 id="scTitle">—</h3>
             <p id="scText">—</p>
             <div class="story-prog"><i id="scBar"></i></div>
@@ -714,7 +725,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         </div>
       </div>
       <div class="story-end">
-        <p>That is one full cycle. AquaSense repeats it whenever the soil drops below the threshold.</p>
+        <p>That's the full story: AquaSense waters on its own, and you can take over whenever you want.</p>
         <button class="btn" id="storyReplay">↺ Replay from the start</button>
       </div>
     </div>
@@ -1387,13 +1398,19 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     { title: 'The soil dries out', text: 'Sun and air pull water out of the soil. Moisture falls from 62% towards the 35% threshold, the surface cracks and the plant starts to droop.' },
     { title: 'The sensor detects it', text: 'The capacitive sensor in the root zone measures the soil. Its reading drops to 31%, which is below the 35% threshold.' },
     { title: 'The ESP32 decides', text: 'The reading travels down the wire to the ESP32. It compares 31% with the 35% threshold and decides the plant needs water.' },
-    { title: 'Data goes to the app', text: 'Over Wi-Fi the ESP32 sends the reading to the cloud, and your phone shows "Moisture low: watering started".' },
+    { title: 'Saved to the cloud database', text: 'Over Wi-Fi the ESP32 writes the reading into the cloud database. The database pushes it to your phone, which shows "Moisture low!".' },
     { title: 'The pump switches on', text: 'The ESP32 sets its output pin high. The relay clicks closed and the mini pump starts spinning.' },
     { title: 'Water flows to the drippers', text: 'The pump pulls water from the tank and pushes it through the pipe into the drip line above the soil.' },
     { title: 'Drips raise the moisture', text: 'Each dripper releases slow drops right above the roots. The wet zone spreads down through the soil and moisture climbs from 31% to 60%.' },
-    { title: 'Target reached, pump off', text: 'The sensor reads 61%, above the 60% stop level. The ESP32 opens the relay, the pump stops, the drips end and the app shows the plant is watered.' }
+    { title: 'Target reached, pump off', text: 'The sensor reads 61%, above the 60% stop level. The ESP32 opens the relay, the pump stops, and the database and app record that the plant is watered.' },
+    { title: 'You switch to manual', text: 'You open the app and tap Manual. The choice is saved in the cloud database, which passes it to the ESP32. Now the pump only does what you tell it.' },
+    { title: 'You turn the pump on', text: 'You tap "Turn pump ON". The command goes from your phone to the database and down to the ESP32, which closes the relay and starts the pump.' },
+    { title: 'Watering under your control', text: 'The soil keeps getting wetter. In automatic mode the pump would stop at 60%, but in manual mode it keeps running until you stop it. Above 95% the app would alert you.' },
+    { title: 'You turn the pump off', text: 'At 84% you tap "Turn pump OFF". The ESP32 opens the relay, the pump stops and the drip line drains.' },
+    { title: 'Back to automatic', text: 'You tap Auto. The ESP32 goes back to watching the thresholds and will water again on its own when the soil drops below 35%.' }
   ];
   const sim3d = (function () {
+    const N = STEPS.length;
     let ready = false, failed = false, started = false, renderer, scene, camera;
     const R = {}, labels = {};
     let prog = 0, lastK = -1, playing = false, playY = 0, screenKey = '', last = performance.now(), time = 0;
@@ -1401,38 +1418,70 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     const c01 = (x) => clamp(x, 0, 1);
     const SOIL_B = 0.08, SOIL_H = 1.6, TOP = SOIL_B + SOIL_H, DRIP_Y = TOP + 0.6, LINE_Z = 0.15;
     const EMIT = [-0.25, -0.9, -1.55, -2.2];
-    const KEYS = [
-      { p: [5.2, 5.0, 7.6], t: [-0.9, 1.5, 0] },
-      { p: [1.6, 3.1, 4.4], t: [-0.3, 1.4, 0.4] },
-      { p: [5.6, 2.8, 4.6], t: [2.4, 0.7, 1.0] },
-      { p: [9.5, 8.6, 9.6], t: [3.0, 3.4, -0.6] },
-      { p: [6.6, 2.6, 2.2], t: [3.6, 0.4, -0.9] },
-      { p: [6.4, 5.4, 6.6], t: [1.4, 1.9, -0.4] },
-      { p: [-0.9, 2.8, 5.0], t: [-1.0, 1.35, 0] },
-      { p: [7.8, 6.6, 10.6], t: [1.4, 1.9, 0] }
-    ];
+    const CAM = {
+      soil: [[5.2, 5.0, 7.6], [-0.9, 1.5, 0]], sensor: [[1.6, 3.1, 4.4], [-0.3, 1.4, 0.4]], esp: [[5.6, 2.8, 4.6], [2.4, 0.7, 1.0]],
+      cloud: [[9.5, 8.6, 9.6], [3.0, 3.6, -0.6]], relay: [[6.6, 2.6, 2.2], [3.6, 0.4, -0.9]], pipe: [[6.4, 5.4, 6.6], [1.4, 1.9, -0.4]],
+      drip: [[-0.9, 2.8, 5.0], [-1.0, 1.35, 0]], wide: [[7.8, 6.6, 10.6], [1.6, 2.2, 0]],
+      phone: [[3.55, 4.6, 5.2], [6.0, 3.9, 1.6]], med: [[9.6, 5.0, 7.6], [4.4, 2.3, 0.3]]
+    };
+    // camera keyframes on the story timeline: [position on timeline, camera key]
+    const KF = [];
+    ['soil', 'sensor', 'esp', 'cloud', 'relay', 'pipe', 'drip', 'wide'].forEach((key, k) => { KF.push([k, key], [k + 0.6, key]); });
+    KF.push([8, 'phone'], [8.6, 'phone'], [9, 'phone'], [9.42, 'phone'], [9.62, 'med'], [9.85, 'med'], [10, 'drip'], [10.6, 'drip'],
+      [11, 'phone'], [11.4, 'phone'], [11.6, 'med'], [11.85, 'med'], [12, 'phone'], [12.45, 'phone'], [12.8, 'wide'], [13, 'wide']);
+    const HOT = [['soil'], ['sensor'], ['sensor', 'esp'], ['esp', 'cloud', 'db', 'app'], ['esp', 'relay', 'pump'], ['pump', 'drip'], ['drip', 'soil'], ['sensor', 'db', 'app'],
+      ['app', 'db', 'esp'], ['app', 'db', 'esp', 'relay', 'pump'], ['drip', 'soil', 'app'], ['app', 'db', 'relay', 'pump'], ['app', 'db', 'esp']];
 
     function story(p) {
-      p = clamp(p, 0, 8);
+      p = clamp(p, 0, N);
       let k = Math.floor(p), t = p - k;
-      if (k > 7) { k = 7; t = 1; }
-      const s = { k, t };
-      s.m = k === 0 ? 62 - 31 * ease(t) : k < 6 ? 31 : k === 6 ? 31 + 30 * ease(t) : 61;
-      s.stress = k === 0 ? 0.85 * ease(t) : k < 6 ? 0.85 : k === 6 ? 0.85 * (1 - ease(t)) : 0;
-      s.crack = k === 0 ? c01((t - 0.3) / 0.6) : k < 6 ? 1 : k === 6 ? 1 - c01(t * 2) : 0;
-      s.evap = k === 0 && t < 0.97;
-      s.sense = k === 1 || (k === 7 && t < 0.45);
-      s.wireT = k === 2 ? c01(t / 0.5) : (k === 7 && t < 0.4 ? c01(t / 0.3) : -1);
-      s.espMsg = k === 2 && t > 0.45 ? '31% < 35%  →  water' : k === 7 && t > 0.2 && t < 0.8 ? '61% ≥ 60%  →  stop' : '';
-      s.netT = k === 3 ? t : k === 7 ? c01((t - 0.35) / 0.65) : -1;
-      s.relayT = k === 4 ? c01(t / 0.55) : -1;
-      s.relayOn = (k === 4 && t >= 0.4) || k === 5 || k === 6 || (k === 7 && t < 0.35);
-      s.pumpOn = (k === 4 && t >= 0.55) || k === 5 || k === 6 || (k === 7 && t < 0.35);
-      s.fill = k < 5 ? 0 : k === 5 ? ease(c01(t / 0.9)) : k === 6 ? 1 : c01(1 - (t - 0.35) / 0.4);
-      s.drip = (k === 5 && t > 0.88) || k === 6 || (k === 7 && t < 0.4);
-      s.wet = k < 5 ? 0 : k === 5 ? (t > 0.9 ? (t - 0.9) * 0.4 : 0) : k === 6 ? 0.04 + 0.96 * ease(t) : 1;
-      s.screen = (k < 3 || (k === 3 && t < 0.65)) ? 'ok' : (k === 3 || (k === 4 && t < 0.55)) ? 'low' : (k < 7 || t < 0.35) ? 'water' : 'done';
-      s.hot = [['soil'], ['sensor'], ['sensor', 'esp'], ['esp', 'cloud', 'app'], ['esp', 'relay', 'pump'], ['pump', 'drip'], ['drip', 'soil'], ['sensor', 'app']][k];
+      if (k > N - 1) { k = N - 1; t = 1; }
+      const s = { k, t, mode: 'auto', thumb: null, approach: 0, press: 0, cmdT: -1, netT: -1, wireT: -1, relayT: -1, espMsg: '',
+        relayOn: false, pumpOn: false, fill: 0, drip: false, wet: 0, stress: 0, crack: 0, evap: false, sense: false, screen: 'ok', m: 61 };
+      if (k <= 7) {
+        s.m = k === 0 ? 62 - 31 * ease(t) : k < 6 ? 31 : k === 6 ? 31 + 30 * ease(t) : 61;
+        s.stress = k === 0 ? 0.85 * ease(t) : k < 6 ? 0.85 : k === 6 ? 0.85 * (1 - ease(t)) : 0;
+        s.crack = k === 0 ? c01((t - 0.3) / 0.6) : k < 6 ? 1 : k === 6 ? 1 - c01(t * 2) : 0;
+        s.evap = k === 0 && t < 0.97;
+        s.sense = k === 1 || (k === 7 && t < 0.45);
+        s.wireT = k === 2 ? c01(t / 0.5) : (k === 7 && t < 0.4 ? c01(t / 0.3) : -1);
+        s.espMsg = k === 2 && t > 0.45 ? '31% < 35%  →  water' : k === 7 && t > 0.2 && t < 0.8 ? '61% ≥ 60%  →  stop' : '';
+        s.netT = k === 3 ? t : k === 7 ? c01((t - 0.35) / 0.65) : -1;
+        s.relayT = k === 4 ? c01(t / 0.55) : -1;
+        s.relayOn = (k === 4 && t >= 0.4) || k === 5 || k === 6 || (k === 7 && t < 0.35);
+        s.pumpOn = (k === 4 && t >= 0.55) || k === 5 || k === 6 || (k === 7 && t < 0.35);
+        s.fill = k < 5 ? 0 : k === 5 ? ease(c01(t / 0.9)) : k === 6 ? 1 : c01(1 - (t - 0.35) / 0.4);
+        s.drip = (k === 5 && t > 0.88) || k === 6 || (k === 7 && t < 0.4);
+        s.wet = k < 5 ? 0 : k === 5 ? (t > 0.9 ? (t - 0.9) * 0.4 : 0) : k === 6 ? 0.04 + 0.96 * ease(t) : 1;
+        s.screen = (k < 3 || (k === 3 && t < 0.65)) ? 'ok' : (k === 3 || (k === 4 && t < 0.55)) ? 'low' : (k < 7 || t < 0.35) ? 'water' : 'done';
+      } else {
+        s.mode = 'manual';
+        const tap = (a0, a1, p0, p1) => {
+          s.approach = ease(c01((t - a0) / (a1 - a0))) * (1 - ease(c01((t - p1 - 0.04) / 0.2)));
+          s.press = t >= p0 && t < p1 ? Math.sin(Math.PI * (t - p0) / (p1 - p0)) : 0;
+        };
+        if (k === 8) {
+          s.m = 61 - 11 * ease(t); s.wet = 1 - 0.5 * ease(t); s.thumb = 'manual'; tap(0.08, 0.36, 0.36, 0.48);
+          s.mode = t > 0.42 ? 'manual' : 'auto'; s.cmdT = c01((t - 0.48) / 0.4); if (t > 0.88) s.espMsg = 'Mode: MANUAL';
+        } else if (k === 9) {
+          s.m = 50; s.wet = 0.5; s.thumb = 'pump'; tap(0.05, 0.26, 0.26, 0.36);
+          s.cmdT = c01((t - 0.36) / 0.32); if (t > 0.68 && t < 0.95) s.espMsg = 'App says: pump ON';
+          s.relayT = t > 0.68 ? c01((t - 0.68) / 0.12) : -1; s.relayOn = t > 0.76; s.pumpOn = t > 0.78;
+          s.fill = ease(c01((t - 0.78) / 0.2)); s.drip = t > 0.97; s.screen = t > 0.78 ? 'water' : 'ok';
+        } else if (k === 10) {
+          s.m = 50 + 34 * ease(t); s.wet = 0.5 + 0.5 * ease(t); s.relayOn = s.pumpOn = true; s.fill = 1; s.drip = true; s.screen = 'water';
+          s.netT = (t * 2.5) % 1; if (t > 0.5) s.espMsg = 'Auto would stop at 60% · manual keeps going';
+        } else if (k === 11) {
+          s.m = 84; s.wet = 1; s.thumb = 'pump'; tap(0.05, 0.26, 0.26, 0.36);
+          s.cmdT = c01((t - 0.36) / 0.32); if (t > 0.68 && t < 0.95) s.espMsg = 'App says: pump OFF';
+          s.relayT = t > 0.68 ? c01((t - 0.68) / 0.1) : -1;
+          s.relayOn = s.pumpOn = t < 0.74; s.fill = t < 0.74 ? 1 : 1 - ease(c01((t - 0.74) / 0.24)); s.drip = t < 0.77; s.screen = t < 0.74 ? 'water' : 'ok';
+        } else {
+          s.m = 84 - 4 * ease(t); s.wet = 1; s.thumb = 'auto'; tap(0.05, 0.28, 0.28, 0.38);
+          s.mode = t > 0.33 ? 'auto' : 'manual'; s.cmdT = c01((t - 0.38) / 0.38); if (t > 0.8) s.espMsg = 'Mode: AUTO · waters below 35%';
+        }
+      }
+      s.hot = HOT[k];
       return s;
     }
 
@@ -1442,12 +1491,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const r = $('story').getBoundingClientRect();
       const stageH = $('simStage').offsetHeight;
       const total = Math.max(1, r.height - stageH);
-      return { total, startY: window.scrollY + r.top - hdr, prog: c01((hdr - r.top) / total) * 8 };
+      return { total, startY: window.scrollY + r.top - hdr, prog: c01((hdr - r.top) / total) * N };
     }
-    function jump(i) { const g = geom(); stopPlay(); window.scrollTo({ top: g.startY + (i === 0 ? 0.02 : i + 0.5) / 8 * g.total, behavior: 'smooth' }); }
+    function jump(i) { const g = geom(); stopPlay(); window.scrollTo({ top: g.startY + (i === 0 ? 0.02 : i + 0.5) / N * g.total, behavior: 'smooth' }); }
     function startPlay() {
       const g = geom();
-      if (g.prog >= 7.95) window.scrollTo(0, g.startY);
+      if (g.prog >= N - 0.05) window.scrollTo(0, g.startY);
       else if (g.prog <= 0.01) window.scrollTo(0, g.startY + 2);
       playY = window.scrollY; playing = true; $('storyPlay').textContent = '❚❚ Pause';
     }
@@ -1455,8 +1504,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     $('storyPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
     $('storyReplay').addEventListener('click', () => { const g = geom(); window.scrollTo(0, g.startY); setTimeout(startPlay, 350); });
     ['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { if (playing) stopPlay(); }, { passive: true }));
-    $('storyRail').innerHTML = STEPS.map((s, i) => '<li><button data-step="' + i + '" aria-label="Step ' + (i + 1) + ': ' + s.title + '"><span>' + (i + 1) + '. ' + s.title + '</span></button></li>').join('');
+    $('storyRail').innerHTML = STEPS.map((s, i) => '<li' + (i === 8 ? ' class="sep"' : '') + '><button data-step="' + i + '" aria-label="Step ' + (i + 1) + ': ' + s.title + '"><span>' + (i + 1) + '. ' + s.title + '</span></button></li>').join('');
     $('storyRail').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) jump(+b.dataset.step); });
+    $$('[data-chapter]').forEach((b) => b.addEventListener('click', () => jump(+b.dataset.chapter)));
 
     function fail() { failed = true; $('simFallback').hidden = false; }
     function init() {
@@ -1470,11 +1520,13 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-      R.camPos = new THREE.Vector3().fromArray(KEYS[0].p);
-      R.camTgt = new THREE.Vector3().fromArray(KEYS[0].t);
-      R.v = new THREE.Vector3(); R.v2 = new THREE.Vector3();
+      camera = new THREE.PerspectiveCamera(40, 1, 0.1, 120);
+      R.camPos = new THREE.Vector3().fromArray(CAM.soil[0]);
+      R.camTgt = new THREE.Vector3().fromArray(CAM.soil[1]);
+      R.v = new THREE.Vector3(); R.v2 = new THREE.Vector3(); R.tmp = new THREE.Vector3(); R.up = new THREE.Vector3(0, 1, 0);
       camera.position.copy(R.camPos); camera.lookAt(R.camTgt);
       build();
       applyTheme();
@@ -1501,77 +1553,130 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       $('simLabels').appendChild(el);
       labels[key] = { el, pos: V(pos) };
     }
+    function canvasTex(w, h, draw, repeat) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+      if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); }
+      return t;
+    }
+    const woodTex = (rep) => canvasTex(256, 256, (g, w, h) => {
+      const rnd = mulberry(11);
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 2) {
+        const v = 200 + Math.sin(y * 0.11) * 18 + rnd() * 22;
+        g.fillStyle = 'rgb(' + v + ',' + (v * 0.93) + ',' + (v * 0.86) + ')'; g.fillRect(0, y, w, 2);
+      }
+      g.strokeStyle = 'rgba(90,55,30,0.18)';
+      for (let n = 0; n < 14; n++) { g.lineWidth = 1 + rnd() * 2; g.beginPath(); const y0 = rnd() * h; g.moveTo(0, y0); for (let x = 0; x <= w; x += 16) g.lineTo(x, y0 + Math.sin(x * 0.03 + n) * 4); g.stroke(); }
+    }, rep);
+    const soilTex = () => canvasTex(256, 256, (g, w, h) => {
+      const rnd = mulberry(23);
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+      for (let n = 0; n < 2600; n++) { const v = 150 + rnd() * 105 | 0; g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; const s = 1 + rnd() * 3; g.fillRect(rnd() * w, rnd() * h, s, s); }
+    }, [2, 1.5]);
 
     function crackTexture() {
-      const c = document.createElement('canvas'); c.width = 512; c.height = 384;
-      const g = c.getContext('2d'); const rnd = mulberry(7);
-      g.strokeStyle = 'rgba(70,45,25,0.9)'; g.lineCap = 'round';
-      for (let n = 0; n < 26; n++) {
-        let x = rnd() * 512, y = rnd() * 384, a = rnd() * Math.PI * 2;
-        g.lineWidth = 1 + rnd() * 2.5; g.beginPath(); g.moveTo(x, y);
-        for (let j = 0; j < 9; j++) { a += (rnd() - 0.5) * 1.1; x += Math.cos(a) * 18; y += Math.sin(a) * 18; g.lineTo(x, y); }
-        g.stroke();
-      }
-      const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; return tex;
+      return canvasTex(512, 384, (g) => {
+        const rnd = mulberry(7);
+        g.strokeStyle = 'rgba(70,45,25,0.9)'; g.lineCap = 'round';
+        for (let n = 0; n < 26; n++) {
+          let x = rnd() * 512, y = rnd() * 384, a = rnd() * Math.PI * 2;
+          g.lineWidth = 1 + rnd() * 2.5; g.beginPath(); g.moveTo(x, y);
+          for (let j = 0; j < 9; j++) { a += (rnd() - 0.5) * 1.1; x += Math.cos(a) * 18; y += Math.sin(a) * 18; g.lineTo(x, y); }
+          g.stroke();
+        }
+      });
+    }
+    function limb(r, m) {
+      const g = new THREE.Group();
+      const cyl = mesh(new THREE.CylinderGeometry(r, r, 1, 14), m), a = mesh(new THREE.SphereGeometry(r, 14, 10), m), b = mesh(new THREE.SphereGeometry(r, 14, 10), m);
+      g.add(cyl, a, b); g.userData = { cyl, a, b }; return g;
+    }
+    function setLimb(g, A, B) {
+      const u = g.userData, d = R.tmp.subVectors(B, A), len = Math.max(0.001, d.length());
+      u.cyl.scale.set(1, len, 1); u.cyl.position.copy(A).addScaledVector(d, 0.5);
+      u.cyl.quaternion.setFromUnitVectors(R.up, d.normalize()); u.a.position.copy(A); u.b.position.copy(B);
     }
 
     function build() {
-      R.hemi = new THREE.HemisphereLight(0xffffff, 0x4a5a50, 0.75); scene.add(R.hemi);
-      R.sunLight = new THREE.DirectionalLight(0xffffff, 0.85);
-      R.sunLight.position.set(6, 12, 7); R.sunLight.castShadow = true;
-      R.sunLight.shadow.mapSize.set(1024, 1024);
-      Object.assign(R.sunLight.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
-      scene.add(R.sunLight);
-      R.sun = mesh(new THREE.SphereGeometry(0.55, 24, 16), new THREE.MeshBasicMaterial({ color: 0xffc43d }), false);
-      R.sun.position.set(-4.5, 7.5, -5); scene.add(R.sun);
+      R.hemi = new THREE.HemisphereLight(0xffffff, 0x3c4a44, 0.55); scene.add(R.hemi);
+      R.key = new THREE.DirectionalLight(0xfff0d8, 1.05);
+      R.key.position.set(6, 11, 7); R.key.castShadow = true;
+      R.key.shadow.mapSize.set(2048, 2048); R.key.shadow.bias = -0.0004;
+      Object.assign(R.key.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 45 });
+      scene.add(R.key);
+      const fill = new THREE.DirectionalLight(0xb9d4ff, 0.35); fill.position.set(-7, 5, -4); scene.add(fill);
+      // soft sun glow
+      const glowTex = canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,226,140,1)'); gr.addColorStop(0.25, 'rgba(255,200,90,0.75)'); gr.addColorStop(1, 'rgba(255,190,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
+      R.sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+      R.sun.position.set(-4.5, 7.8, -5.5); R.sun.scale.set(3.2, 3.2, 1); scene.add(R.sun);
 
-      R.ground = mesh(new THREE.PlaneGeometry(60, 60), mat(0xdde4df, { roughness: 0.95 }));
-      R.ground.rotation.x = -Math.PI / 2; R.ground.castShadow = false; scene.add(R.ground);
-      R.table = mesh(new THREE.BoxGeometry(11, 0.12, 6.4), mat(0xb98d62, { roughness: 0.8 }));
-      R.table.position.set(1.6, -0.06, -0.2); scene.add(R.table);
+      // studio floor + wooden table on legs
+      const floorTex = canvasTex(256, 256, (g) => { const gr = g.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#9aa59f'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); });
+      R.floor = mesh(new THREE.CircleGeometry(26, 64), mat(0xdde4df, { roughness: 0.95, map: floorTex }));
+      R.floor.rotation.x = -Math.PI / 2; R.floor.position.y = -2.4; R.floor.castShadow = false; scene.add(R.floor);
+      R.tableMat = mat(0xc89566, { roughness: 0.6, map: woodTex([2, 1]) });
+      R.table = mesh(new THREE.BoxGeometry(11.4, 0.16, 6.6), R.tableMat); R.table.position.set(1.6, -0.08, -0.2); scene.add(R.table);
+      [[-3.8, -3.2], [7.0, -3.2], [-3.8, 2.8], [7.0, 2.8]].forEach((xz) => { const leg = mesh(new THREE.BoxGeometry(0.28, 2.3, 0.28), R.tableMat); leg.position.set(xz[0], -1.3, xz[1]); scene.add(leg); });
 
-      // planter: wooden back and sides, glass front so the soil layers show
-      const wood = mat(0x8a5a33, { roughness: 0.85 });
+      // planter
+      const wood = mat(0xb07a4a, { roughness: 0.75, map: woodTex([1, 1]) });
       const back = mesh(new THREE.BoxGeometry(3.3, 2.0, 0.08), wood); back.position.set(-1, 1.0, -1.22); scene.add(back);
       [-2.62, 0.62].forEach((x) => { const side = mesh(new THREE.BoxGeometry(0.08, 2.0, 2.5), wood); side.position.set(x, 1.0, 0); scene.add(side); });
       const base = mesh(new THREE.BoxGeometry(3.3, 0.08, 2.5), wood); base.position.set(-1, 0.04, 0); scene.add(base);
-      const glass = mesh(new THREE.PlaneGeometry(3.2, 2.0), mat(0xcfe3f2, { transparent: true, opacity: 0.14, roughness: 0.05, depthWrite: false }), false);
+      [[-1, 2.0, -1.22, 3.42, 0.08, 0.16], [-2.62, 2.0, 0, 0.16, 0.08, 2.6], [0.62, 2.0, 0, 0.16, 0.08, 2.6]].forEach((b) => { const cap = mesh(new THREE.BoxGeometry(b[3], b[4], b[5]), wood); cap.position.set(b[0], b[1], b[2]); scene.add(cap); });
+      const glass = mesh(new THREE.PlaneGeometry(3.2, 2.0), mat(0xd9ecf8, { transparent: true, opacity: 0.12, roughness: 0.05, metalness: 0.1, depthWrite: false }), false);
       glass.position.set(-1, 1.0, 1.21); scene.add(glass);
-      const rim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.2, 2.0)), new THREE.LineBasicMaterial({ color: 0x7f97a8 }));
+      const rim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(3.2, 2.0)), new THREE.LineBasicMaterial({ color: 0x9fb4c2 }));
       rim.position.copy(glass.position); scene.add(rim);
 
-      R.lowMat = mat(0x6e4c33, { roughness: 1 });
+      const sTex = soilTex();
+      R.lowMat = mat(0x6e4c33, { roughness: 1, map: sTex });
       R.low = mesh(new THREE.BoxGeometry(3.16, 1, 2.36), R.lowMat); R.low.position.x = -1; scene.add(R.low);
-      R.wetBox = mesh(new THREE.BoxGeometry(3.16, 1, 2.36), mat(0x30221a, { roughness: 0.9 })); R.wetBox.position.x = -1; scene.add(R.wetBox);
+      R.wetBox = mesh(new THREE.BoxGeometry(3.16, 1, 2.36), mat(0x3a2a1f, { roughness: 0.55, map: sTex })); R.wetBox.position.x = -1; scene.add(R.wetBox);
       R.front = mesh(new THREE.PlaneGeometry(3.16, 0.035), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, transparent: true, opacity: 0.85 }), false);
       R.front.position.set(-1, 1, 1.185); scene.add(R.front);
       R.cracks = mesh(new THREE.PlaneGeometry(3.16, 2.36), new THREE.MeshBasicMaterial({ map: crackTexture(), transparent: true, opacity: 0, depthWrite: false }), false);
       R.cracks.rotation.x = -Math.PI / 2; R.cracks.position.set(-1, TOP + 0.004, 0); scene.add(R.cracks);
       R.spots = EMIT.map((x) => {
-        const s = mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x24180f, transparent: true, opacity: 0.75, depthWrite: false }), false);
+        const s = mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ color: 0x24180f, transparent: true, opacity: 0.7, depthWrite: false }), false);
         s.rotation.x = -Math.PI / 2; s.position.set(x, TOP + 0.006, LINE_Z); scene.add(s); return s;
       });
+      // mulch pebbles
+      const prnd = mulberry(5), pebbleCols = [0x8a7f74, 0x6f655c, 0xa39686, 0x5d5047];
+      for (let n = 0; n < 55; n++) {
+        const x = -2.5 + prnd() * 3.0, z = -1.1 + prnd() * 2.2;
+        if (Math.abs(x + 0.15) < 0.35 && Math.abs(z - 0.6) < 0.25) continue;
+        const pb = mesh(new THREE.DodecahedronGeometry(0.03 + prnd() * 0.04, 0), mat(pebbleCols[n % 4], { roughness: 0.9 }));
+        pb.position.set(x, TOP + 0.02, z); pb.rotation.set(prnd() * 3, prnd() * 3, prnd() * 3); pb.scale.y = 0.6; scene.add(pb);
+      }
 
-      // plant
+      // plant with shaped leaves
       R.plant = new THREE.Group(); R.plant.position.set(-1.7, TOP, -0.55); R.plant.scale.setScalar(1.35); scene.add(R.plant);
-      const stem = mesh(new THREE.CylinderGeometry(0.045, 0.07, 1.9, 8), mat(0x4f7a3a)); stem.position.y = 0.95; R.plant.add(stem);
-      R.leafMat = mat(0x3f9b4b, { roughness: 0.6, side: THREE.DoubleSide });
+      const stemCurve = curveOf([[0, 0, 0], [0.04, 0.6, 0.02], [-0.03, 1.3, -0.02], [0, 1.95, 0]]);
+      R.plant.add(mesh(new THREE.TubeGeometry(stemCurve, 24, 0.05, 8, false), mat(0x4f7a3a, { roughness: 0.6 })));
+      const shape = new THREE.Shape(); shape.moveTo(0, 0); shape.bezierCurveTo(0.12, 0.13, 0.42, 0.16, 0.62, 0); shape.bezierCurveTo(0.42, -0.16, 0.12, -0.13, 0, 0);
+      const leafGeo = new THREE.ShapeGeometry(shape, 14);
+      R.leafMat = mat(0x3f9b4b, { roughness: 0.5, side: THREE.DoubleSide });
+      const vein = new THREE.LineBasicMaterial({ color: 0x2c6b35 });
       R.leaves = [];
-      for (let j = 0; j < 7; j++) {
-        const py = new THREE.Group(); py.position.y = 0.45 + j * 0.22; py.rotation.y = j * 2.2;
+      for (let j = 0; j < 9; j++) {
+        const py = new THREE.Group(); py.position.y = 0.35 + j * 0.18; py.rotation.y = j * 2.3;
         const pz = new THREE.Group(); py.add(pz);
-        const leaf = mesh(new THREE.SphereGeometry(1, 16, 10), R.leafMat);
-        const sz = 0.5 - j * 0.035;
-        leaf.scale.set(sz, 0.05, sz * 0.42); leaf.position.x = sz * 0.9;
+        const leaf = mesh(leafGeo, R.leafMat); leaf.rotation.x = -Math.PI / 2 + 0.25;
+        const sc = 1.05 - j * 0.07; leaf.scale.setScalar(sc);
+        const rib = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0.002), new THREE.Vector3(0.6, 0, 0.002)]), vein); leaf.add(rib);
         pz.add(leaf); R.plant.add(py); R.leaves.push(pz);
       }
-      const bud = mesh(new THREE.SphereGeometry(0.12, 12, 10), mat(0x6cbf5a)); bud.position.y = 1.95; R.plant.add(bud);
+      [0, 2.1, 4.2].forEach((a) => { const bud = mesh(new THREE.SphereGeometry(0.07, 12, 10), mat(0xf2c94c, { roughness: 0.4 })); bud.position.set(Math.cos(a) * 0.08, 1.98, Math.sin(a) * 0.08); R.plant.add(bud); });
+      const flower = mesh(new THREE.SphereGeometry(0.06, 12, 10), mat(0xe07a3f)); flower.position.y = 2.02; R.plant.add(flower);
 
       // sensor
       const sx = -0.15, sz = 0.6;
-      const pcb = mesh(new THREE.BoxGeometry(0.5, 0.6, 0.05), mat(0x1c1f22, { roughness: 0.5 })); pcb.position.set(sx, TOP + 0.45, sz); scene.add(pcb);
+      const pcb = mesh(new THREE.BoxGeometry(0.5, 0.6, 0.05), mat(0x1c1f22, { roughness: 0.45 })); pcb.position.set(sx, TOP + 0.45, sz); scene.add(pcb);
       [-0.14, 0.14].forEach((dx) => { const prong = mesh(new THREE.BoxGeometry(0.1, 1.0, 0.04), mat(0x23272b)); prong.position.set(sx + dx, TOP - 0.35, sz); scene.add(prong); });
       const chip = mesh(new THREE.BoxGeometry(0.18, 0.14, 0.03), mat(0x111111)); chip.position.set(sx, TOP + 0.55, sz + 0.035); scene.add(chip);
+      const trace = mesh(new THREE.BoxGeometry(0.03, 0.4, 0.005), mat(0xc9a227, { metalness: 0.7 })); trace.position.set(sx - 0.12, TOP + 0.35, sz + 0.028); scene.add(trace);
       R.sensorLed = mesh(new THREE.SphereGeometry(0.04, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff3b30, emissiveIntensity: 0.3 }), false);
       R.sensorLed.position.set(sx + 0.16, TOP + 0.66, sz + 0.035); scene.add(R.sensorLed);
       R.rings = [0, 1, 2].map(() => {
@@ -1581,8 +1686,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
       // ESP32
       const ex = 3.0, ez = 1.3;
-      const board = mesh(new THREE.BoxGeometry(1.5, 0.08, 0.75), mat(0x1f2a33, { roughness: 0.5 })); board.position.set(ex, 0.04, ez); scene.add(board);
-      const shield = mesh(new THREE.BoxGeometry(0.62, 0.1, 0.52), mat(0xb9c0c8, { metalness: 0.8, roughness: 0.3 })); shield.position.set(ex - 0.25, 0.13, ez); scene.add(shield);
+      const board = mesh(new THREE.BoxGeometry(1.5, 0.08, 0.75), mat(0x1f2a33, { roughness: 0.45 })); board.position.set(ex, 0.04, ez); scene.add(board);
+      const shield = mesh(new THREE.BoxGeometry(0.62, 0.1, 0.52), mat(0xc8cfd6, { metalness: 0.85, roughness: 0.25 })); shield.position.set(ex - 0.25, 0.13, ez); scene.add(shield);
       const ant = mesh(new THREE.BoxGeometry(0.22, 0.02, 0.5), mat(0xc9a227, { metalness: 0.6 })); ant.position.set(ex - 0.66, 0.1, ez); scene.add(ant);
       [-1, 1].forEach((k) => { const pins = mesh(new THREE.BoxGeometry(1.3, 0.12, 0.07), mat(0x111111)); pins.position.set(ex + 0.05, 0.1, ez + k * 0.33); scene.add(pins); });
       const usb = mesh(new THREE.BoxGeometry(0.16, 0.08, 0.22), mat(0x9aa3ab, { metalness: 0.7 })); usb.position.set(ex + 0.72, 0.1, ez); scene.add(usb);
@@ -1593,32 +1698,33 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
       // relay
       const rx = 3.0, rz = -0.7;
-      const relay = mesh(new THREE.BoxGeometry(0.75, 0.35, 0.55), mat(0x2a6ad1, { roughness: 0.4 })); relay.position.set(rx, 0.175, rz); scene.add(relay);
+      const relay = mesh(new THREE.BoxGeometry(0.75, 0.35, 0.55), mat(0x2a6ad1, { roughness: 0.35 })); relay.position.set(rx, 0.175, rz); scene.add(relay);
       const term = mesh(new THREE.BoxGeometry(0.2, 0.18, 0.5), mat(0x2e8b57)); term.position.set(rx + 0.32, 0.26, rz); scene.add(term);
       R.arm = mesh(new THREE.BoxGeometry(0.28, 0.04, 0.08), mat(0xd8dde2, { metalness: 0.6 })); R.arm.position.set(rx - 0.08, 0.37, rz - 0.1); scene.add(R.arm);
       R.relayLed = mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshStandardMaterial({ color: 0xff453a, emissive: 0xff453a, emissiveIntensity: 0.05 }), false);
       R.relayLed.position.set(rx - 0.2, 0.37, rz + 0.15); scene.add(R.relayLed);
 
       // tank + pump
-      const tank = mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.0, 32, 1, true), mat(0xcfe3f2, { transparent: true, opacity: 0.22, roughness: 0.1, side: THREE.DoubleSide, depthWrite: false }), false);
+      const tank = mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.0, 40, 1, true), mat(0xdcecf7, { transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false }), false);
       tank.position.set(5.6, 1.0, -1.4); scene.add(tank);
-      const tankBase = mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.06, 32), mat(0x7a8a95)); tankBase.position.set(5.6, 0.03, -1.4); scene.add(tankBase);
-      R.water = mesh(new THREE.CylinderGeometry(0.74, 0.74, 1, 32), mat(0x2f7fd6, { transparent: true, opacity: 0.55, roughness: 0.1 }), false);
+      const tankBase = mesh(new THREE.CylinderGeometry(0.84, 0.84, 0.08, 40), mat(0x6f7f8a, { metalness: 0.4, roughness: 0.4 })); tankBase.position.set(5.6, 0.04, -1.4); scene.add(tankBase);
+      const lid = mesh(new THREE.TorusGeometry(0.8, 0.035, 8, 48), mat(0x6f7f8a, { metalness: 0.4 })); lid.rotation.x = Math.PI / 2; lid.position.set(5.6, 2.0, -1.4); scene.add(lid);
+      R.water = mesh(new THREE.CylinderGeometry(0.76, 0.76, 1, 40), mat(0x2f86e0, { transparent: true, opacity: 0.6, roughness: 0.05, emissive: 0x0b3a74, emissiveIntensity: 0.25 }), false);
       R.water.position.set(5.6, 0.76, -1.4); scene.add(R.water);
       R.pump = new THREE.Group(); R.pump.position.set(4.35, 0.24, -1.1); scene.add(R.pump);
-      const pb = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 20), mat(0x2b2f33, { roughness: 0.4 })); pb.rotation.z = Math.PI / 2; R.pump.add(pb);
+      const pb = mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.55, 24), mat(0x2b2f33, { roughness: 0.35, metalness: 0.3 })); pb.rotation.z = Math.PI / 2; R.pump.add(pb);
       R.impeller = new THREE.Group(); R.impeller.position.x = -0.31; R.pump.add(R.impeller);
-      const cap = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 20), mat(0x3b82c4)); cap.rotation.z = Math.PI / 2; R.impeller.add(cap);
+      const cap = mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.06, 24), mat(0x3b82c4)); cap.rotation.z = Math.PI / 2; R.impeller.add(cap);
       for (let j = 0; j < 4; j++) { const blade = mesh(new THREE.BoxGeometry(0.02, 0.36, 0.06), mat(0xe8eef3)); blade.position.x = -0.04; blade.rotation.x = j * Math.PI / 4; R.impeller.add(blade); }
       tube(curveOf([[4.62, 0.24, -1.1], [4.95, 0.22, -1.25], [5.15, 0.25, -1.35]]), 0.05, 0x9fb3c2);
 
       // delivery pipe + drip line on stakes
       R.pipeCurve = curveOf([[4.05, 0.3, -1.1], [3.9, 1.6, -1.1], [2.9, 2.75, -0.6], [1.5, 2.85, -0.1], [0.85, DRIP_Y + 0.25, LINE_Z], [0.55, DRIP_Y, LINE_Z]]);
       R.lineCurve = new THREE.LineCurve3(V([0.55, DRIP_Y, LINE_Z]), V([-2.45, DRIP_Y, LINE_Z]));
-      tube(R.pipeCurve, 0.07, 0xb7d8f2, { transparent: true, opacity: 0.45, roughness: 0.1, depthWrite: false }, 120);
+      tube(R.pipeCurve, 0.07, 0xc5e1f5, { transparent: true, opacity: 0.4, roughness: 0.05, depthWrite: false }, 120);
       tube(R.lineCurve, 0.06, 0x2b2f33, { transparent: true, opacity: 0.55, roughness: 0.3, depthWrite: false }, 60);
-      R.pipeWater = tube(R.pipeCurve, 0.045, 0x1f78ff, { roughness: 0.2, emissive: 0x0a3d8f, emissiveIntensity: 0.4 }, 120);
-      R.lineWater = tube(R.lineCurve, 0.04, 0x1f78ff, { roughness: 0.2, emissive: 0x0a3d8f, emissiveIntensity: 0.4 }, 60);
+      R.pipeWater = tube(R.pipeCurve, 0.045, 0x1f78ff, { roughness: 0.15, emissive: 0x0a3d8f, emissiveIntensity: 0.5 }, 120);
+      R.lineWater = tube(R.lineCurve, 0.04, 0x1f78ff, { roughness: 0.15, emissive: 0x0a3d8f, emissiveIntensity: 0.5 }, 60);
       R.pipeIdx = R.pipeWater.geometry.index.count; R.lineIdx = R.lineWater.geometry.index.count;
       const endCap = mesh(new THREE.SphereGeometry(0.065, 12, 10), mat(0x2b2f33)); endCap.position.set(-2.45, DRIP_Y, LINE_Z); scene.add(endCap);
       [0.3, -1.25, -2.4].forEach((x) => { const st = mesh(new THREE.CylinderGeometry(0.02, 0.02, DRIP_Y - TOP + 0.3, 6), mat(0x3a3f44)); st.position.set(x, (DRIP_Y + TOP - 0.3) / 2, LINE_Z - 0.07); scene.add(st); });
@@ -1629,11 +1735,11 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         scene.add(g); return g;
       });
       R.drops = EMIT.map((x, j) => {
-        const d = mesh(new THREE.SphereGeometry(0.05, 12, 10), mat(0x4aa3ff, { roughness: 0.05, transparent: true, opacity: 0.92 }), false);
+        const d = mesh(new THREE.SphereGeometry(0.05, 14, 12), mat(0x5fb2ff, { roughness: 0.02, metalness: 0.1, transparent: true, opacity: 0.9, emissive: 0x0d4a99, emissiveIntensity: 0.3 }), false);
         d.scale.set(1, 1.3, 1); d.visible = false; scene.add(d);
         const ring = mesh(new THREE.TorusGeometry(0.12, 0.012, 6, 32), new THREE.MeshBasicMaterial({ color: 0x8cc8ff, transparent: true, opacity: 0 }), false);
         ring.rotation.x = Math.PI / 2; ring.position.set(x, TOP + 0.01, LINE_Z); scene.add(ring);
-        return { x, d, ring, state: 'idle', a: 0, y: 0, v: 0, delay: j * 0.17 };
+        return { x, d, ring, state: 'idle', a: 0, v: 0, delay: j * 0.17 };
       });
       R.beads = [];
       for (let k = 0; k < 18; k++) {
@@ -1648,26 +1754,55 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       }
 
       // wires
-      R.wSense = curveOf([[-0.15, TOP + 0.76, 0.6], [0.5, 2.9, 0.95], [1.9, 1.6, 1.5], [2.5, 0.25, 1.4], [2.6, 0.12, 1.3]]); tube(R.wSense, 0.025, 0xd2453a);
-      R.wRelay = curveOf([[3.0, 0.12, 0.9], [3.15, 0.3, 0.2], [3.0, 0.3, -0.4]]); tube(R.wRelay, 0.025, 0xe2b93b);
-      R.wPump = curveOf([[3.38, 0.24, -0.75], [3.85, 0.35, -0.95], [4.15, 0.3, -1.1]]); tube(R.wPump, 0.025, 0xe07b39);
+      R.wSense = curveOf([[-0.15, TOP + 0.76, 0.6], [0.5, 2.9, 0.95], [1.9, 1.6, 1.5], [2.5, 0.25, 1.4], [2.6, 0.12, 1.3]]); tube(R.wSense, 0.025, 0xd2453a, { roughness: 0.4 });
+      R.wRelay = curveOf([[3.0, 0.12, 0.9], [3.15, 0.3, 0.2], [3.0, 0.3, -0.4]]); tube(R.wRelay, 0.025, 0xe2b93b, { roughness: 0.4 });
+      R.wPump = curveOf([[3.38, 0.24, -0.75], [3.85, 0.35, -0.95], [4.15, 0.3, -1.1]]); tube(R.wPump, 0.025, 0xe07b39, { roughness: 0.4 });
 
-      // cloud + phone
-      R.cloud = new THREE.Group(); R.cloud.position.set(1.2, 5.6, -2.4); scene.add(R.cloud);
-      R.cloudMat = mat(0xf2f6fa, { roughness: 0.95, emissive: 0x5ea9ff, emissiveIntensity: 0 });
-      [[0, 0, 0, 0.7], [0.75, -0.1, 0.1, 0.55], [-0.7, -0.12, 0, 0.5], [0.25, 0.35, -0.1, 0.5]].forEach((c) => {
-        const s = mesh(new THREE.SphereGeometry(c[3], 20, 16), R.cloudMat, false); s.position.set(c[0], c[1], c[2]); R.cloud.add(s);
+      // cloud with a database inside
+      R.cloud = new THREE.Group(); R.cloud.position.set(1.2, 5.95, -2.4); scene.add(R.cloud);
+      R.cloudMat = mat(0xf4f8fc, { roughness: 0.9, emissive: 0x5ea9ff, emissiveIntensity: 0, transparent: true, opacity: 0.92 });
+      [[0, 0, 0, 0.7], [0.75, -0.1, 0.1, 0.55], [-0.7, -0.12, 0, 0.5], [0.25, 0.35, -0.1, 0.5], [-0.3, 0.25, 0.15, 0.42], [1.15, -0.2, -0.05, 0.36]].forEach((c) => {
+        const s = mesh(new THREE.SphereGeometry(c[3], 24, 18), R.cloudMat, false); s.position.set(c[0], c[1], c[2]); R.cloud.add(s);
       });
+      R.db = new THREE.Group(); R.db.position.set(1.2, 4.3, -2.0); scene.add(R.db);
+      R.dbMat = mat(0x2c4f7c, { metalness: 0.5, roughness: 0.3 });
+      R.dbBands = [];
+      for (let j = 0; j < 3; j++) {
+        const disk = mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.2, 40), R.dbMat); disk.position.y = j * 0.26; R.db.add(disk);
+        const top = mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.01, 40), mat(0x3d6aa3, { metalness: 0.4, roughness: 0.3 })); top.position.y = j * 0.26 + 0.105; R.db.add(top);
+        const band = mesh(new THREE.TorusGeometry(0.425, 0.018, 8, 48), new THREE.MeshBasicMaterial({ color: 0x5ea9ff })); band.rotation.x = Math.PI / 2; band.position.y = j * 0.26 - 0.05; R.db.add(band); R.dbBands.push(band);
+      }
       R.phone = new THREE.Group(); R.phone.position.set(6.0, 4.1, 1.6); R.phone.rotation.set(-0.08, -0.6, 0); scene.add(R.phone);
-      R.phone.add(mesh(new THREE.BoxGeometry(1.0, 1.95, 0.09), mat(0x111417, { roughness: 0.3 })));
+      R.phone.add(mesh(new THREE.BoxGeometry(1.0, 1.95, 0.09), mat(0x15191c, { roughness: 0.25, metalness: 0.4 })));
       R.screenCanvas = document.createElement('canvas'); R.screenCanvas.width = 256; R.screenCanvas.height = 500;
       R.screenTex = new THREE.CanvasTexture(R.screenCanvas); R.screenTex.encoding = THREE.sRGBEncoding;
-      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.76), new THREE.MeshBasicMaterial({ map: R.screenTex }));
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.76), new THREE.MeshBasicMaterial({ map: R.screenTex, toneMapped: false }));
       scr.position.z = 0.047; R.phone.add(scr);
-      R.pEspCloud = curveOf([[3.3, 0.3, 1.3], [3.4, 2.6, 0.4], [1.9, 5.3, -2.2]]);
-      R.pCloudPhone = curveOf([[1.9, 5.7, -2.2], [4.2, 6.0, -0.6], [5.9, 4.6, 1.5]]);
+      // the user's hand holding the phone
+      const skin = mat(0xb07650, { roughness: 0.6 });
+      const palm = mesh(new THREE.SphereGeometry(1, 20, 16), skin); palm.scale.set(0.44, 0.5, 0.17); palm.position.set(0.12, -0.62, -0.17); R.phone.add(palm);
+      const wrist = limb(0.17, skin); R.phone.add(wrist); setLimb(wrist, V([0.12, -0.95, -0.2]), V([0.3, -1.7, -0.42]));
+      const sleeve = limb(0.21, mat(0x2b5d8f, { roughness: 0.8 })); R.phone.add(sleeve); setLimb(sleeve, V([0.3, -1.6, -0.4]), V([0.45, -2.3, -0.62]));
+      for (let j = 0; j < 4; j++) {
+        const y = -0.52 + j * 0.16;
+        const f1 = limb(0.055, skin), f2 = limb(0.05, skin); R.phone.add(f1, f2);
+        setLimb(f1, V([0.36, y - 0.04, -0.13]), V([0.56, y, -0.02])); setLimb(f2, V([0.56, y, -0.02]), V([0.5, y + 0.02, 0.07]));
+      }
+      R.thumb = limb(0.065, skin); R.phone.add(R.thumb);
+      R.thumbBase = V([-0.36, -0.8, -0.03]);
+      const px = (x, y) => new THREE.Vector3((x / 256 - 0.5) * 0.9, (0.5 - y / 500) * 1.76, 0);
+      R.btn = { auto: px(71, 322), manual: px(185, 322), pump: px(128, 388) };
+      R.thumbRest = V([-0.27, -0.55, 0.14]);
+      R.thumbTip = R.thumbRest.clone();
+      setLimb(R.thumb, R.thumbBase, R.thumbTip);
+
+      R.pEspCloud = curveOf([[3.3, 0.3, 1.3], [3.4, 2.4, 0.4], [1.5, 4.55, -1.75]]);
+      R.pCloudPhone = curveOf([[1.6, 4.7, -1.75], [4.2, 5.6, -0.6], [5.9, 4.6, 1.5]]);
+      R.pPhoneCloud = curveOf([[5.9, 4.6, 1.5], [4.2, 5.6, -0.6], [1.6, 4.7, -1.75]]);
+      R.pCloudEsp = curveOf([[1.5, 4.55, -1.75], [3.4, 2.4, 0.4], [3.3, 0.3, 1.3]]);
       const dot = (c, r) => { const m = mesh(new THREE.SphereGeometry(r, 12, 10), new THREE.MeshBasicMaterial({ color: c }), false); m.visible = false; scene.add(m); return m; };
       R.netDots = [0, 1, 2].map(() => dot(0x5ea9ff, 0.1));
+      R.cmdDots = [0, 1, 2].map(() => dot(0xffa53f, 0.1));
       R.wireDots = [0, 1, 2].map(() => dot(0xffd23f, 0.07));
       R.relayDot = dot(0xffd23f, 0.08);
 
@@ -1677,80 +1812,101 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       label('think', '', [3.0, 1.25, 1.3]);
       label('relay', 'Relay', [3.0, 0.85, -0.7]);
       label('pump', 'Pump', [4.35, 0.8, -1.1]);
-      label('tank', 'Water tank', [5.6, 2.35, -1.4]);
+      label('tank', 'Water tank', [5.6, 2.4, -1.4]);
       label('drip', 'Drip line', [0.35, DRIP_Y + 0.32, LINE_Z]);
-      label('cloud', 'Cloud', [1.2, 6.65, -2.4]);
-      label('app', 'Mobile app', [6.0, 5.35, 1.6]);
+      label('cloud', 'Cloud', [1.2, 6.95, -2.4]);
+      label('db', 'Database', [1.2, 4.15, -1.4]);
+      label('app', 'Your phone', [6.0, 5.35, 1.6]);
       label('plant', 'Plant', [-1.7, TOP + 3.0, -0.55]);
       labels.think.el.className = 'think';
     }
 
     function applyTheme() {
       if (!scene) return;
-      scene.background = new THREE.Color(css('--sunk') || '#e2e9e4');
       const dark = (css('--bg') || '#fff').toLowerCase() < '#5';
-      R.ground.material.color.set(dark ? 0x16221f : 0xdde4df);
-      R.table.material.color.set(dark ? 0x5b4632 : 0xb98d62);
+      const top = dark ? '#0e2230' : '#d6e6f2', bottom = dark ? '#0b1513' : '#eef2ee';
+      scene.background = canvasTex(4, 256, (g) => { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, top); gr.addColorStop(1, bottom); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); });
+      scene.fog = new THREE.Fog(bottom, 22, 48);
+      R.floor.material.color.set(dark ? 0x1d2a27 : 0xe7ece8);
+      R.hemi.intensity = dark ? 0.4 : 0.55;
     }
 
     function drawScreen(s) {
-      const key = s.screen + Math.round(s.m);
+      const key = [s.screen, Math.round(s.m), s.mode, s.pumpOn, s.thumb, Math.round(s.press * 6)].join('|');
       if (key === screenKey) return; screenKey = key;
-      const g = R.screenCanvas.getContext('2d');
+      const g = R.screenCanvas.getContext('2d'), man = s.mode === 'manual';
       g.fillStyle = '#0f1b18'; g.fillRect(0, 0, 256, 500);
-      g.fillStyle = '#e2ece8'; g.font = '800 26px "Bricolage Grotesque", sans-serif'; g.textAlign = 'left'; g.fillText('AquaSense', 18, 48);
-      const banner = { ok: ['#1f3a33', '#93a69f', 'Monitoring'], low: ['#5a1f1a', '#ffb4a8', 'Moisture low!'], water: ['#123a6b', '#9fd0ff', 'Watering · pump ON'], done: ['#16442b', '#a6f0c1', 'Watered · pump OFF'] }[s.screen];
-      g.fillStyle = banner[0]; g.fillRect(14, 66, 228, 46);
-      g.fillStyle = banner[1]; g.font = '600 18px "IBM Plex Sans", sans-serif'; g.fillText(banner[2], 26, 96);
-      const cx = 128, cy = 245, r = 78, p = s.m / 100;
-      g.lineWidth = 16; g.strokeStyle = '#263a34'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
-      g.strokeStyle = s.m < 35 ? '#e0a64a' : '#5ea9ff'; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.stroke();
-      g.fillStyle = '#e2ece8'; g.font = '800 46px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(Math.round(s.m) + '%', cx, cy + 14);
-      g.fillStyle = '#93a69f'; g.font = '500 14px "IBM Plex Mono", monospace'; g.fillText('MOISTURE', cx, cy + 40);
-      g.textAlign = 'left';
-      const row = (y, k, v, col) => { g.fillStyle = '#13201d'; g.fillRect(14, y, 228, 50); g.fillStyle = '#93a69f'; g.font = '500 15px "IBM Plex Sans", sans-serif'; g.fillText(k, 28, y + 31); g.fillStyle = col || '#e2ece8'; g.font = '600 17px "IBM Plex Sans", sans-serif'; g.textAlign = 'right'; g.fillText(v, 228, y + 31); g.textAlign = 'left'; };
-      row(352, 'Pump', s.screen === 'water' ? 'RUNNING' : 'Off', s.screen === 'water' ? '#5ea9ff' : null);
-      row(410, 'Range', '35–60%');
+      g.textAlign = 'left'; g.fillStyle = '#e2ece8'; g.font = '800 24px "Bricolage Grotesque", sans-serif'; g.fillText('AquaSense', 16, 38);
+      const banner = { ok: man ? ['#4a3510', '#ffd48a', 'Manual mode'] : ['#1f3a33', '#93a69f', 'Monitoring'], low: ['#5a1f1a', '#ffb4a8', 'Moisture low!'],
+        water: man ? ['#123a6b', '#9fd0ff', 'Pump ON (manual)'] : ['#123a6b', '#9fd0ff', 'Watering · pump ON'], done: ['#16442b', '#a6f0c1', 'Watered · pump OFF'] }[s.screen];
+      g.fillStyle = banner[0]; g.fillRect(14, 54, 228, 40);
+      g.fillStyle = banner[1]; g.font = '600 17px "IBM Plex Sans", sans-serif'; g.fillText(banner[2], 26, 80);
+      const cx = 128, cy = 190, r = 62, p = s.m / 100;
+      g.lineWidth = 14; g.strokeStyle = '#263a34'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = s.m < 35 ? '#e0a64a' : s.m > 95 ? '#ef7565' : '#5ea9ff'; g.beginPath(); g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); g.stroke();
+      g.fillStyle = '#e2ece8'; g.font = '800 40px "Bricolage Grotesque", sans-serif'; g.textAlign = 'center'; g.fillText(Math.round(s.m) + '%', cx, cy + 12);
+      g.fillStyle = '#93a69f'; g.font = '500 12px "IBM Plex Mono", monospace'; g.fillText('MOISTURE', cx, cy + 34);
+      // mode toggle
+      g.fillStyle = '#13201d'; g.fillRect(14, 296, 228, 52);
+      g.fillStyle = man ? '#e0a64a' : '#5ea9ff'; g.fillRect(man ? 128 : 18, 300, 110, 44);
+      g.font = '600 16px "IBM Plex Sans", sans-serif';
+      g.fillStyle = man ? '#93a69f' : '#0b1513'; g.fillText('Auto', 71, 328);
+      g.fillStyle = man ? '#0b1513' : '#93a69f'; g.fillText('Manual', 185, 328);
+      // pump button
+      if (man) { g.fillStyle = s.pumpOn ? '#ef7565' : '#5ea9ff'; g.fillRect(14, 362, 228, 52); g.fillStyle = '#0b1513'; g.fillText(s.pumpOn ? 'Turn pump OFF' : 'Turn pump ON', 128, 394); }
+      else { g.fillStyle = '#1b2724'; g.fillRect(14, 362, 228, 52); g.fillStyle = '#6c7f78'; g.fillText('Pump: automatic' + (s.pumpOn ? ' (on)' : ''), 128, 394); }
+      g.fillStyle = '#6c7f78'; g.font = '500 12px "IBM Plex Mono", monospace'; g.fillText('Range 35–60% · alerts 5% / 95%', 128, 446);
+      if (s.press > 0 && s.thumb) {
+        const b = { auto: [71, 322], manual: [185, 322], pump: [128, 388] }[s.thumb];
+        g.fillStyle = 'rgba(255,255,255,' + (0.45 * s.press) + ')'; g.beginPath(); g.arc(b[0], b[1], 14 + 26 * s.press, 0, Math.PI * 2); g.fill();
+      }
       R.screenTex.needsUpdate = true;
     }
 
     function updateDOM(s) {
       if (s.k !== lastK) {
         lastK = s.k;
-        $('scStep').textContent = 'Step ' + (s.k + 1) + ' of 8';
+        $('scStep').textContent = (s.k < 8 ? 'Chapter 1 · ' : 'Chapter 2 · ') + 'Step ' + (s.k + 1) + ' of ' + N;
         $('scTitle').textContent = STEPS[s.k].title;
         $('scText').textContent = STEPS[s.k].text;
-        $('hudStep').textContent = (s.k + 1) + ' / 8';
+        $('hudStep').textContent = (s.k + 1) + ' / ' + N;
         $$('#storyRail button').forEach((b) => { const i = +b.dataset.step; b.classList.toggle('active', i === s.k); b.classList.toggle('done', i < s.k); });
+        $$('[data-chapter]').forEach((b) => b.setAttribute('aria-pressed', (+b.dataset.chapter === 8) === (s.k >= 8)));
       }
       $('scBar').style.width = (s.t * 100).toFixed(1) + '%';
-      const mt = Math.round(s.m) + '%'; if ($('hudM').textContent !== mt) $('hudM').textContent = mt;
-      const pt = s.pumpOn ? 'On' : 'Off'; if ($('hudPump').textContent !== pt) $('hudPump').textContent = pt;
+      const upd = (id, v) => { if ($(id).textContent !== v) $(id).textContent = v; };
+      upd('hudM', Math.round(s.m) + '%'); upd('hudPump', s.pumpOn ? 'On' : 'Off'); upd('hudMode', s.mode === 'auto' ? 'Auto' : 'Manual');
       $('scrollCue').hidden = prog > 0.05;
+    }
+
+    function camAt(p) {
+      let i = 0; while (i < KF.length - 2 && KF[i + 1][0] <= p) i++;
+      const a = KF[i], b = KF[i + 1], u = ease(c01((p - a[0]) / Math.max(0.0001, b[0] - a[0])));
+      R.v.fromArray(CAM[a[1]][0]).lerp(R.v2.fromArray(CAM[b[1]][0]), u);
+      const pos = R.v.clone();
+      R.v.fromArray(CAM[a[1]][1]).lerp(R.v2.fromArray(CAM[b[1]][1]), u);
+      return [pos, R.v.clone()];
     }
 
     function update3D(s, dt) {
       const k = s.k, t = s.t;
-      // camera
-      const nk = Math.min(k + 1, 7), a = ease(c01((t - 0.6) / 0.4));
-      R.v.fromArray(KEYS[k].p).lerp(R.v2.fromArray(KEYS[nk].p), a);
-      R.camPos.lerp(R.v, 1 - Math.exp(-dt * 3.5));
-      R.v.fromArray(KEYS[k].t).lerp(R.v2.fromArray(KEYS[nk].t), a);
-      R.camTgt.lerp(R.v, 1 - Math.exp(-dt * 3.5));
+      const cam = camAt(prog), damp = 1 - Math.exp(-dt * 3.5);
+      R.camPos.lerp(cam[0], damp); R.camTgt.lerp(cam[1], damp);
       camera.position.copy(R.camPos); camera.lookAt(R.camTgt);
 
       // soil
       const wetH = SOIL_H * 0.92 * s.wet, lowH = Math.max(0.001, SOIL_H - wetH);
       R.low.scale.y = lowH; R.low.position.y = SOIL_B + lowH / 2;
       R.wetBox.visible = wetH > 0.002; R.wetBox.scale.y = Math.max(0.001, wetH); R.wetBox.position.y = SOIL_B + lowH + wetH / 2;
-      R.lowMat.color.setHex(0xcfa673).lerp(new THREE.Color(0x6e4c33), c01((s.m - 28) / 34));
+      R.damp = R.damp || new THREE.Color(0x7a5538);
+      R.lowMat.color.setHex(0xd8b385).lerp(R.damp, c01((s.m - 28) / 34));
       R.front.visible = s.wet > 0.01 && s.wet < 0.99; R.front.position.y = SOIL_B + lowH;
       R.front.material.opacity = 0.5 + 0.4 * Math.sin(time * 5) ** 2;
       R.cracks.material.opacity = 0.85 * s.crack;
       R.spots.forEach((sp) => { sp.visible = s.wet > 0; const r = 0.06 + 0.42 * Math.min(1, s.wet * 1.4); sp.scale.set(r, r, 1); });
       // sun + evaporation
-      R.sun.scale.setScalar(k === 0 ? 1.25 + 0.08 * Math.sin(time * 3) : 1);
-      R.sunLight.intensity = k === 0 ? 1.05 : 0.85;
+      const sunS = k === 0 ? 4.2 + 0.25 * Math.sin(time * 3) : 3.2; R.sun.scale.set(sunS, sunS, 1);
+      R.key.intensity = k === 0 ? 1.25 : 1.05;
       R.vapor.forEach((p) => {
         p.ph = (p.ph + dt * 0.35) % 1;
         p.v.visible = s.evap;
@@ -1758,7 +1914,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       });
       // plant
       R.leafMat.color.setHex(0x3f9b4b).lerp(new THREE.Color(0xb8a03c), s.stress);
-      R.leaves.forEach((pz, j) => { pz.rotation.z += ((-0.12 - s.stress * 0.8 + Math.sin(time * 1.3 + j) * 0.03) - pz.rotation.z) * Math.min(1, dt * 4); });
+      R.leaves.forEach((pz, j) => { pz.rotation.z += ((-0.05 - s.stress * 0.8 + Math.sin(time * 1.3 + j) * 0.03) - pz.rotation.z) * Math.min(1, dt * 4); });
       // sensor
       R.rings.forEach((r, j) => {
         const ph = (time * 0.9 + j / 3) % 1;
@@ -1766,7 +1922,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       });
       R.sensorLed.material.emissiveIntensity = s.sense && Math.sin(time * 14) > 0 ? 2.5 : 0.3;
       // ESP32
-      const thinking = k === 2 || k === 3 || (k === 7 && t < 0.8);
+      const thinking = k === 2 || k === 3 || (k === 7 && t < 0.8) || s.cmdT > 0.5;
       R.espLed.material.emissiveIntensity = thinking && Math.sin(time * 18) > 0 ? 2.4 : 0.4;
       R.espGlow.material.opacity = thinking ? 0.35 + 0.2 * Math.sin(time * 6) : 0;
       // relay + pump
@@ -1774,8 +1930,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       R.arm.rotation.z += ((s.relayOn ? -0.28 : 0) - R.arm.rotation.z) * Math.min(1, dt * 18);
       R.pump.position.y = 0.24 + (s.pumpOn ? Math.sin(time * 70) * 0.008 : 0);
       if (s.pumpOn) R.impeller.rotation.x += dt * 25;
-      const used = c01((prog - 4.5) / 3.2);
-      const wh = 1.4 * (1 - 0.2 * used); R.water.scale.y = wh; R.water.position.y = 0.06 + wh / 2;
+      const used = c01((prog - 4.5) / 3.2) * 0.6 + c01((prog - 9.8) / 1.8) * 0.4;
+      const wh = 1.4 * (1 - 0.25 * used); R.water.scale.y = wh; R.water.position.y = 0.08 + wh / 2;
       // water in pipe + line
       const f1 = c01(s.fill / 0.8), f2 = c01((s.fill - 0.8) / 0.2);
       R.pipeWater.visible = f1 > 0; R.lineWater.visible = f2 > 0;
@@ -1793,7 +1949,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         if (dp.state === 'idle') {
           if (s.drip && dp.delay <= 0) { dp.state = 'grow'; dp.a = 0; dp.d.visible = true; dp.d.position.set(dp.x, DRIP_Y - 0.17, LINE_Z); }
         } else if (dp.state === 'grow') {
-          dp.a += dt / 0.5; dp.d.scale.set(0.3 + 0.7 * dp.a, (0.3 + 0.7 * dp.a) * 1.3, 0.3 + 0.7 * dp.a);
+          dp.a += dt / 0.5; const g = 0.3 + 0.7 * Math.min(1, dp.a); dp.d.scale.set(g, g * 1.3, g);
           if (!s.drip && dp.a < 0.5) { dp.state = 'idle'; dp.d.visible = false; }
           else if (dp.a >= 1) { dp.state = 'fall'; dp.v = 0; }
         } else if (dp.state === 'fall') {
@@ -1810,25 +1966,39 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         d.visible = s.wireT >= 0 && u >= 0 && u < 1;
         if (d.visible) R.wSense.getPoint(u, d.position);
       });
-      R.netDots.forEach((d, j) => {
-        const u = s.netT * 1.2 - j * 0.1;
-        d.visible = s.netT >= 0 && u >= 0 && u < 1;
-        if (d.visible) { if (u < 0.5) R.pEspCloud.getPoint(u * 2, d.position); else R.pCloudPhone.getPoint((u - 0.5) * 2, d.position); }
+      const route = (dots, T, A, B) => dots.forEach((d, j) => {
+        const u = T * 1.2 - j * 0.1;
+        d.visible = T >= 0 && u >= 0 && u < 1;
+        if (d.visible) { if (u < 0.5) A.getPoint(u * 2, d.position); else B.getPoint((u - 0.5) * 2, d.position); }
       });
-      R.cloudMat.emissiveIntensity = s.netT > 0.35 && s.netT < 0.75 ? 0.35 : 0;
+      route(R.netDots, s.netT, R.pEspCloud, R.pCloudPhone);
+      route(R.cmdDots, s.cmdT > 0 && s.cmdT < 1 ? s.cmdT : -1, R.pPhoneCloud, R.pCloudEsp);
+      const atDb = (T) => T > 0.38 && T < 0.72;
+      const dbHit = atDb(s.netT) || atDb(s.cmdT);
+      R.cloudMat.emissiveIntensity = dbHit ? 0.3 : 0;
+      R.dbBands.forEach((b, j) => { b.material.color.setHex(dbHit && Math.sin(time * 16 + j * 1.5) > -0.2 ? 0xffd23f : 0x5ea9ff); });
+      R.db.rotation.y += dt * (dbHit ? 2.2 : 0.25);
       R.relayDot.visible = s.relayT >= 0 && s.relayT < 1;
       if (R.relayDot.visible) { if (s.relayT < 0.73) R.wRelay.getPoint(s.relayT / 0.73, R.relayDot.position); else R.wPump.getPoint((s.relayT - 0.73) / 0.27, R.relayDot.position); }
-      R.cloud.position.y = 5.6 + Math.sin(time * 0.8) * 0.06;
+      R.cloud.position.y = 5.95 + Math.sin(time * 0.8) * 0.06;
+      // thumb
+      const target = s.thumb ? R.btn[s.thumb] : R.thumbRest;
+      R.v.copy(R.thumbRest).lerp(R.v2.set(target.x, target.y, 0.24), s.approach);
+      if (s.approach > 0.98 && s.press > 0) R.v.z = 0.24 - 0.13 * s.press;
+      R.thumbTip.lerp(R.v, Math.min(1, dt * 14));
+      setLimb(R.thumb, R.thumbBase, R.thumbTip);
       drawScreen(s);
 
       renderer.render(scene, camera);
       // labels
-      labels.sensor.el.textContent = k >= 1 ? 'Sensor reads ' + Math.round(s.m) + '%' : 'Moisture sensor';
+      labels.sensor.el.textContent = k >= 1 && k <= 7 ? 'Sensor reads ' + Math.round(s.m) + '%' : 'Moisture sensor';
       labels.soil.el.textContent = 'Soil ' + Math.round(s.m) + '%';
       labels.plant.el.textContent = s.stress > 0.4 ? 'Plant: thirsty' : 'Plant: healthy';
       labels.think.el.textContent = s.espMsg;
       labels.relay.el.textContent = s.relayOn ? 'Relay ON' : 'Relay';
       labels.pump.el.textContent = s.pumpOn ? 'Pump ON' : 'Pump';
+      labels.db.el.textContent = 'Database · ' + Math.round(s.m) + '% · pump ' + (s.pumpOn ? 'ON' : 'off') + ' · ' + (s.mode === 'auto' ? 'auto' : 'manual');
+      labels.app.el.textContent = s.thumb && s.approach > 0.2 ? 'You tap ' + (s.thumb === 'pump' ? (s.pumpOn ? '"Pump OFF"' : '"Pump ON"') : '"' + (s.thumb === 'auto' ? 'Auto' : 'Manual') + '"') : 'Your phone';
       const r = $('simStage').getBoundingClientRect();
       Object.keys(labels).forEach((key) => {
         const l = labels[key];
@@ -1846,9 +2016,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       if (view !== 'simulation') { if (playing) stopPlay(); return; }
       if (playing) {
         const g = geom();
-        playY += g.total / 8 / 4.5 * dt;
+        playY += g.total / N / 4.5 * dt;
         window.scrollTo(0, playY);
-        if (g.prog >= 7.98) stopPlay();
+        if (g.prog >= N - 0.02) stopPlay();
       }
       prog = geom().prog;
       const s = story(prog);
