@@ -1442,6 +1442,360 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     renderHistory();
   }));
 
+  // ---------------- shared question understanding + knowledge (used by both chatbots) ----------------
+  const Brain = (function () {
+    // words -> concepts
+    const GROUPS = {
+      water: 'water waters watering watered irrigate irrigation irrigating hydrate sprinkle',
+      moisture: 'moisture moist wetness dampness damp',
+      dry: 'dry dries drying dried thirsty parched wilting wilt wilted droop drooping droopy',
+      wet: 'wet soggy waterlogged waterlogging overwater overwatered overwatering flooded flooding puddle',
+      threshold: 'threshold thresholds level levels limit limits range setting settings setpoint percent percentage start stop',
+      alert: 'alert alerts notification notifications notify alarm warning warnings',
+      pump: 'pump pumps motor',
+      power: 'power pressure flow strength stronger weaker',
+      timing: 'timing duration seconds second sec secs minutes minute mins burst bursts longer shorter',
+      more: 'more increase increasing higher raise raising longer bigger stronger faster extra boost',
+      less: 'less decrease decreasing lower reduce reducing shorter smaller weaker slower cut',
+      manual: 'manual manually myself override',
+      auto: 'automatic auto automatically autopilot',
+      mode: 'mode',
+      rain: 'rain raining rainy rains monsoon shower showers drizzle storm thunderstorm',
+      weather: 'weather forecast temperature hot heat heatwave sunny sun cold winter summer humid humidity wind windy climate season',
+      hot: 'hot heat heatwave summer sunny scorching',
+      cold: 'cold winter chilly cool frost',
+      now: 'now today tonight immediately currently right',
+      later: 'later tomorrow wait waiting skip postpone delay hold',
+      morning: 'morning mornings sunrise early',
+      evening: 'evening evenings night nights sunset late',
+      soil: 'soil soils dirt earth ground potting sand sandy clay loam loamy peat peaty silt silty mix compost',
+      drip: 'drip drips dripper drippers emitter emitters dripline nozzle',
+      sprinkler: 'sprinkler sprinklers spray hose',
+      clog: 'clog clogs clogged clogging blocked blockage choke choked',
+      sensor: 'sensor sensors probe capacitive resistive reading readings calibrate calibration',
+      esp32: 'esp32 esp microcontroller arduino nodemcu esp8266 firmware code',
+      relay: 'relay relays transistor mosfet',
+      net: 'wifi internet network cloud database firebase sync app website online offline',
+      supply: 'battery batteries adapter supply solar charger usb voltage volt volts amps',
+      tank: 'tank reservoir container bucket bottle',
+      fert: 'fertilizer fertiliser fertilizers nutrient nutrients npk manure feed fertigation urea',
+      health: 'health healthy sick dying dead yellow yellowing brown leaves leaf growth grow growing disease fungus pest pests rot rotting',
+      plant: 'plant plants crop crops garden pot pots tree flower flowers',
+      cost: 'cost costs price cheap expensive budget rupees inr money',
+      energy: 'electricity energy consumption bill',
+      safety: 'safe safety danger dangerous risk shock fire',
+      leak: 'leak leaks leaking leakage',
+      source: 'tap ro rainwater borewell hard chlorine salty quality',
+      algae: 'algae slime mosquito mosquitoes mosquitos',
+      mulch: 'mulch mulching',
+      drain: 'drainage drain draining holes',
+      away: 'vacation holiday travel away trip travelling traveling',
+      indoor: 'indoor indoors inside room',
+      outdoor: 'outdoor outdoors outside balcony terrace garden',
+      cutoff: 'cutoff lockout runtime',
+      problem: 'problem problems issue issues broken fix stuck wrong error fail failing failed faulty working',
+      how: 'how',
+      why: 'why reason',
+      greet: 'hi hello hey thanks thank namaste',
+      seedling: 'seed seeds seedling seedlings germination sapling saplings',
+      amount: 'much many litre litres liter liters ml'
+    };
+    const LEX = {};
+    Object.keys(GROUPS).forEach((g) => GROUPS[g].split(' ').forEach((w) => { (LEX[w] = LEX[w] || []).push(g); }));
+    const stem = (w) => w.length > 4 ? w.replace(/(ings|ing|edly|ed|es|s)$/, '') : w;
+    const PTYPES = {
+      chili: { names: ['chili', 'chilli', 'chilly', 'chilies', 'chillies', 'pepper', 'peppers', 'capsicum', 'mirchi'], range: [40, 65], note: 'Chilies like evenly moist soil. Very wet soil makes flowers drop, and long dry spells make the fruit small.' },
+      tomato: { names: ['tomato', 'tomatoes', 'tamatar'], range: [45, 70], note: 'Tomatoes need steady moisture. Swinging between dry and wet causes cracked fruit and blossom-end rot.' },
+      rose: { names: ['rose', 'roses', 'gulab'], range: [40, 60], note: 'Roses like deep watering but hate soggy roots.' },
+      tulsi: { names: ['tulsi', 'basil'], range: [40, 60], note: 'Tulsi and basil like moist but well-drained soil.' },
+      pothos: { names: ['money plant', 'pothos'], range: [30, 50], note: 'Money plant prefers to dry out a little between waterings.' },
+      succulent: { names: ['cactus', 'cacti', 'succulent', 'succulents', 'aloe', 'aloe vera', 'jade', 'snake plant'], range: [10, 25], note: 'Cacti and succulents store water. Let the soil dry well before watering, because constant moisture causes rot.' },
+      fern: { names: ['fern', 'ferns'], range: [55, 75], note: 'Ferns like consistently moist soil and humid air.' },
+      mint: { names: ['mint', 'pudina'], range: [55, 75], note: 'Mint loves moisture and wilts quickly when dry.' },
+      greens: { names: ['spinach', 'palak', 'lettuce', 'methi', 'fenugreek', 'leafy greens', 'greens'], range: [50, 70], note: 'Leafy greens grow best in steadily moist soil.' },
+      lawn: { names: ['lawn', 'grass', 'turf'], range: [35, 55], note: 'Grass does best with deep, less frequent watering.' },
+      orchid: { names: ['orchid', 'orchids'], range: [30, 50], note: 'Orchids need airy media that partly dries between waterings.' },
+      hibiscus: { names: ['hibiscus', 'gudhal'], range: [45, 65], note: 'Hibiscus is thirsty in summer and drops buds if it dries out.' },
+      strawberry: { names: ['strawberry', 'strawberries'], range: [50, 70], note: 'Strawberries have shallow roots and need frequent light watering.' },
+      curry: { names: ['curry leaf', 'curry leaves', 'kadi patta'], range: [30, 50], note: 'Curry leaf prefers slightly dry soil and good drainage.' },
+      coriander: { names: ['coriander', 'dhaniya', 'cilantro'], range: [45, 65], note: 'Coriander bolts in heat if the soil dries out.' },
+      marigold: { names: ['marigold', 'marigolds', 'genda'], range: [35, 55], note: 'Marigolds are tough and prefer slightly dry soil.' },
+      brinjal: { names: ['brinjal', 'eggplant', 'baingan'], range: [45, 65], note: 'Brinjal needs regular watering, especially while fruiting.' },
+      citrus: { names: ['lemon', 'lime', 'citrus', 'orange tree'], range: [35, 55], note: 'Citrus likes deep watering and a partial dry-down.' },
+      jasmine: { names: ['jasmine', 'mogra'], range: [40, 60], note: 'Jasmine likes moist, well-drained soil, especially in summer.' },
+      seedling: { names: ['seedling', 'seedlings', 'germinating', 'germination', 'sapling', 'saplings'], range: [55, 75], note: 'Seedlings have tiny roots, so keep the top layer moist and use gentle, short bursts.' }
+    };
+    const SOILN = { sandy: ['sandy', 'sand'], clay: ['clay', 'clayey'], loamy: ['loam', 'loamy'], potting: ['potting', 'potting mix', 'cocopeat', 'coco peat'], silty: ['silt', 'silty'], peaty: ['peat', 'peaty'] };
+    const PUMP_SOIL = {
+      sandy: 'Sandy soil drains fast, so use short bursts (about 30 s) at moderate power (around 60%) more often. More power or longer runs just drain past the roots.',
+      loamy: 'Loamy soil takes water evenly, so a balanced setting works: about 70% power with 1-minute bursts.',
+      clay: 'Clay absorbs slowly, so use low power (about 35%) with long bursts (about 2 min). Extra power only runs off the top.',
+      potting: 'Potting mix absorbs well but dries fairly fast: about 65% power with 45-second bursts.',
+      silty: 'Silty soil packs down and can pool, so use moderate power (about 50%) with longer bursts (about 90 s).',
+      peaty: 'Peat soaks up water like a sponge, so use moderate power (about 55%) with short bursts (about 40 s) to avoid waterlogging.'
+    };
+
+    function parse(q) {
+      const raw = (q || '').trim();
+      const t = ' ' + raw.toLowerCase().replace(/[’`]/g, "'").replace(/[^a-z0-9%.\s'/-]/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
+      const words = t.trim().split(/[\s/]+/).map((w) => w.replace(/^[.'-]+|[.'-]+$/g, ''));
+      const c = {};
+      words.forEach((w) => { (LEX[w] || LEX[stem(w)] || []).forEach((g) => { c[g] = true; }); });
+      if (/\bwi-?fi\b/.test(t)) c.net = true;
+      if (/\bdrip ?line\b/.test(t)) c.drip = true;
+      if (/\b(no|not|isn't|doesn't|won't|didn't|can't|cannot)\b/.test(t) && (c.pump || c.sensor || c.relay || c.drip || c.net || c.esp32)) c.problem = true;
+      const plants = []; let m; const pr = /plants?\s*(?:no\.?|number|#)?\s*(\d{1,2})(?:\s*(?:,|and|&|vs|or)\s*(\d{1,2}))?/g;
+      while ((m = pr.exec(t))) { [m[1], m[2]].forEach((n) => { if (n && +n >= 1 && +n <= 12 && !plants.includes(+n)) plants.push(+n); }); }
+      const pct = []; const pc = /(\d{1,3}(?:\.\d)?)\s*(?:%|percent\b|per cent\b)/g; while ((m = pc.exec(t))) if (+m[1] <= 100) pct.push(+m[1]);
+      let secs = null; const sm = t.match(/(\d+(?:\.\d+)?)\s*(s|sec|secs|seconds?|min|mins|minutes?)\b/); if (sm) secs = +sm[1] * (/^m/.test(sm[2]) ? 60 : 1);
+      let ptype = null; Object.keys(PTYPES).forEach((k) => { if (!ptype && PTYPES[k].names.some((n) => t.includes(' ' + n + ' ') || t.includes(' ' + n + 's ') || t.includes(' ' + n + '?'))) ptype = k; });
+      let soil = null; Object.keys(SOILN).forEach((k) => { if (!soil && SOILN[k].some((n) => t.includes(' ' + n + ' '))) soil = k; });
+      // question type + the two options of an "A or B" question
+      let type = 'statement', options = null;
+      const body = t.trim().replace(/\?+$/, '').trim();
+      const vs = body.match(/(?:^|\s)between (.+?) and (.+)$/) || body.match(/^(.+?)\s+(?:vs\.?|versus)\s+(.+)$/);
+      const orIdx = body.lastIndexOf(' or ');
+      if (vs) { type = 'choice'; options = [vs[1], vs[2]]; }
+      else if (orIdx > 0 && !/ or not\b/.test(body) && !/\bor so\b/.test(body)) {
+        type = 'choice';
+        let a = body.slice(0, orIdx), b = body.slice(orIdx + 4);
+        a = a.replace(/^(so |ok |okay |hey |hi )?(should i|should we|shall i|do i|do we|is it better to|would it be better to|which is better|what is better|what's better|better to|can i|is it|are|is|should|which|what|do you think i should|do you think)\s+/, '');
+        a = a.replace(/^(use|go with|choose|keep|have)\s+/, (x) => x);
+        options = [a.trim(), b.trim()];
+      } else if (/^(should|shall|can|could|is|are|am|do|does|did|will|would|may|must|was|were|has|have|isn't|aren't|won't)\b/.test(body)) type = 'yesno';
+      else if (/^why\b/.test(body)) type = 'why';
+      else if (/^how (much|many|long|often)\b/.test(body)) type = 'howmuch';
+      else if (/^how\b/.test(body)) type = 'how';
+      else if (/^(when|what time)\b/.test(body)) type = 'when';
+      else if (/^(what|which|where|who)\b/.test(body)) type = 'what';
+      if (options) options = options.map((o) => o.replace(/\s+(while|when|if|during|because|since|so that|for my|for the|in my|on my)\b.*$/, '').replace(/^(the|a|an|to)\s+/, '').trim());
+      if (options && (options[0].length > 70 || options[1].length > 70 || !options[0] || !options[1])) options = null;
+      return { raw, t, c, plants, pct, secs, ptype, soil, type, options, tomorrow: /\btomorrow\b/.test(t) };
+    }
+
+    const yesNoLead = (ok) => ok ? 'Yes. ' : 'No. ';
+    function pickOption(p, re) { if (!p.options) return null; const i = p.options.findIndex((o) => re.test(' ' + o + ' ')); return i >= 0 ? p.options[i] : null; }
+    function verdict(p, re, fallback) { const o = pickOption(p, re); return o ? 'Better choice: ' + o + '. ' : (fallback || ''); }
+    function standardAlerts(dry, wet) { return [Math.max(5, dry - 20), Math.min(95, wet + 30)]; }
+    function pctBand(v) {
+      if (v < 10) return 'extremely dry: roots start dying at this level for almost every plant except cacti';
+      if (v < 25) return 'dry: only cacti and succulents are happy this dry';
+      if (v < 35) return 'on the dry side: fine as a start level for drought-tolerant plants, a bit low for most';
+      if (v <= 65) return 'in the healthy range for most plants';
+      if (v <= 80) return 'wet: good for moisture-loving plants like ferns or mint, too wet for most others';
+      return 'waterlogged: roots run short of air and can rot if the soil stays this wet';
+    }
+    function wxLine(wx) {
+      if (!wx) return '';
+      if (wx.rainSoon) return ' Rain is likely in ' + wx.city + ' (' + Math.max(wx.today.rainProb, wx.tomorrow.rainProb) + '% chance in the next two days), so outdoor plants will get extra water.';
+      if (wx.hot) return ' It is hot in ' + wx.city + ' (up to ' + wx.today.tmax + '°C), so soil will dry faster than usual today.';
+      return '';
+    }
+    function targets(p, ctx) {
+      if (p.plants.length && ctx.plantInfo) return p.plants.map((n) => ctx.plantInfo(n)).filter(Boolean);
+      if (ctx.pl) return [ctx.pl];
+      return null;
+    }
+
+    // ---------- decisions from live data ----------
+    function decideWater(p, ctx) {
+      const wx = ctx.wx, list = targets(p, ctx);
+      if (list && list.length) {
+        return list.map((pl) => {
+          if (pl.pump) return 'Plant ' + pl.id + ' is being watered right now (' + Math.round(pl.m) + '%). ' + (pl.mode === 'auto' ? 'It will stop by itself at ' + pl.wet + '%.' : 'It is in manual mode, so turn it off near ' + pl.wet + '%.') + (p.options ? ' ' + verdict(p, /\b(wait|later|skip|not|stop|off)\b/) : '');
+          if (pl.m < pl.dry) return verdict(p, /\b(now|water|yes|today|on)\b/, p.type === 'yesno' ? 'Yes. ' : '') + 'Plant ' + pl.id + ' is at ' + Math.round(pl.m) + '%, below its ' + pl.dry + '% start level, so it needs water. ' +
+            (pl.mode === 'auto' ? 'It is in automatic mode, so the pump will start on its own at the next check. You don\'t need to do anything.' : 'It is in manual mode, so turn its pump on now and turn it off near ' + pl.wet + '%.') + (wx && wx.rainSoon ? ' If it is outdoors, a short watering is enough because rain is expected.' : '');
+          if (pl.m < pl.dry + 6) return verdict(p, /\b(wait|later|skip|tomorrow|evening|not)\b/, p.type === 'yesno' ? 'Not yet. ' : '') + 'Plant ' + pl.id + ' is at ' + Math.round(pl.m) + '%, just above its ' + pl.dry + '% start level, so it will need water soon. ' + pl.next + wxLine(wx);
+          return verdict(p, /\b(wait|later|skip|tomorrow|not|no)\b/, p.type === 'yesno' ? 'No. ' : '') + 'Plant ' + pl.id + ' is at ' + Math.round(pl.m) + '%, comfortably above its ' + pl.dry + '% start level, so watering now would only make it wetter. ' + pl.next + wxLine(wx);
+        }).join('\n\n');
+      }
+      const all = ctx.plants ? ctx.plants() : [];
+      if (!all.length) return 'Water when the soil drops below about 35% and stop around 60%. The sensor does this check for you in automatic mode.' + wxLine(wx);
+      const dryMan = all.filter((pl) => pl.mode === 'manual' && !pl.pump && pl.m < pl.dry), dryAuto = all.filter((pl) => pl.mode === 'auto' && pl.m < pl.dry), soon = all.filter((pl) => !pl.pump && pl.m >= pl.dry && pl.m < pl.dry + 6);
+      let s = '';
+      // "water now or wait (for rain)?" -> decide from the forecast first
+      if (p.c.rain || p.c.later || p.options) {
+        if (!wx) s = 'I can\'t see the forecast right now, so don\'t count on rain: water the plants that are below their start level. ';
+        else if (wx.rainSoon) s = verdict(p, /\b(wait|later|skip|rain|tomorrow)\b/) + 'Rain is likely in ' + wx.city + ' (' + Math.max(wx.today.rainProb, wx.tomorrow.rainProb) + '% chance), so for outdoor plants you can wait. Plants in automatic mode will still be watered if the soil dries out before the rain comes. Indoor plants won\'t get the rain, so water those as normal. ';
+        else s = verdict(p, /\b(now|water|today|yes)\b/) + 'Don\'t wait for rain: the forecast for ' + wx.city + ' shows only a ' + Math.max(wx.today.rainProb, wx.tomorrow.rainProb) + '% chance in the next two days. ';
+      }
+      s += dryMan.length ? (dryMan.length > 1 ? 'These plants need water now: ' : 'This plant needs water now: ') + dryMan.map((x) => 'Plant ' + x.id + ' (' + Math.round(x.m) + '%)').join(', ') + '. ' + (dryMan.length > 1 ? 'They are' : 'It is') + ' below the start level and in manual mode, so water ' + (dryMan.length > 1 ? 'them' : 'it') + ' yourself or switch to automatic. '
+        : 'No plant needs watering by hand right now. ';
+      if (dryAuto.length) s += dryAuto.map((x) => 'Plant ' + x.id).join(', ') + (dryAuto.length > 1 ? ' are' : ' is') + ' below the start level, but automatic mode will water ' + (dryAuto.length > 1 ? 'them' : 'it') + ' on its own. ';
+      if (soon.length) s += soon.map((x) => 'Plant ' + x.id).join(', ') + ' will need water soon. ';
+      return s + (p.c.rain || p.c.later || p.options ? '' : wxLine(wx));
+    }
+    function decideMode(p, ctx) {
+      const pl = (targets(p, ctx) || [])[0];
+      const reason = p.c.away ? 'away' : p.c.fert ? 'fert' : p.c.rain ? 'rain' : /\b(test|testing|clean|cleaning|flush|repair|fix)\b/.test(p.t) ? 'service' : null;
+      let s = '';
+      if (reason === 'away') s = verdict(p, /\bauto/) + 'Keep automatic while you are away: AquaSense waters each plant whenever it drops below its start level. In manual mode nothing would water your plants. Before you leave, fill the tank and check the drippers.';
+      else if (reason === 'fert') s = verdict(p, /\bmanual/) + 'Use manual for a short time while you feed fertilizer, so you control exactly how much goes in. Then flush the line with plain water for a minute and switch back to automatic.';
+      else if (reason === 'rain') s = verdict(p, /\bauto/) + 'Automatic is usually still the better choice in rain: the sensor sees the rain-soaked soil and won\'t start the pump. Switch an outdoor plant to manual only if you want to be extra careful before very heavy rain, and remember to switch it back.';
+      else if (reason === 'service') s = verdict(p, /\bmanual/) + 'Manual is right while you test, clean or repair. It stops the system from switching the pump on in the middle of your work. Switch back to automatic when you\'re done.';
+      else s = verdict(p, /\bauto/, p.type === 'yesno' && /manual/.test(p.t) ? 'Usually not. ' : '') + 'Automatic is the better choice for everyday use: it waters whenever the soil drops below the start level and stops at the stop level, even at night or when you are away. Use manual only when you want direct control (testing, cleaning the drip line, feeding fertilizer, seedlings that need hand care), and switch back afterwards, because in manual mode the plant won\'t be watered on its own.';
+      if (pl) s += '\n\nPlant ' + pl.id + ' is currently in ' + (pl.mode === 'auto' ? 'automatic' : 'manual') + ' mode at ' + Math.round(pl.m) + '%.' + (pl.mode === 'manual' && pl.m < pl.dry ? ' It is already below its ' + pl.dry + '% start level, so switch it back to automatic or water it now.' : '') + (pl.mode === 'manual' ? ' In manual mode you get an alert below ' + pl.lowLim + '% (pump off) or above ' + pl.highLim + '% (pump on).' : '');
+      return s;
+    }
+    function decidePump(p, ctx) {
+      const pl = (targets(p, ctx) || [])[0];
+      const soil = p.soil || (pl && pl.soil) || null;
+      let s = '';
+      const wantMore = p.c.more || /not enough|too slow|barely|takes (too )?long|dry patch/.test(p.t), wantLess = p.c.less || /too much|flood|overflow|runoff|run off|puddle/.test(p.t);
+      if (p.options) {
+        const tFirst = !soil || soil === 'clay' || soil === 'silty' || soil === 'loamy';
+        s = tFirst ? verdict(p, /\b(time|timing|longer|duration|minute|second|burst)/) + 'Lengthen the timing before raising the power. Longer, gentler bursts give water time to soak in, while extra power mostly runs off or drains away. Raise the power only if water barely comes out of the drippers.'
+          : verdict(p, /\b(short|frequent|often|less|lower|time|timing)/) + 'On fast-draining soil, neither more power nor much longer runs help: water drains past the roots. Use short bursts at moderate power so the soil gets watered more often.';
+      } else if (wantMore) s = 'If the soil isn\'t getting wet enough, increase the timing first (for example from 1 min to 1 min 30 s). Raise the power only if the drippers barely drip, and check for a clog if one dripper is much slower than the others.';
+      else if (wantLess) s = 'If water pools or runs off, lower the power (try 10–15% less) and keep the timing, or shorten the bursts. Pooling usually means the water comes faster than the soil can absorb.';
+      else s = 'Power is how hard the pump pushes water (1.5 L/min at 100%). Timing is how long each burst lasts. Match them to the soil: slow-absorbing soil needs gentle, longer bursts, and fast-draining soil needs short, frequent ones.';
+      if (soil) s += '\n\n' + PUMP_SOIL[soil];
+      if (pl) s += '\n\nPlant ' + pl.id + ' (' + pl.soilName.toLowerCase() + ' soil, ' + pl.conf + ' confidence) is set to ' + pl.power + '% for ' + fmtS(pl.timing) + '; suggested: ' + pl.rec.power + '% for ' + fmtS(pl.rec.timing) + '.';
+      if (p.secs != null) s += '\n\nAbout ' + fmtS(Math.round(p.secs)) + ': ' + (p.secs < 10 ? 'that is below the 10 s minimum.' : p.secs > 150 ? 'that is above the 2 min 30 s maximum; use several shorter bursts instead.' : p.secs <= 40 ? 'a short burst, good for sandy soil, seedlings and peat.' : p.secs <= 90 ? 'a medium burst, good for loamy soil and potting mix.' : 'a long burst, good for clay and silty soil at low power.');
+      return { text: s, action: pl && (pl.power !== pl.rec.power || pl.timing !== pl.rec.timing) ? { type: 'pump', id: pl.id, rec: pl.rec } : null };
+    }
+    function fmtS(t) { return t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : ''); }
+    function decideThreshold(p, ctx) {
+      const pl = (targets(p, ctx) || [])[0];
+      const pt = p.ptype ? PTYPES[p.ptype] : null;
+      let ref = pt ? pt.range : pl ? [pl.trec.dry, pl.trec.wet] : [35, 60];
+      const PT_LABEL = { succulent: 'cacti and succulents', pothos: 'money plant', greens: 'leafy greens', lawn: 'lawn grass', curry: 'curry leaf', citrus: 'citrus', seedling: 'seedlings', tulsi: 'tulsi and basil' };
+      const refName = pt ? (PT_LABEL[p.ptype] || p.ptype) : pl ? 'Plant ' + pl.id + ' (' + pl.soilName.toLowerCase() + ' soil)' : 'most plants';
+      let s = '';
+      if (p.pct.length) {
+        const v = p.pct[0];
+        const role = /\b(stop|until|up ?to|upto|end|wet|high|max)\b/.test(p.t) ? 'stop' : /\balert/.test(p.t) ? 'alert' : /\b(start|below|begin|dry|low|min)\b/.test(p.t) ? 'start' : 'level';
+        s = v + '% is ' + pctBand(v) + '. ';
+        if (role === 'start') s += v < ref[0] - 7 ? 'As a start level it is lower than the ' + ref[0] + '% I would use for ' + refName + ', so the soil would get quite dry before watering.' : v > ref[0] + 7 ? 'As a start level it is higher than the ' + ref[0] + '% suggested for ' + refName + ', so the pump would run often and the soil may stay too wet.' : 'As a start level it suits ' + refName + ' (suggested ' + ref[0] + '%).';
+        else if (role === 'stop') s += v > ref[1] + 7 ? 'As a stop level it is higher than the ' + ref[1] + '% suggested for ' + refName + ', which risks waterlogged roots.' : v < ref[1] - 7 ? 'As a stop level it is lower than the ' + ref[1] + '% suggested for ' + refName + ', so each watering will be short and the pump will run more often.' : 'As a stop level it suits ' + refName + ' (suggested ' + ref[1] + '%).';
+        else if (role === 'alert') s += v < 15 ? 'That works as a "too dry" alert limit.' : v > 85 ? 'That works as a "too wet" alert limit.' : 'Alert limits should sit well outside the watering range: about 5–10% for "too dry" and 90–95% for "too wet".';
+        else s += 'For ' + refName + ' the soil should stay between ' + ref[0] + '% and ' + ref[1] + '%.';
+        if (p.type === 'yesno') s = ((role === 'start' && Math.abs(v - ref[0]) <= 7) || (role === 'stop' && Math.abs(v - ref[1]) <= 7) || (role === 'level' && v >= ref[0] && v <= ref[1]) ? 'Yes. ' : 'Not quite. ') + s;
+      } else if (pt) {
+        const al = standardAlerts(pt.range[0], pt.range[1]);
+        s = 'For ' + refName + ', keep the soil between ' + pt.range[0] + '% and ' + pt.range[1] + '%: start watering below ' + pt.range[0] + '%, stop at ' + pt.range[1] + '%, alerts below ' + al[0] + '% and above ' + al[1] + '%. ' + pt.note;
+      } else if (pl) {
+        s = 'Plant ' + pl.id + ' looks like ' + pl.soilName.toLowerCase() + ' soil. Suggested: start below ' + pl.trec.dry + '%, stop at ' + pl.trec.wet + '%, alerts below ' + pl.trec.lowLim + '% and above ' + pl.trec.highLim + '%. ' + pl.trec.why + '\n\nCurrently: ' + pl.dry + '–' + pl.wet + '%, alerts below ' + pl.lowLim + '% / above ' + pl.highLim + '%.';
+      } else {
+        s = 'For most plants: start watering below 35% (30–40% is fine), stop at 60% (55–65%), keep at least 10% between them, and set alerts below 5–10% and above 90–95%.' + (ctx.climate ? ' With today\'s weather in ' + (ctx.wx ? ctx.wx.city : 'your city') + ' (' + ctx.climate.tag.toLowerCase() + ') I would use ' + ctx.climate.dry + '–' + ctx.climate.wet + '%.' : '') + ' Tell me the plant (for example chili, tomato or cactus) for a more specific range.';
+      }
+      if (p.options && !p.pct.length) s = 'Pick the option that keeps the soil between ' + ref[0] + '% and ' + ref[1] + '% for ' + refName + '. ' + s;
+      let action = null;
+      if (pl && !p.pct.length) { const t = pt ? { dry: pt.range[0], wet: pt.range[1], lowLim: standardAlerts(pt.range[0], pt.range[1])[0], highLim: standardAlerts(pt.range[0], pt.range[1])[1] } : { dry: pl.trec.dry, wet: pl.trec.wet, lowLim: pl.trec.lowLim, highLim: pl.trec.highLim }; if (t.dry !== pl.dry || t.wet !== pl.wet || t.lowLim !== pl.lowLim || t.highLim !== pl.highLim) action = { type: 'thr', id: pl.id, t }; }
+      return { text: s, action };
+    }
+    function weatherAnswer(p, ctx) {
+      const wx = ctx.wx;
+      if (!wx) return 'I couldn\'t load the forecast right now, so I can\'t tell you about today\'s weather. In general: water more often in hot, sunny, windy weather, and less before rain or in cool, humid weather. The soil sensor adjusts for this automatically in automatic mode.';
+      const d = p.tomorrow ? wx.tomorrow : wx.today, when = p.tomorrow ? 'tomorrow' : 'today';
+      if (p.c.rain && (p.type === 'yesno' || p.type === 'when' || /\bwill it\b/.test(p.t))) return (d.rainProb >= 50 ? 'Yes, probably. ' : d.rainProb >= 25 ? 'Maybe. ' : 'Probably not. ') + 'The forecast for ' + wx.city + ' ' + when + ' gives a ' + d.rainProb + '% chance of rain (' + d.rainMm.toFixed(1) + ' mm expected). ' + (d.rainProb >= 50 ? 'Outdoor plants will get water from the sky, and the sensors will hold the pump off once the soil is wet.' : 'Your plants will rely on the drip system as usual.');
+      if (p.c.hot || p.c.cold || /\btemperature\b/.test(p.t)) return wx.city + ' ' + when + ': ' + d.tmin + '–' + d.tmax + '°C' + (p.tomorrow ? '' : ' (now ' + wx.now + '°C, humidity ' + wx.rh + '%)') + '. ' + (d.tmax >= 34 ? 'That is hot: soil can dry 2–3 times faster in the afternoon. A start level of about 40% and mulch on top will help.' : d.tmax <= 18 ? 'That is cool: soil dries slowly, so a slightly lower start level (about 30%) avoids soggy roots.' : 'That is mild, so the standard 35–60% range works.');
+      return ctx.weatherText ? ctx.weatherText() : '';
+    }
+
+    // ---------- general knowledge ----------
+    const KB = [
+      { tags: { how: 1, plant: 0.5 }, re: /how (does|do) (it|this|aquasense|the system|the project) work|what is aquasense|explain (the )?(system|project)/, a: () => 'AquaSense works in a loop: a capacitive sensor measures soil moisture, and the ESP32 reads it every few minutes. When moisture drops below the start level, the ESP32 switches a relay that runs a small pump. Water flows through a drip line to the roots, and the pump stops at the stop level. Every reading goes over Wi-Fi to a cloud database, so the app shows live values, history and alerts, and lets you switch any plant to manual.' },
+      { tags: { morning: 2, evening: 2, water: 1, when: 1 }, re: /best time|what time|when.*(water|irrigat)/, a: () => 'Early morning is the best time to water: less water evaporates, leaves dry quickly (less fungus), and the plant has water for the hot afternoon. Evening is the next best. Avoid watering late at night, because wet leaves overnight invite fungal disease. In automatic mode AquaSense waters whenever the soil needs it, so this matters most when you water by hand.' },
+      { tags: { wet: 2, health: 1 }, re: /sign.*(over ?water)|too much water|over ?water/, a: () => 'Signs of overwatering: yellow lower leaves, soft or drooping stems while the soil is wet, mould or algae on the soil, a sour smell, and brown, mushy roots. Fix: lower the stop level by 5–10%, shorten the pump timing, make sure the pot drains, and let the soil dry to the start level before the next watering.' },
+      { tags: { dry: 2, health: 1 }, re: /sign.*(under ?water|dry)|not enough water|under ?water/, a: () => 'Signs of underwatering: drooping that recovers after watering, crispy brown leaf edges, curled leaves, soil pulling away from the pot, and slow growth. Fix: raise the start level by about 5%, check that every dripper drips, and add mulch to slow evaporation.' },
+      { tags: { health: 1.5 }, re: /yellow|brown|spots|curl|wilt/, a: () => 'Yellow or brown leaves usually come from watering. If the soil reads above 65% most of the time, it is overwatering: lower the stop level. If it often drops below 30%, it is underwatering: raise the start level. If the watering looks fine, the cause may be nutrients (feed a balanced fertilizer), too little light, or pests (check the leaf undersides). The plant advisor in Settings shows each plant\'s moisture history and health score.' },
+      { tags: { fert: 3 }, re: /fertili[sz]|nutrient|fertigation|manure|feed/, a: () => 'You can feed fertilizer through the drip line ("fertigation"), but only fully water-soluble fertilizer at about half the label strength. Switch the plant to manual, run the fertilizer solution for one short burst, then flush the line with plain water for a minute so the drippers don\'t clog. Solid manure or compost should go on the soil, not in the tank. Feed every 2–3 weeks in the growing season.' },
+      { tags: { source: 3 }, re: /tap water|ro water|rain ?water|borewell|hard water|chlorine/, a: () => 'Tap water is fine for most plants; letting it stand overnight lets chlorine escape. Rainwater is the best. RO water is safe but has no minerals, so feed a little fertilizer. Very hard borewell water leaves white crust in the drippers, so flush them monthly and soak them in vinegar if they clog. Avoid softened water, because its salt harms plants.' },
+      { tags: { mulch: 3 }, re: /mulch/, a: () => 'Mulch (dry leaves, bark, coco husk or pebbles, 2–5 cm thick) slows evaporation by up to half, keeps roots cool and stops soil splashing. With mulch the pump runs less often. Keep it a few centimetres away from the stem so the stem doesn\'t rot.' },
+      { tags: { away: 3 }, re: /vacation|holiday|away|travel|trip/, a: () => 'Before going away: keep every plant in automatic mode, fill the tank completely (each watering of a 1-minute burst at 70% uses about 1 L), check that every dripper drips, set the alert limits so you get notified, and add mulch. For long trips use a bigger tank. In summer one plant can need 1–2 waterings a day.' },
+      { tags: { indoor: 2, outdoor: 2 }, re: /indoor|outdoor|inside|outside|balcony|terrace/, a: () => 'Indoor plants dry slowly (no wind or strong sun), so they need a slightly lower start level (about 30%) and shorter bursts. Outdoor plants dry faster in sun and wind but also get rain. Keep automatic mode on so the sensor accounts for rain, and use 35–40% as the start level in summer.' },
+      { tags: { algae: 3, tank: 1 }, re: /algae|green water|slime|mosquito|(paint|colou?r|transparent|clear|opaque|dark).*tank|tank.*(paint|colou?r|transparent|clear|opaque|dark)/, a: (p) => (/paint|colou?r|transparent|clear|opaque|dark/.test(p.t) ? 'The colour itself matters less than blocking light: any dark, opaque colour works. Blue or green paint is fine as long as no light gets through. A see-through tank grows algae within days in sunlight, and algae clogs the drippers. ' : '') + 'Algae grows when light reaches the water. Use an opaque or painted tank with a lid, clean it every 2–3 weeks, and keep an inline filter in front of the pump. A closed lid also stops mosquitoes breeding. Never leave open standing water.' },
+      { tags: { plant: 0.5, drain: 1 }, re: /\b(new|bigger|larger|smaller) pot|repot|pot size|which pot|plastic or (clay|terracotta)|terracotta|grow bag/, a: () => 'Repot when roots circle the bottom or grow out of the drainage holes, usually every 1–2 years. Go up only 2–5 cm in diameter, because a much bigger pot holds extra wet soil that roots can\'t use. Any pot needs drainage holes. Terracotta breathes and dries faster (good for succulents), while plastic and grow bags hold moisture longer (good for thirsty plants). After repotting, re-insert the sensor in the root zone and let it settle for a day.' },
+      { tags: { tank: 2, amount: 1, how: 0.5 }, re: /how (long|many days).*(tank|water) (last|go)|tank size|how big.*tank|how much water/, a: (p, ctx) => 'The pump moves about 1.5 L/min at 100% power, so a burst of 1 minute at 70% uses about 1 L. A plant typically gets 1–3 bursts a day (more in summer). For 12 plants, plan roughly 15–35 L a day, so a 20 L tank lasts about a day in summer and 2–3 days in mild weather. The Settings page shows each plant\'s water per burst.' },
+      { tags: { energy: 3, cost: 1 }, re: /electricity|power consumption|energy|bill/, a: () => 'AquaSense uses very little electricity. The ESP32 draws about 0.5 W all the time, and a mini pump about 2–3 W only while running (a few minutes a day). That is well under 0.5 kWh a month, a few rupees at most.' },
+      { tags: { supply: 3 }, re: /battery|adapter|solar|power supply|usb/, a: () => 'Power options: a 5 V USB adapter for the ESP32 plus a separate 5 V adapter or 4×AA pack for the pump is simplest. Batteries alone need changing every few weeks, because the ESP32 runs all the time. A 6 V solar panel with a small lithium battery and charge controller works for outdoor setups. Always connect the grounds together, and never power the pump from the ESP32\'s 3.3 V pin.' },
+      { tags: { cost: 3 }, re: /cost|price|budget|how much (does|will|is).*(cost|build)|cheap/, a: () => 'Approximate cost in India: ESP32 board ₹350–500, capacitive soil sensor ₹80–150 each, relay module ₹60–100, mini pump ₹100–200, tubing + drippers + stakes ₹150–300, power supply ₹150–300, wires and breadboard ₹100–150. That is about ₹1,000–1,700 for one plant. Each extra plant adds roughly ₹300–500 (sensor, relay or valve, drippers).' },
+      { tags: { sensor: 2 }, re: /capacitive|resistive/, a: () => 'Use a capacitive sensor. It measures moisture through an insulated board, so it doesn\'t corrode and lasts for years. A resistive sensor has bare metal prongs that corrode in weeks, and its readings drift. Capacitive sensors cost only a little more.' },
+      { tags: { esp32: 2 }, re: /esp32|arduino|nodemcu|esp8266|microcontroller/, a: () => 'The ESP32 is the best fit because it has built-in Wi-Fi and Bluetooth, enough analog pins for several sensors, and it is cheap. An Arduino Uno has no Wi-Fi, so it can\'t send data to the app without an extra module. An ESP8266 (NodeMCU) has Wi-Fi but only one analog pin, which limits it to one sensor. Use ADC1 pins (GPIO 32–39) for sensors, because ADC2 pins stop working when Wi-Fi is on.' },
+      { tags: { sensor: 1.5 }, re: /calibrat/, a: () => 'To calibrate: read the raw sensor value in dry air (this is 0%) and with the probe in a glass of water up to the "max insert" line (this is 100%). Put both numbers in the code, and the ESP32 converts every reading to a percentage between them. Repeat for each sensor, because they differ slightly.' },
+      { tags: { sensor: 1.5 }, re: /where.*(put|place|insert)|how deep|placement|position.*sensor/, a: () => 'Put the sensor in the root zone, about halfway between the stem and the pot edge and 5–10 cm deep, up to its "max insert" line. Press the soil around it so there are no air gaps, and keep it a little away from the dripper, otherwise it reads the wet spot right under the drip.' },
+      { tags: { pump: 1, plant: 1, amount: 1.5 }, re: /how many plants.*(one|single|a) pump|one pump.*(many|several|multiple) plants/, a: () => 'One mini pump can feed about 4–8 plants on one drip line, but then they all get watered together. AquaSense waters each plant separately, so give each plant its own small pump, or use one pump with a solenoid valve per plant and let the ESP32 open the right valve.' },
+      { tags: { threshold: 1, why: 2 }, re: /why.*(two|2) (threshold|level)|hysteresis|why.*start.*stop/, a: () => 'With a single level the pump would flicker on and off: at 34.9% it starts, at 35.1% it stops, again and again, which wears out the relay and pump. Two levels (start below 35%, stop at 60%) give each watering a proper soak and leave a quiet gap in between.' },
+      { tags: { alert: 2 }, re: /alert|notification|warning/, a: () => 'Alerts only apply in manual mode, because then nothing protects the plant automatically. You get an alert if a plant drops below its low limit with the pump off, or goes above its high limit with the pump on. The limits are 5% and 95% unless you change them for a plant in Settings.' },
+      { tags: { cutoff: 3 }, re: /cut ?off|lockout|max(imum)? runtime/, a: () => 'The safety cutoff stops a pump that has run longer than the maximum runtime, for example when the tank is empty, a tube is off or the sensor fell out. Then it pauses for a few minutes. If it happens often, check the tank and drippers before raising the limit.' },
+      { tags: { net: 2 }, re: /wi-?fi (goes |is )?(down|off|lost)|without internet|offline|internet (goes|is) (down|off)/, a: () => 'Your plants keep getting water without internet: the ESP32 decides on its own from the sensor. Only the app and website stop updating until Wi-Fi returns, and then the latest readings sync again. The installed app still opens offline and shows the last data.' },
+      { tags: { drip: 2, sprinkler: 2 }, re: /sprinkler|hand water|watering can|hose/, a: () => 'Drip is the better choice for pots and beds. It puts water right at the roots, uses 30–50% less water than sprinklers or a hose, keeps leaves dry (less disease) and can be controlled per plant. Sprinklers suit lawns. Hand watering works but depends on you remembering.' },
+      { tags: { seedling: 3 }, re: /seedling|germinat|sapling|seeds?\b/, a: () => 'Seedlings and seeds need the top layer constantly moist but not soggy. Use a start level of about 55%, stop at 70–75%, with very short, gentle bursts (10–20 s at about 40% power) so the seeds don\'t wash away. Once plants have 4–6 true leaves, move to the normal range.' },
+      { tags: { drain: 3 }, re: /drain|drainage|holes/, a: () => 'Every pot needs drainage holes. Without them water collects at the bottom and the roots rot, even if the sensor near the top reads normal. Add a 2–3 cm layer of gravel or broken pot pieces at the bottom, and never let the pot stand in a full saucer.' },
+      { tags: { health: 1 }, re: /root rot|rotting|fungus|mould|mold/, a: () => 'Root rot comes from soil that stays wet. Lower the stop level, shorten the bursts, and check that the pot drains. Remove soft, brown roots and repot in fresh, well-draining mix if it is bad. For fungus on the soil, let it dry to the start level between waterings and improve airflow.' },
+      { tags: { health: 1 }, re: /pest|insect|aphid|mealy|bug|worm/, a: () => 'Pests are not caused by watering, but stressed plants (too dry or too wet) attract them more. Check the leaf undersides, wipe with soapy water or spray diluted neem oil every few days, and keep the moisture steady in the healthy range.' },
+      { tags: { health: 1 }, re: /grow (faster|better|bigger|more)|faster growth|better growth|more (flowers|fruit|yield)|healthier plants?/, a: () => 'Plants grow best when four things are right: light (most vegetables and flowers need 5–6 hours of direct sun a day), steady moisture in their healthy range (AquaSense handles this), nutrients (a balanced water-soluble fertilizer every 2–3 weeks in the growing season, plus compost), and enough root space (repot when roots circle the pot). Pinch off dead leaves, check for pests weekly, and don\'t overwater, because soggy roots slow growth more than slightly dry ones.' },
+      { tags: { more: 1, water: 1, health: 1 }, re: /more water.*(better|grow|faster)|water more.*(grow|better)/, a: () => 'More water does not mean more growth. Roots also need air, and soggy soil suffocates them. Plants grow best when the soil stays in the healthy range (about 35–60%) and dries a little between waterings, which is exactly what the start and stop levels do.' },
+      { tags: { safety: 3 }, re: /safe|danger|shock|fire|leave.*(on|running).*(night|unattended)/, a: () => 'AquaSense runs on low-voltage DC (5–6 V), so it is safe to touch and to leave running, including at night. The safety cutoff stops a pump that runs too long. Keep the electronics out of splash range (a small plastic box helps), and don\'t wire mains (230 V) pumps through the relay unless someone experienced checks it.' },
+      { tags: { leak: 3 }, re: /leak/, a: () => 'For leaks at joints: push the tube fully onto the fitting, add a hose clamp or zip tie, match the tube size to the fitting, and lower the pump power if the pressure is too high.' },
+      { tags: { rain: 1, sensor: 1 }, re: /rain sensor|detect rain/, a: () => 'You don\'t need a separate rain sensor: rain wets the soil and the moisture sensor sees it, so the pump stays off. A rain sensor or the weather forecast can help skip watering just before rain. That is a good future upgrade.' }
+    ];
+    const PROB_STRONG = [
+      { re: /clog|blocked|not dripping|no drops|dripper.*(slow|stopped)|uneven/, id: 'clog' },
+      { re: /runs? but no water|no water (comes|coming)|pump (is )?running but|air ?lock|dry run/, id: 'nowater' },
+      { re: /relay.*click|click.*(no|not|but) pump|pump (does not|doesn't|won't|wont|is not|isn't) (start|run|work)|pump not (starting|working|running)/, id: 'relay' },
+      { re: /reading.*(wrong|jump|stuck|0%|100%)|(wrong|jumpy|stuck|noisy).*(reading|sensor)|sensor.*(not working|wrong|stuck)/, id: 'sensor' },
+      { re: /not updating|app.*(offline|not working|blank)|website.*not|data.*not (show|updat)|wifi.*(problem|issue|disconnect)/, id: 'app' },
+      { re: /restart|reboot|reset|brown ?out|keeps crashing/, id: 'reset' },
+      { re: /soggy|waterlogged|too wet|stays wet/, id: 'soggy' },
+      { re: /dries (out )?(too )?fast|drying (too )?fast|too dry quickly/, id: 'dryfast' },
+      { re: /leak/, id: 'leak' },
+      { re: /cut ?off (keeps|again|often)|safety cutoff/, id: 'cutoff' }
+    ];
+
+    function generic(p, ctx, near) {
+      const topics = Object.keys(p.c).filter((k) => !['how', 'why', 'now', 'more', 'less', 'plant', 'problem', 'amount', 'greet'].includes(k));
+      const nice = { water: 'watering', moisture: 'soil moisture', threshold: 'moisture levels', pump: 'the pump', power: 'pump power', timing: 'pump timing', rain: 'rain', weather: 'weather', soil: 'soil', drip: 'drippers', sensor: 'the sensor', esp32: 'the ESP32', relay: 'the relay', net: 'the app/Wi-Fi', supply: 'power supply', tank: 'the tank', fert: 'fertilizer', health: 'plant health', cost: 'cost', alert: 'alerts', manual: 'manual mode', auto: 'automatic mode', dry: 'dry soil', wet: 'wet soil' };
+      const named = topics.map((k) => nice[k]).filter(Boolean).slice(0, 3);
+      let s = '';
+      const watery = ['water', 'moisture', 'threshold', 'dry', 'wet', 'soil', 'health', 'drip', 'pump', 'power', 'timing'].some((k) => p.c[k]);
+      if (p.options) s = 'I don\'t have specific information comparing "' + p.options[0] + '" and "' + p.options[1] + '", so I can\'t say for sure which is better. ' + (watery
+        ? 'Here is how I would decide: choose the option that keeps the soil between its start and stop levels (35–60% for most plants), doesn\'t leave roots waterlogged, and that you can keep up with reliably.'
+        : 'Compare them on what matters for the project: reliability, safety around water and electricity, cost, and how easy each is to maintain. If both are similar, pick the cheaper or simpler one.');
+      else if (p.type === 'yesno') s = 'I can\'t say yes or no for certain from what I know' + (named.length ? ' about ' + named.join(', ') : '') + '. ' + (watery ? 'As a rule: keep soil moisture in the healthy range for the plant, change one setting at a time, and watch the history graph for a day before changing again.' : 'If it affects the water, the electronics or safety, test it on one plant first.');
+      else if (named.length) s = 'I understood you\'re asking about ' + named.join(', ') + ', but I don\'t have a specific answer for that exact question.';
+      else s = 'I\'m not sure what you mean. Could you rephrase it?';
+      if (near) s += '\n\nThis may help: ' + near;
+      s += '\n\n' + (ctx.scope === 'plant' ? 'For this plant I can answer: is it healthy, when it needs water, what thresholds suit it, whether to water now or wait, manual or automatic, more power or longer timing, and whether a level like 40% is right.'
+        : 'I can answer things like: should I water now or wait for rain, manual or automatic, what moisture suits chili or cactus, is 30% too low, more power or longer timing, how much it costs, and how to fix clogged drippers or wrong sensor readings.') + ' Telling me the plant type, the soil, or indoors/outdoors makes my answer more specific.';
+      return s;
+    }
+
+    function answer(q, ctx) {
+      const p = parse(q);
+      const out = (r, src) => { const o = typeof r === 'string' ? { text: r } : r; o.p = p; o.src = src; return o; };
+      if (!p.t.trim()) return out('Ask me anything about watering, settings, weather or problems.', 'empty');
+      if (p.c.greet && p.t.trim().split(' ').length <= 4) return out(/thank/.test(p.t) ? 'You\'re welcome! Ask any time.' : 'Hi! Ask me about watering, moisture settings, the weather or any problem with the system.', 'greet');
+      // 1) problems with a clear description
+      if (ctx.kb && !(p.type === 'choice')) { const pr = PROB_STRONG.find((x) => x.re.test(p.t)); if (pr && ctx.kb(pr.id)) return out(ctx.kb(pr.id), 'problem'); }
+      // 2) system-wide check
+      if (ctx.systemCheck && /system check|check (my|the|all|everything)|anything wrong|any problems?\b|overall status/.test(p.t)) return out(ctx.systemCheck(), 'check');
+      // 3) decisions from live data
+      if (p.pct.length && (p.c.moisture || p.c.threshold || p.c.dry || p.c.wet || p.c.alert || p.type === 'yesno' || p.ptype)) return out(decideThreshold(p, ctx), 'threshold');
+      const waterQ = p.c.water && !p.c.fert && !p.c.source && !p.c.clog && !p.c.leak && !p.c.drip && p.type !== 'howmuch' && p.type !== 'how' && !p.c.morning && !p.c.evening && (p.type === 'yesno' || p.type === 'choice' || p.type === 'when' || p.c.now || p.c.later || /need(s)? water|needs watering|thirsty/.test(p.t));
+      if (waterQ || (/\bneeds? water\b/.test(p.t) && p.type !== 'how')) return out(decideWater(p, ctx), 'water');
+      if ((p.c.manual || p.c.auto) && !p.c.problem && !p.c.alert) return out(decideMode(p, ctx), 'mode');
+      if ((p.c.power || p.c.timing || p.secs != null) && (p.c.pump || p.c.drip || p.c.water || p.c.more || p.c.less || p.type === 'choice' || p.secs != null) && !p.c.esp32 && !p.c.supply && !p.c.energy) return out(decidePump(p, ctx), 'pump');
+      if (p.pct.length && (p.c.moisture || p.c.threshold || p.c.dry || p.c.wet || p.c.alert || p.type === 'yesno' || p.ptype)) return out(decideThreshold(p, ctx), 'threshold');
+      if (p.ptype && (p.c.moisture || p.c.water || p.c.threshold || p.c.dry || p.c.wet || p.type === 'what' || p.type === 'howmuch' || p.type === 'how')) return out(decideThreshold(p, ctx), 'ptype');
+      if (p.c.threshold && (p.c.moisture || p.type === 'what' || p.type === 'choice' || p.type === 'yesno' || /should|suit|best|good|recommend/.test(p.t)) && !p.c.alert) return out(decideThreshold(p, ctx), 'threshold');
+      if ((p.c.rain || p.c.weather) && !p.c.sensor && !p.c.indoor && !p.c.outdoor) return out(weatherAnswer(p, ctx) || generic(p, ctx), 'weather');
+      // 4) the plant advisor's own questions (health, next watering, soil, current setting)
+      if (ctx.extra) { const r = ctx.extra(p); if (r) return out(r, 'plant'); }
+      // 5) health of a named plant from the general assistant
+      if (!ctx.pl && p.plants.length && ctx.plantInfo && (p.c.health || /how is|how's|doing|status/.test(p.t))) return out(p.plants.map((n) => { const pl = ctx.plantInfo(n); return pl ? pl.healthText : ''; }).join('\n\n'), 'health');
+      // 6) knowledge base
+      let best = null, bestS = 0;
+      KB.forEach((e) => { let s = e.re.test(p.t) ? 3 : 0; Object.keys(e.tags).forEach((k) => { if (p.c[k]) s += e.tags[k]; }); if (s > bestS) { bestS = s; best = e; } });
+      if (best && bestS >= 3) return out(best.a(p, ctx), 'kb');
+      if (ctx.kb) { const loose = PROB_STRONG.find((x) => x.re.test(p.t)); if (loose && ctx.kb(loose.id)) return out(ctx.kb(loose.id), 'problem'); }
+      // 7) not sure: a careful general answer
+      return out(generic(p, ctx, best && bestS >= 2.5 ? best.a(p, ctx).split('. ').slice(0, 2).join('. ').replace(/\.?$/, '.') : ''), 'generic');
+    }
+    return { answer, parse };
+  })();
+
   // ---------------- general assistant: weather, common settings, troubleshooting ----------------
   let sampler = null;
   const generalUI = (function () {
@@ -1581,7 +1935,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     async function ask(q) {
       q = (q || '').trim(); if (!q) return;
       addMsg('user', q); chat.push({ role: 'user', text: q });
-      const r = route(q);
+      const r = Brain.answer(q, ctxGeneral());
       if (sampler) {
         const el = addMsg('bot', 'Thinking…');
         const facts = { city: city[0], weatherNow: wx ? wx.current : null, forecast: wx ? wx.daily : null, suggestedCommonSettings: climate(), knownProblems: KB.map((k) => k.title) };
@@ -1595,7 +1949,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           chat.push({ role: 'assistant', text: out.text }); return;
         } catch (err) { el.remove(); if (err && err.code === 'not_granted') { sampler = null; setBadge(); } }
       }
-      addMsg('bot', r.text, 'Built-in knowledge');
+      addMsg('bot', r.text, r.src === 'generic' ? 'Built-in knowledge · general answer' : 'Built-in knowledge');
       chat.push({ role: 'assistant', text: r.text });
     }
     function render() {
@@ -1615,6 +1969,20 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       $('commonWhy').textContent = 'For ' + city[0] + ' today.';
     }
     function short() { return wx ? Math.round(wx.current.temperature_2m) + '°C · ' + city[0] : city[0]; }
+    // weather facts in a simple shape for the question engine
+    function wxFacts() {
+      if (!wx) return null;
+      const d = wx.daily, cl = climate();
+      const day = (i) => ({ tmax: Math.round(d.temperature_2m_max[i]), tmin: Math.round(d.temperature_2m_min[i]), rainProb: d.precipitation_probability_max[i] || 0, rainMm: d.precipitation_sum[i] || 0, cond: WMO(d.weather_code[i])[0] });
+      return { city: city[0], now: Math.round(wx.current.temperature_2m), rh: wx.current.relative_humidity_2m, today: day(0), tomorrow: day(1), rainSoon: cl.key === 'rain', hot: cl.key === 'hot', humid: cl.key === 'humid' };
+    }
+    function ctxGeneral() {
+      return {
+        scope: 'general', pl: null, wx: wxFacts(), climate: climate(),
+        plantInfo: (n) => plantsUI.info(n), plants: () => plantsUI.all().map((x) => plantsUI.info(x)),
+        systemCheck, weatherText, kb: (id) => { const k = KB.find((x) => x.id === id); return k ? kbText(k) : null; }
+      };
+    }
     function setBadge() { const b = $('engineBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
 
     $('city').innerHTML = CITIES.map((c, i) => '<option value="' + i + '">' + c[0] + '</option>').join('');
@@ -1625,7 +1993,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     addMsg('bot', 'Hi! I am the general AquaSense assistant. Ask me about the weather and watering, good moisture settings, or how to fix a problem such as clogged drippers. Try "Run a system check" to scan all your plants.');
     loadWeather();
     (async () => { try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; } })();
-    return { render, short, climate };
+    return { render, short, climate, wxFacts, kb: (id) => { const k = KB.find((x) => x.id === id); return k ? kbText(k) : null; } };
   })();
   function setBadge() { const b = $('engineBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
 
@@ -2983,14 +3351,54 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       const m = q.match(/plant\s*(\d{1,2})/i);
       if (m && +m[1] >= 1 && +m[1] <= 12) $('advPlant').value = m[1];
       if (m && +m[1] >= 1 && +m[1] <= 12 && +m[1] !== sel) pick(+m[1]);
-      const kind = /all plants|every plant|all of/i.test(q) ? 'all'
-        : /health|healthy|sick|dying|leaf|leaves|how is|how's|doing|status/i.test(q) ? 'health'
-        : /threshold|start|stop|alert|limit|level|range|moisture setting|what %|percent/i.test(q) ? 'thresholds'
-        : /when|next|predict|dry out|need water|forecast/i.test(q) ? 'next'
-        : /what do|explain|meaning|power and timing/i.test(q) ? 'explain'
-        : /current|ok\b|okay|good|right/i.test(q) ? 'current' : 'plant';
-      advAsk(kind, q);
+      askPlant(q);
     });
+    // free-text questions go through the shared question engine, with this plant's live data as context
+    async function askPlant(q) {
+      const pl = plants[sel - 1];
+      addAdv('user', q);
+      const r = Brain.answer(q, {
+        scope: 'plant', pl: info(pl), wx: generalUI.wxFacts(), climate: generalUI.climate(),
+        plantInfo: (n) => info(n), plants: () => plants.map(info), kb: (id) => generalUI.kb(id),
+        extra: (p) => plantIntent(p, pl)
+      });
+      const el = addAdv('bot', r.text);
+      const ok = await aiPolish(r.text, plantFacts(pl), el, q);
+      const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : r.src === 'generic' ? 'Built-in analysis · general answer' : 'Built-in analysis'; el.appendChild(s);
+      const a = r.action;
+      if (a && a.type === 'thr') thrBtn(el, a.id, a.t);
+      if (a && a.type === 'pump') applyBtn(el, 'Use ' + a.rec.power + '% · ' + fmtSec(a.rec.timing) + ' for Plant ' + a.id, a.rec, [a.id]);
+      if (a && a.type === 'groups') Object.keys(a.groups).forEach((k) => applyBtn(el, 'Use ' + REC[k].power + '% · ' + fmtSec(REC[k].timing) + ' for ' + SOILS[k].name, REC[k], a.groups[k]));
+      render();
+    }
+    function plantIntent(p, pl) {
+      const t = p.t;
+      if (p.c.alert || /\bwhy\b.*(red|warning|alert)/.test(t)) {
+        const msg = pl.alertLow ? 'Plant ' + pl.id + ' has an alert because it is in manual mode, its pump is off, and moisture (' + Math.round(pl.m) + '%) is below its ' + pl.lowLim + '% low limit. Turn its pump on or switch it to automatic.'
+          : pl.alertHigh ? 'Plant ' + pl.id + ' has an alert because it is in manual mode, its pump is on, and moisture (' + Math.round(pl.m) + '%) is above its ' + pl.highLim + '% high limit. Turn its pump off now.'
+          : 'Plant ' + pl.id + ' has no active alert. Alerts only fire in manual mode: below ' + pl.lowLim + '% with the pump off, or above ' + pl.highLim + '% with the pump on. You can change these limits in the editor.';
+        return { text: msg };
+      }
+      if (/\ball (my |the )?plants|every plant|all of them/.test(t)) { const a = adviceAll(); return { text: a.text, action: { type: 'groups', groups: a.groups } }; }
+      if (p.c.soil && (p.type === 'what' || /predict|type|kind|which soil|what soil/.test(t))) { const a = advice(pl); return { text: a.text, action: { type: 'pump', id: pl.id, rec: a.rec } }; }
+      if ((p.c.power || p.c.timing) && /(current|ok\b|okay|good|right|fine|correct)/.test(t)) {
+        const inf = infer(pl), r = REC[inf.soil], dp = pl.power - r.power, dt = pl.timing - r.timing;
+        let s = 'Plant ' + pl.id + ' is set to ' + pl.power + '% for ' + fmtSec(pl.timing) + '. For ' + SOILS[inf.soil].name.toLowerCase() + ' soil I would use ' + r.power + '% for ' + fmtSec(r.timing) + '. ';
+        s += Math.abs(dp) <= 10 && Math.abs(dt) <= 20 ? 'Yes, your setting is close enough.' : (dp > 10 ? 'Power is on the high side, so some water may run off. ' : dp < -10 ? 'Power is low, so watering takes longer. ' : '') + (dt > 20 ? 'Bursts are longer than needed. ' : dt < -20 ? 'Bursts are short, so it will take several to reach the stop level.' : '');
+        return { text: s, action: { type: 'pump', id: pl.id, rec: r } };
+      }
+      if (p.c.health || /how is|how's|how are|doing|status|condition|fine\b|okay\b/.test(t)) return { text: healthText(pl) };
+      if (/\b(when|next|predict|dry out|run out|how long until)\b/.test(t)) return { text: nextText(pl) };
+      return null;
+    }
+    function info(x) {
+      const pl = typeof x === 'number' ? plants[x - 1] : x; if (!pl) return null;
+      const inf = infer(pl), tr = TREC[inf.soil];
+      return { id: pl.id, m: pl.m, dry: pl.dry, wet: pl.wet, lowLim: pl.lowLim, highLim: pl.highLim, mode: pl.mode, pump: pl.pump, power: pl.power, timing: pl.timing,
+        soil: inf.soil, soilName: SOILS[inf.soil].name, conf: inf.conf, rec: REC[inf.soil], alertLow: pl.alertLow, alertHigh: pl.alertHigh,
+        trec: { dry: tr.dry, wet: tr.wet, lowLim: Math.max(5, tr.dry - 20), highLim: Math.min(95, tr.wet + 30), why: tr.why },
+        next: nextText(pl), healthText: healthText(pl) };
+    }
     addAdv('bot', 'I answer questions about one plant at a time. Pick a plant on the left (or in the menu below), then ask about its health, its moisture thresholds and alert limits, when it needs water next, or press "Predict soil & suggest" for pump power and timing.');
     setTimeout(setAdvBadge, 0);
     setTimeout(setAdvBadge, 11000);
@@ -3003,7 +3411,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       render();
     }
     const all = () => plants;
-    return { renderPlants, renderPumps, badge, activeCount, series, applyAll, all, health: plantHealth };
+    return { renderPlants, renderPumps, badge, activeCount, series, applyAll, all, health: plantHealth, info };
   })();
 
   // theme changes
