@@ -2200,6 +2200,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
     $('applyCommon').addEventListener('click', () => { const cl = climate(); plantsUI.applyAll({ dry: cl.dry, wet: cl.wet, lowLim: cl.low, highLim: cl.high }, cl.tag); });
     addMsg('bot', 'Hi! I am the general AquaSense assistant. Ask me about the weather and watering, good moisture settings, or how to fix a problem such as clogged drippers. Try "Run a system check" to scan all your plants.');
     loadWeather();
+    setBadge();
     (async () => { try { if (window.claude && window.claude.use) { sampler = await window.claude.use('sample'); setBadge(); } } catch (e) { sampler = null; } })();
     return { render, short, climate, wxFacts, kb: (id) => { const k = KB.find((x) => x.id === id); return k ? kbText(k) : null; } };
   })();
