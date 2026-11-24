@@ -1627,7 +1627,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   // ---------------- optional cloud AI (free Cloudflare Workers AI) ----------------
   // Paste your Worker address here after deploying tools/aquasense-ai-worker.js, e.g. 'https://aquasense-ai.yourname.workers.dev'.
   // Leave it empty to use only the built-in engine. No API key ever goes in this file.
-  const AI_URL = '';
+  const AI_URL = 'https://aquasense-ai.chinmay-k1708.workers.dev/';
   async function cloudAI(question, draft, facts, scope, history) {
     if (!AI_URL || !navigator.onLine) return null;
     try {
@@ -1636,7 +1636,8 @@ footer .tag { color: var(--leaf); font-weight: 600; }
       clearTimeout(tm);
       if (!r.ok) return null;
       const j = await r.json();
-      return j && j.answer && j.answer.trim() ? j.answer.trim() : null;
+      if (!j || !j.answer || !j.answer.trim()) return null;
+      return j.answer.trim().replace(/•\s*•\s*/g, '   • ').replace(/\*\*(.+?)\*\*/g, '$1').replace(/^#+\s*/gm, '').replace(/[ \t]+\n/g, '\n');
     } catch (e) { return null; }
   }
 
