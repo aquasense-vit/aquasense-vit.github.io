@@ -17,17 +17,23 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: an instrument-style app. Sticky top bar with views (Overview, Dashboard, 3D Simulation, History, Assistant); one shared simulation engine drives every view. */
+/* Nature theme: leaf green for actions, water blue for anything wet, earth tones for soil, on a fresh pale-sage page. */
 :root {
-  --bg: #edf1ee;
-  --surface: #f8faf8;
-  --sunk: #e2e9e4;
-  --ink: #10231f;
-  --muted: #52655f;
-  --line: #c9d5cf;
-  --water: #1667c4;
-  --water-soft: rgba(22, 103, 196, .14);
+  --bg: #f1f6ec;
+  --surface: #ffffff;
+  --sunk: #e7efe1;
+  --ink: #132a1e;
+  --muted: #55695b;
+  --line: #d2dfcc;
+  --water: #1b74b8;
+  --water-soft: rgba(27, 116, 184, .13);
   --soil: #8a5a2c;
   --soil-soft: #c9a47c;
+  --leaf: #2f8a4f;
+  --leaf-deep: #1f6a3a;
+  --leaf-soft: rgba(47, 138, 79, .12);
+  --sky: #dbeef8;
+  --shadow: 0 10px 30px -18px rgba(19, 60, 34, .35);
   --ok: #2c7a4b;
   --warn: #a86b12;
   --crit: #b8382a;
@@ -38,14 +44,16 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
-    --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+    --bg: #0a1510; --surface: #11211a; --sunk: #0d1b15; --ink: #e3efe6; --muted: #93a99b; --line: #243a2e;
+    --water: #5eb0ff; --water-soft: rgba(94, 176, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+    --leaf: #5cc47f; --leaf-deep: #3fa564; --leaf-soft: rgba(92, 196, 127, .14); --sky: #10283a; --shadow: 0 12px 34px -18px rgba(0, 0, 0, .7);
     --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; --s1: #5ea9ff; --s2: #fb923c; --s3: #5cc184; --s4: #c08cff; --s5: #22c3dd; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0c1614; --surface: #13201d; --sunk: #0f1b18; --ink: #e2ece8; --muted: #93a69f; --line: #263a34;
-  --water: #5ea9ff; --water-soft: rgba(94, 169, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+  --bg: #0a1510; --surface: #11211a; --sunk: #0d1b15; --ink: #e3efe6; --muted: #93a99b; --line: #243a2e;
+  --water: #5eb0ff; --water-soft: rgba(94, 176, 255, .16); --soil: #c99563; --soil-soft: #7b5a3a;
+  --leaf: #5cc47f; --leaf-deep: #3fa564; --leaf-soft: rgba(92, 196, 127, .14); --sky: #10283a; --shadow: 0 12px 34px -18px rgba(0, 0, 0, .7);
   --ok: #5cc184; --warn: #e0a64a; --crit: #ef7565; --s1: #5ea9ff; --s2: #fb923c; --s3: #5cc184; --s4: #c08cff; --s5: #22c3dd; color-scheme: dark;
 }
 
@@ -420,12 +428,92 @@ select { font: 500 .9rem var(--font-body); color: var(--ink); background: var(--
 }
 footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: .88rem; }
 footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; }
+
+/* ================= nature look ================= */
+body {
+  background:
+    radial-gradient(1200px 600px at -10% -10%, var(--leaf-soft), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, var(--water-soft), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+.topbar { background: color-mix(in srgb, var(--bg) 82%, transparent); }
+.brand svg { width: 26px; height: 26px; }
+.topbar nav a { border-radius: 999px; }
+.topbar nav a[aria-current="page"] { background: var(--leaf-soft); color: var(--leaf-deep); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--leaf) 35%, transparent); }
+.btn { border-radius: 999px; padding: 8px 15px; transition: transform .15s, box-shadow .15s, border-color .15s; }
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: linear-gradient(135deg, var(--leaf), var(--leaf-deep)); border-color: transparent; color: #fff; box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--leaf) 70%, transparent); }
+.panel { border-radius: 18px; box-shadow: var(--shadow); }
+.pump-btn { border-radius: 14px; }
+.view-head .label, .ov-block > h2 + .label { color: var(--leaf); }
+.view-head .label::before, .kicker .label:first-child::before {
+  content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; background: var(--leaf);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 4C10 4 4 9 4 17c0 1 .1 2 .3 3C5 13 9 9 16 7c-6 3-9 7-10 13h2c1-6 5-11 12-13V4z'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 4C10 4 4 9 4 17c0 1 .1 2 .3 3C5 13 9 9 16 7c-6 3-9 7-10 13h2c1-6 5-11 12-13V4z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.hero.nature-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; gap: 36px; padding-block: 18px 44px; }
+.hero.nature-hero h1 em { color: var(--leaf); }
+.hero-text { display: grid; gap: 18px; min-width: 0; }
+.hero-points { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-points li { font-size: .86rem; padding: 6px 12px 6px 30px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); position: relative; }
+.hero-points li::before { content: ""; position: absolute; left: 10px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50% 0 50% 0; background: var(--leaf); transform: rotate(-10deg); }
+.hero-art { border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--line); background: var(--sky); min-width: 0; }
+.hero-art svg { display: block; width: 100%; height: auto; }
+.hero-art .drop { animation: fall 2.4s ease-in infinite; transform-box: fill-box; }
+.hero-art .drop.d2 { animation-delay: .8s; } .hero-art .drop.d3 { animation-delay: 1.6s; }
+.hero-art .sway { animation: sway 5s ease-in-out infinite; transform-origin: 262px 300px; }
+.hero-art .cloud { animation: drift 30s linear infinite; }
+.hero-art .ripple { animation: ripple 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+.hero-art .ripple.d2 { animation-delay: .8s; } .hero-art .ripple.d3 { animation-delay: 1.6s; }
+@keyframes fall { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(58px); opacity: 0; } }
+@keyframes ripple { 0%, 80% { transform: scale(.2); opacity: 0; } 85% { opacity: .9; } 100% { transform: scale(1.4); opacity: 0; } }
+@keyframes sway { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
+@keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
+@media (max-width: 860px) { .hero.nature-hero { grid-template-columns: 1fr; } }
+.feature { position: relative; overflow: hidden; }
+.feature .f-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--leaf-soft); color: var(--leaf); }
+.feature .f-ico.w { background: var(--water-soft); color: var(--water); }
+.feature .f-ico svg { width: 22px; height: 22px; }
+.feature::after { content: ""; position: absolute; right: -30px; bottom: -30px; width: 110px; height: 110px; border-radius: 50% 0 50% 0; background: var(--leaf-soft); transform: rotate(20deg); opacity: .7; pointer-events: none; }
+.feature:hover { border-color: var(--leaf); }
+.feature .go { color: var(--leaf); }
+.eco-band { margin-top: 56px; border-radius: 24px; padding: 26px; background: linear-gradient(135deg, var(--leaf-deep), color-mix(in srgb, var(--water) 70%, var(--leaf-deep))); color: #fff; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; position: relative; overflow: hidden; }
+.eco-band::before { content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px; border-radius: 50% 0 50% 0; background: rgba(255,255,255,.08); transform: rotate(25deg); }
+.eco-band b { display: block; font: 800 1.7rem/1.1 var(--font-display); }
+.eco-band span { font-size: .9rem; opacity: .9; }
+@media (max-width: 760px) { .eco-band { grid-template-columns: 1fr; } }
+footer { background: linear-gradient(to bottom, transparent, var(--leaf-soft)); }
+footer .tag { color: var(--leaf); font-weight: 600; }
+/* popup inviting the Pune plan, and the second story */
+.plan-pop { position: fixed; z-index: 55; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--leaf); border-radius: 20px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.5); padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; animation: popin .35s ease-out; }
+.plan-pop .pp-ico { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; background: var(--leaf-soft); color: var(--leaf); }
+.plan-pop .pp-ico svg { width: 30px; height: 30px; }
+.plan-pop h3 { font-size: 1.1rem; }
+.plan-pop p { font-size: .88rem; color: var(--muted); }
+.plan-pop .acts { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+@keyframes popin { from { transform: translate(-50%, 30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+.plan-head { margin-top: 64px; padding: 22px 24px; border-radius: 22px; background: linear-gradient(135deg, var(--leaf-soft), var(--water-soft)); border: 1px solid var(--line); display: grid; gap: 8px; scroll-margin-top: 90px; }
+.plan-head h2 { font-size: clamp(1.5rem, 3vw, 2.2rem); }
+.plan-head p { color: var(--muted); max-width: 70ch; }
+.story2 { position: relative; height: calc(9 * 75vh + 100vh); margin-top: 18px; }
+.news-card { position: absolute; left: 16px; top: 16px; width: min(440px, calc(100% - 32px)); background: #fbf8f1; color: #1d1b16; border-radius: 6px; padding: 16px 18px 14px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.55); font-family: Georgia, "Times New Roman", serif; transform: rotate(-1.2deg); transition: opacity .4s, transform .4s; }
+.news-card .np { font: 700 .7rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: #8a2b1d; border-bottom: 2px solid #1d1b16; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 8px; }
+.news-card h4 { margin: 0 0 6px; font-size: 1.12rem; line-height: 1.25; }
+.news-card p { font-size: .86rem; line-height: 1.45; color: #3a362d; }
+.news-card a { color: #8a2b1d; font: 600 .76rem var(--font-body); }
+.news-card.gone { opacity: 0; transform: rotate(-1.2deg) translateY(-12px); pointer-events: none; }
+.meter { position: absolute; right: 56px; top: 14px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; display: grid; gap: 4px; min-width: 210px; font-size: .78rem; }
+.meter .bar { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.meter .bar i { display: block; height: 100%; width: 0; border-radius: 4px; }
+.meter .bar.drip i { background: var(--water); } .meter .bar.flood i { background: var(--soil); }
+@media (max-width: 640px) { .meter { right: 10px; top: auto; bottom: 150px; min-width: 0; } .news-card { left: 10px; top: 10px; padding: 12px; } .news-card p { font-size: .8rem; } }
 </style>
 
 <header class="topbar">
   <div class="wrap">
     <a class="brand" href="#overview" aria-label="AquaSense overview">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M5.6 15.5h12.8" stroke="var(--soil)" stroke-width="2"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M12 19.5c0-4 1.6-6.4 5.6-7.6-.3 3.9-2.2 6.4-5.6 7.6Z" fill="var(--leaf)"/><path d="M12 20v-3.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
       AquaSense
     </a>
     <nav aria-label="Views">
@@ -449,61 +537,108 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <!-- ================= OVERVIEW ================= -->
   <section data-view="overview" id="view-overview">
     <div class="wrap">
-      <div class="hero">
-        <div>
+      <div class="hero nature-hero">
+        <div class="hero-text">
           <div class="kicker">
             <span class="label">EDI Project 1</span>
             <span class="label">CS-C · Group 10</span>
             <span class="label">VIT Pune · 2026–27</span>
           </div>
           <h1>Water only when the <em>soil</em> asks for it.</h1>
-        </div>
-        <div>
-          <p class="lede">AquaSense reads soil moisture with an ESP32, switches a pump on its own when the soil gets dry, and stops it when the soil is wet enough. You can watch and control it from your phone.</p>
+          <p class="lede">AquaSense reads soil moisture with an ESP32, switches a pump on its own when the soil gets dry, and stops it when the soil is wet enough. Every drop goes where the roots need it, and you can watch and control it all from your phone.</p>
           <div class="ctas">
-            <a class="btn primary" href="#simulation">Watch the 3D simulation</a>
-            <a class="btn" href="#dashboard">Open dashboard</a>
+            <a class="btn primary" href="#simulation">🌱 Watch the 3D simulation</a>
+            <a class="btn" href="#plants">See your plants</a>
           </div>
+          <ul class="hero-points">
+            <li>Waters by itself when soil gets dry</li>
+            <li>Stops before roots get soggy</li>
+            <li>Every plant on your phone</li>
+          </ul>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 520 420" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky)"/><stop offset="1" stop-color="var(--surface)"/></linearGradient>
+              <linearGradient id="hsoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5232"/><stop offset="1" stop-color="#4a3020"/></linearGradient>
+              <linearGradient id="hwet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2618"/><stop offset="1" stop-color="#3a2618" stop-opacity="0"/></linearGradient>
+              <radialGradient id="hsun"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#ffd25a" stop-opacity=".7"/><stop offset="1" stop-color="#ffd25a" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="520" height="420" fill="url(#hsky)"/>
+            <circle cx="420" cy="78" r="70" fill="url(#hsun)"/><circle cx="420" cy="78" r="26" fill="#ffd25a"/>
+            <g class="cloud" fill="#fff" opacity=".85"><ellipse cx="120" cy="70" rx="44" ry="16"/><ellipse cx="146" cy="60" rx="28" ry="16"/><ellipse cx="96" cy="64" rx="22" ry="12"/></g>
+            <path d="M0 250 C 90 200, 170 220, 260 236 S 430 190, 520 222 V 300 H 0 Z" fill="#8cc78f" opacity=".75"/>
+            <path d="M0 270 C 110 238, 220 262, 320 254 S 470 236, 520 250 V 300 H 0 Z" fill="#5fae6a"/>
+            <g fill="#3f8a4f"><path d="M60 262 l10 -40 l10 40 z"/><path d="M78 264 l12 -52 l12 52 z"/><path d="M450 246 l9 -34 l9 34 z"/><path d="M468 248 l11 -44 l11 44 z"/></g>
+            <rect y="292" width="520" height="128" fill="url(#hsoil)"/>
+            <rect y="292" width="520" height="70" fill="url(#hwet)" opacity=".75"/>
+            <g fill="#a37a52" opacity=".55"><circle cx="40" cy="330" r="4"/><circle cx="120" cy="370" r="3"/><circle cx="210" cy="345" r="5"/><circle cx="330" cy="385" r="4"/><circle cx="430" cy="340" r="3"/><circle cx="490" cy="395" r="5"/></g>
+            <g stroke="#e8d3ae" stroke-width="2" fill="none" opacity=".65" stroke-linecap="round"><path d="M262 300 C 255 330, 240 350, 228 380"/><path d="M262 300 C 270 335, 288 355, 300 392"/><path d="M262 300 C 262 340, 266 370, 262 410"/><path d="M248 340 c -14 6 -22 14 -30 26"/><path d="M280 350 c 12 8 18 18 22 30"/></g>
+            <g class="sway">
+              <path d="M262 300 C 262 250, 258 210, 262 150" stroke="#3d7a32" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <g fill="#4caf50"><path d="M262 250 C 222 238, 200 214, 196 196 C 226 196, 252 214, 262 250 Z"/><path d="M262 228 C 300 214, 322 190, 328 170 C 296 172, 270 196, 262 228 Z"/><path d="M262 196 C 232 184, 218 160, 216 142 C 240 146, 258 168, 262 196 Z"/></g>
+              <g fill="#3e9446"><path d="M262 176 C 290 164, 304 140, 306 122 C 282 128, 266 150, 262 176 Z"/><path d="M262 154 C 254 132, 256 112, 264 100 C 274 118, 272 138, 262 154 Z"/></g>
+              <g fill="#d93a2a"><path d="M300 232 q 14 26 4 52 q -14 -24 -4 -52 z"/><path d="M224 214 q -12 24 -2 46 q 12 -22 2 -46 z"/></g>
+            </g>
+            <rect x="120" y="226" width="300" height="9" rx="4.5" fill="#26292c"/>
+            <g fill="#1d2024"><rect x="168" y="233" width="12" height="10" rx="3"/><rect x="262" y="233" width="12" height="10" rx="3" opacity="0"/><rect x="356" y="233" width="12" height="10" rx="3"/></g>
+            <g fill="#5fb2ff"><path class="drop" d="M174 246 q 5 8 0 12 q -5 -4 0 -12z"/><path class="drop d2" d="M174 246 q 5 8 0 12 q -5 -4 0 -12z"/><path class="drop d3" d="M362 246 q 5 8 0 12 q -5 -4 0 -12z"/><path class="drop" d="M362 246 q 5 8 0 12 q -5 -4 0 -12z" style="animation-delay:1.2s"/></g>
+            <g fill="none" stroke="#9fd0ff" stroke-width="2"><ellipse class="ripple" cx="174" cy="298" rx="16" ry="4"/><ellipse class="ripple d2" cx="362" cy="298" rx="16" ry="4"/></g>
+            <g><rect x="380" y="256" width="20" height="40" rx="3" fill="#1c1f22"/><rect x="384" y="296" width="5" height="44" fill="#2a2e32"/><rect x="391" y="296" width="5" height="44" fill="#2a2e32"/><circle cx="395" cy="262" r="3" fill="#ff4b3a"/></g>
+            <g transform="translate(28 312)"><rect width="168" height="76" rx="14" fill="var(--surface)" opacity=".94"/><text x="14" y="24" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)" letter-spacing="1">SOIL MOISTURE</text><text x="14" y="54" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="28" fill="var(--ink)">52%</text><rect x="80" y="40" width="74" height="10" rx="5" fill="var(--sunk)"/><rect x="80" y="40" width="44" height="10" rx="5" fill="var(--water)"/><text x="80" y="64" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--leaf)">Healthy · auto</text></g>
+          </svg>
         </div>
       </div>
 
       <div class="feature-grid">
         <a class="panel feature" href="#dashboard">
+          <span class="f-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3c3 3.6 5.5 6.9 5.5 9.8a5.5 5.5 0 0 1-11 0C6.5 9.9 9 6.6 12 3z"/></svg></span>
           <span class="label">Dashboard</span>
           <span class="live" data-bind="m">48%</span>
           <p>Live moisture, and switch the pump between automatic and manual at any time.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#plants">
+          <span class="f-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/><path d="M7 21h10"/></svg></span>
           <span class="label">Your Plants</span>
           <span class="live" data-bind="plantAlerts">0 alerts</span>
           <p>Twelve plants, each with its own moisture reading, pump and automatic or manual mode.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#pumps">
+          <span class="f-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>
           <span class="label">Settings</span>
           <span class="live">Per plant</span>
           <p>Set each plant's pump power, watering time, moisture thresholds and alert limits, with an AI advisor that predicts how its soil takes water.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#simulation">
+          <span class="f-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span>
           <span class="label">3D Simulation</span>
           <span class="live" data-bind="pumpShort">Pump off</span>
           <p>See the sensor, ESP32, cloud, app and pump work together in a 3D model.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#history">
+          <span class="f-ico w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg></span>
           <span class="label">History</span>
           <span class="live" data-bind="water24">0</span>
           <p>Waterings in the last 24 hours. Graphs of past soil moisture over 1, 3 or 7 days.</p>
           <span class="go">Open →</span>
         </a>
         <a class="panel feature" href="#assistant">
+          <span class="f-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14v10H9l-4 4z"/><path d="M9 10h6"/></svg></span>
           <span class="label">AI Assistant</span>
           <span class="live" data-bind="wxShort">Weather</span>
           <p>Weather-based watering advice, common moisture settings, and fixes for problems like clogged drippers.</p>
           <span class="go">Open →</span>
         </a>
+      </div>
+
+      <div class="eco-band">
+        <div><b>Only when needed</b><span>The pump runs only when a plant's soil is actually dry, not on a fixed timer.</span></div>
+        <div><b>Right at the roots</b><span>Drip lines put water at the roots instead of spraying it over leaves and paths.</span></div>
+        <div><b>Built for dry years</b><span>See how AquaSense could help a Pune farm when canal water is cut, in the 3D Simulation.</span></div>
       </div>
 
       <div class="ov-block get-app" id="getApp">
@@ -851,6 +986,45 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <p>That's the full story: AquaSense waters on its own, and you can take over whenever you want.</p>
         <button class="btn" id="storyReplay">↺ Replay from the start</button>
       </div>
+
+      <!-- ===== Our plan: AquaSense in a real Pune situation ===== -->
+      <div class="plan-head" id="planHead">
+        <span class="label" style="color:var(--leaf)">Our plan · real life</span>
+        <h2>AquaSense on a Pune farm when canal water is cut</h2>
+        <p>A step-by-step plan based on a real news report from Pune. Scroll through it like the simulation above: it starts with the problem, then shows how our hardware would be installed and how it solves it. Water figures are illustrative estimates.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn primary" id="story2Play">▶ Play the plan</button></div>
+      </div>
+      <div class="story2" id="story2">
+        <div class="story-stage" id="simStage2">
+          <canvas id="simCanvas2" aria-label="3D model of a farm near Baramati using AquaSense"></canvas>
+          <div class="sim-labels" id="simLabels2"></div>
+          <div class="news-card" id="newsCard">
+            <div class="np"><span>The Bridge Chronicle</span><span>22 May 2026</span></div>
+            <h4>Pune may face water crisis as dam levels drop sharply</h4>
+            <p>The Khadakwasla dam chain was down to about <b>7.5 TMC</b>, with Temghar dam completely dry. To save drinking water for Pune, canal water for farms in <b>Daund, Indapur and Baramati</b> was to be restricted after 30 May.</p>
+            <a href="https://www.thebridgechronicle.com/pune/pune-possible-water-crisis-dam-levels-drop-sharply-agn97" target="_blank" rel="noopener">Read the report ↗</a>
+          </div>
+          <div class="meter" id="meter2" hidden>
+            <span class="label">Water used today (estimate)</span>
+            <div style="display:flex; justify-content:space-between"><span>AquaSense drip</span><b class="mono" id="mDrip">0 L</b></div>
+            <div class="bar drip"><i id="mDripBar"></i></div>
+            <div style="display:flex; justify-content:space-between"><span>Flood irrigation</span><b class="mono" id="mFlood">0 L</b></div>
+            <div class="bar flood"><i id="mFloodBar"></i></div>
+          </div>
+          <div class="story-card" id="storyCard2" aria-live="polite">
+            <span class="label" id="sc2Step">Step 1 of 9</span>
+            <h3 id="sc2Title">—</h3>
+            <p id="sc2Text">—</p>
+            <div class="story-prog"><i id="sc2Bar"></i></div>
+          </div>
+          <ol class="story-rail" id="storyRail2" aria-label="Jump to a step of the plan"></ol>
+          <div class="sim-fallback" id="simFallback2" hidden><p>The 3D view needs WebGL and an internet connection to load the 3D library. The step captions still work as you scroll.</p></div>
+        </div>
+      </div>
+      <div class="story-end">
+        <p>Sources: <a href="https://www.thebridgechronicle.com/pune/pune-possible-water-crisis-dam-levels-drop-sharply-agn97" target="_blank" rel="noopener">The Bridge Chronicle, 22 May 2026</a> · <a href="https://www.downtoearth.org.in/governance/weekly-water-cuts-borewell-ban-maharashtra-tightens-restrictions-amid-drought" target="_blank" rel="noopener">Down To Earth, 13 Oct 2026</a>. The farm, zones and water amounts are our illustration.</p>
+        <button class="btn" id="story2Replay">↺ Replay the plan</button>
+      </div>
     </div>
   </section>
 
@@ -959,12 +1133,20 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
 <footer>
   <div class="wrap">
-    <span><b style="color:var(--ink)">AquaSense</b> · IoT-based smart irrigation</span>
+    <span><b style="color:var(--ink)">AquaSense</b> · IoT-based smart irrigation · <span class="tag">Every drop counts 🌿</span></span>
     <span>EDI Project 1 · CS-C Group 10 · VIT Pune · 2026–27</span>
   </div>
 </footer>
 
 <div class="toasts" id="toasts" aria-live="assertive"></div>
+<div class="plan-pop" id="planPop" role="dialog" aria-labelledby="planPopTitle" hidden>
+  <div class="pp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l4-3 4 3v10"/><path d="M15 20v-6h4v6"/><path d="M12 4c2-2 5-2 7 0-2 1-5 1-7 0z"/></svg></div>
+  <div>
+    <h3 id="planPopTitle">Next: our plan for a real Pune problem</h3>
+    <p>In May 2026, canal water for farms around Baramati was cut to save Pune's drinking water. See, step by step, how AquaSense would help a farm get through it.</p>
+  </div>
+  <div class="acts"><button class="btn" id="planLater">Maybe later</button><button class="btn primary" id="planGo">Show our plan →</button></div>
+</div>
 <div class="modal-back" id="saveModal" hidden>
   <div class="modal panel" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
     <div>
@@ -1213,7 +1395,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     VIEWS.forEach((v) => { $('view-' + v).hidden = v !== view; });
     $$('[data-nav]').forEach((a) => a.setAttribute('aria-current', a.dataset.nav === view ? 'page' : 'false'));
     window.scrollTo(0, 0);
-    if (view === 'simulation') sim3d.init();
+    if (view === 'simulation') { sim3d.init(); farmStory.init(); }
     render();
   }
   window.addEventListener('hashchange', showView);
@@ -1441,6 +1623,22 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     $$('[data-range]').forEach((x) => x.setAttribute('aria-pressed', x === b));
     renderHistory();
   }));
+
+  // ---------------- optional cloud AI (free Cloudflare Workers AI) ----------------
+  // Paste your Worker address here after deploying tools/aquasense-ai-worker.js, e.g. 'https://aquasense-ai.yourname.workers.dev'.
+  // Leave it empty to use only the built-in engine. No API key ever goes in this file.
+  const AI_URL = '';
+  async function cloudAI(question, draft, facts, scope, history) {
+    if (!AI_URL || !navigator.onLine) return null;
+    try {
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 20000);
+      const r = await fetch(AI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, draft, facts, scope, history }), signal: ctrl.signal });
+      clearTimeout(tm);
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j && j.answer && j.answer.trim() ? j.answer.trim() : null;
+    } catch (e) { return null; }
+  }
 
   // ---------------- shared question understanding + knowledge (used by both chatbots) ----------------
   const Brain = (function () {
@@ -1949,6 +2147,15 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           chat.push({ role: 'assistant', text: out.text }); return;
         } catch (err) { el.remove(); if (err && err.code === 'not_granted') { sampler = null; setBadge(); } }
       }
+      if (AI_URL) {
+        const el = addMsg('bot', 'Thinking…');
+        const facts = { city: city[0], weather: wxFacts(), suggestedCommonSettings: climate(), knownProblems: KB.map((k) => k.title) };
+        const ans = await cloudAI(q, r.text, facts, 'general', chat.slice(-7, -1));
+        el.firstChild.textContent = ans || r.text;
+        const s = document.createElement('span'); s.className = 'src'; s.textContent = ans ? 'AI · checked against AquaSense data' : 'Built-in knowledge (AI unavailable)'; el.appendChild(s);
+        $('msgs').scrollTop = $('msgs').scrollHeight;
+        chat.push({ role: 'assistant', text: ans || r.text }); return;
+      }
       addMsg('bot', r.text, r.src === 'generic' ? 'Built-in knowledge · general answer' : 'Built-in knowledge');
       chat.push({ role: 'assistant', text: r.text });
     }
@@ -1983,7 +2190,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         systemCheck, weatherText, kb: (id) => { const k = KB.find((x) => x.id === id); return k ? kbText(k) : null; }
       };
     }
-    function setBadge() { const b = $('engineBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
+    function setBadge() { const on = sampler || AI_URL; const b = $('engineBadge'); b.textContent = on ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (on ? 'on' : 'off'); }
 
     $('city').innerHTML = CITIES.map((c, i) => '<option value="' + i + '">' + c[0] + '</option>').join('');
     $('city').addEventListener('change', (e) => { city = CITIES[+e.target.value]; loadWeather(); });
@@ -2875,6 +3082,368 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
     return { init, resetView, applyTheme };
   })();
 
+  // ---------------- "Our plan": AquaSense on a Pune-district farm (second scroll story) ----------------
+  const farmStory = (function () {
+    const STEPS2 = [
+      { title: 'What happened', text: 'The Bridge Chronicle reported on 22 May 2026 that the Khadakwasla dam chain had fallen to about 7.5 TMC. To keep drinking water for Pune, canal water for farms in Daund, Indapur and Baramati was to be restricted after 30 May.' },
+      { title: 'The problem on the farm', text: 'Many fields here are flood-irrigated from the canal: water is let over the whole plot, and a lot of it evaporates or soaks past the roots. With the canal restricted, this farm near Baramati has only its stored water, and the crops start to wilt.' },
+      { title: 'Our plan: split the field into zones', text: 'Different parts of a field dry out at different speeds. We divide the plot into three zones, A, B and C, and water each one separately, only when it needs it.' },
+      { title: 'A soil sensor in every zone', text: 'A capacitive moisture sensor goes into the root zone of each zone. Right now Zone A reads 24%, Zone B 41% and Zone C 29%.' },
+      { title: 'Solar ESP32 controller and stored water', text: 'A small solar panel powers the ESP32 controller, so the field needs no grid power. Water comes from the farm\'s own storage (a farm pond or borewell) into an overhead tank.' },
+      { title: 'Drip lines and one valve per zone', text: 'A main pipe runs along the field with an electric valve for each zone. Drip lines along every crop row put water right at the roots instead of flooding the whole plot.' },
+      { title: 'Live data on the farmer\'s phone', text: 'Readings go to the cloud database and on to the farmer\'s phone, which shows every zone and sends alerts. The farmer can still switch any zone to manual.' },
+      { title: 'Water only the zones that need it', text: 'Zones A and C are below the 35% start level, so only their valves open. Zone B is already at 41%, so it stays shut. Each zone stops at 60%.' },
+      { title: 'The result', text: 'All three zones are back in the healthy range and the crops recover, using far less water than flooding the plot. Drip irrigation commonly saves 30–70% of water compared with flooding, which matters most when canal water is cut.' }
+    ];
+    const N = STEPS2.length;
+    const ZX = [-7, 0, 7], ZN = ['A', 'B', 'C'], ROWX = [-2.1, -0.7, 0.7, 2.1], ZMIN = -6, ZMAX = 6;
+    const ease = (x) => x * x * (3 - 2 * x), c01 = (x) => clamp(x, 0, 1);
+    let ready = false, failed = false, started = false, renderer, scene, camera, prog = 0, lastK = -1, playing = false, playY = 0, last = performance.now(), time = 0, popShown = false;
+    const R = {}, labels = {};
+    const CAM = [
+      [[16, 15, 24], [0, 0, -2]], [[-3.5, 2.6, 9.5], [-7, 0.4, 2]], [[0, 22, 15], [0, 0, 0]], [[3.5, 4.2, 9.5], [0, 0.5, 1.5]],
+      [[1, 7, 22], [-1, 2.2, 5]], [[-13, 7.5, 15], [-3, 0, 2]], [[14, 10, 23], [4, 6, 0]], [[-1.5, 5.5, 13], [-3, 0.3, 1]], [[19, 14, 23], [0, 0, 0]]
+    ];
+
+    function story(p) {
+      p = clamp(p, 0, N); let k = Math.floor(p), t = p - k; if (k > N - 1) { k = N - 1; t = 1; }
+      const s = { k, t };
+      s.health = k < 7 ? 0.2 - (k === 1 ? 0.05 * t : 0) : k === 7 ? 0.2 + 0.5 * ease(t) : 0.7 + 0.3 * ease(t);
+      s.flood = k === 1 ? Math.max(0, 1 - t * 1.6) : 0;
+      s.zones = k >= 2 ? (k === 2 ? ease(c01(t * 1.5)) : 1) : 0;
+      s.sensors = k >= 3 ? (k === 3 ? ease(c01(t * 1.6)) : 1) : 0;
+      s.ctrl = k >= 4 ? (k === 4 ? ease(c01(t * 1.5)) : 1) : 0;
+      s.tank = k >= 4 ? (k === 4 ? ease(c01(t * 1.2)) : 1) * (k >= 7 ? 1 - 0.35 * (k === 7 ? ease(t) : 1) : 1) : 0.1;
+      s.pipes = k >= 5 ? (k === 5 ? ease(c01(t * 1.25)) : 1) : 0;
+      s.net = k === 6 ? t : k === 7 ? (t * 2) % 1 : -1;
+      s.sense = k === 3 || k === 7;
+      const mA = k < 7 ? 24 : k === 7 ? 24 + 34 * ease(t) : 58, mC = k < 7 ? 29 : k === 7 ? 29 + 28 * ease(t) : 57;
+      s.m = [mA, 41 - (k === 7 ? 0.5 * t : k > 7 ? 0.5 : 0), mC];
+      s.open = [k === 7 && t < 0.97, false, k === 7 && t < 0.93];
+      s.wet = [k === 7 ? ease(t) : k > 7 ? 1 : 0, k >= 7 ? 0.35 : 0, k === 7 ? ease(t) * 0.95 : k > 7 ? 0.95 : 0];
+      s.meter = k === 7 ? ease(t) : k > 7 ? 1 : 0;
+      s.hot = [['canal'], ['canal'], ['zA', 'zB', 'zC'], ['zA', 'zB', 'zC'], ['ctrl', 'tank'], ['valves'], ['cloud', 'phone'], ['zA', 'zC', 'valves'], ['zA', 'zB', 'zC']][k];
+      return s;
+    }
+
+    function setHdr() { return document.querySelector('.topbar').offsetHeight; }
+    function geom() {
+      const hdr = setHdr() + 8, r = $('story2').getBoundingClientRect(), stageH = $('simStage2').offsetHeight, total = Math.max(1, r.height - stageH);
+      return { total, startY: window.scrollY + r.top - hdr, prog: c01((hdr - r.top) / total) * N, r };
+    }
+    function jump(i) { const g = geom(); stopPlay(); window.scrollTo({ top: g.startY + (i === 0 ? 0.02 : i + 0.5) / N * g.total, behavior: 'smooth' }); }
+    function startPlay() { const g = geom(); if (g.prog >= N - 0.05 || g.prog <= 0.01) window.scrollTo(0, g.startY + 2); playY = window.scrollY; playing = true; $('story2Play').textContent = '❚❚ Pause'; }
+    function stopPlay() { playing = false; $('story2Play').textContent = '▶ Play the plan'; }
+    $('story2Play').addEventListener('click', () => { if (playing) stopPlay(); else { const g = geom(); if (g.r.top > 120) { window.scrollTo({ top: g.startY + 2 }); } startPlay(); } });
+    $('story2Replay').addEventListener('click', () => { const g = geom(); window.scrollTo(0, g.startY + 2); setTimeout(startPlay, 300); });
+    ['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { if (playing) stopPlay(); }, { passive: true }));
+    $('storyRail2').innerHTML = STEPS2.map((s, i) => '<li><button data-step2="' + i + '" aria-label="Step ' + (i + 1) + ': ' + s.title + '"><span>' + (i + 1) + '. ' + s.title + '</span></button></li>').join('');
+    $('storyRail2').addEventListener('click', (e) => { const b = e.target.closest('[data-step2]'); if (b) jump(+b.dataset.step2); });
+    // popup that invites the viewer to the plan once the first story has finished
+    const pop = $('planPop');
+    const hidePop = () => { pop.hidden = true; };
+    $('planLater').addEventListener('click', hidePop);
+    $('planGo').addEventListener('click', () => { hidePop(); $('planHead').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) hidePop(); });
+
+    // ---------- scene ----------
+    const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+    const mat = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0.02 }, o || {}));
+    function mesh(g, m, sh) { const x = new THREE.Mesh(g, m); if (sh !== false) { x.castShadow = true; x.receiveShadow = true; } return x; }
+    function tex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; }
+    function label(key, text, pos, cls) { const el = document.createElement('span'); el.textContent = text; if (cls) el.className = cls; $('simLabels2').appendChild(el); labels[key] = { el, pos: V(pos), on: true }; }
+    function tubeOf(points, r, m, segs) { const c = new THREE.CatmullRomCurve3(points.map(V)); const t = mesh(new THREE.TubeGeometry(c, segs || 40, r, 8, false), m); scene.add(t); return t; }
+
+    function build() {
+      scene.background = tex(4, 256, (g) => { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#8fc3ea'); gr.addColorStop(0.6, '#d9ecf5'); gr.addColorStop(1, '#efe6cf'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); });
+      scene.fog = new THREE.Fog(0xe9e5d2, 45, 110);
+      scene.add(new THREE.HemisphereLight(0xdff1ff, 0x8a7350, 0.65));
+      const sun = new THREE.DirectionalLight(0xfff1d6, 1.15); sun.position.set(20, 30, 14); sun.castShadow = true;
+      sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, near: 1, far: 90 }); sun.shadow.bias = -0.0004; scene.add(sun);
+      // dry land around the farm
+      const grass = tex(256, 256, (g, w, h) => { const rnd = mulberry(4); g.fillStyle = '#c8b27a'; g.fillRect(0, 0, w, h); for (let n = 0; n < 2500; n++) { const v = rnd(); g.fillStyle = v < 0.5 ? 'rgba(150,130,80,0.45)' : v < 0.8 ? 'rgba(206,190,140,0.5)' : 'rgba(120,140,70,0.35)'; g.fillRect(rnd() * w, rnd() * h, 2, 2 + rnd() * 4); } }, [24, 24]);
+      const ground = mesh(new THREE.PlaneGeometry(220, 220), mat(0xffffff, { map: grass, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.castShadow = false; scene.add(ground);
+      // hills and trees on the horizon
+      const hillMat = mat(0x9aa56a, { roughness: 1 });
+      [[-40, -60, 30, 9], [-5, -70, 38, 12], [35, -62, 30, 8], [65, -40, 26, 7], [-70, -35, 26, 7]].forEach((h) => { const s = mesh(new THREE.SphereGeometry(1, 24, 12), hillMat, false); s.scale.set(h[2], h[3], h[2] * 0.6); s.position.set(h[0], 0, h[1]); scene.add(s); });
+      const trunk = mat(0x6b4a2b), crown = [mat(0x4f7d3a), mat(0x5f8c40), mat(0x46703a)];
+      const trnd = mulberry(12);
+      for (let n = 0; n < 26; n++) {
+        const a = trnd() * Math.PI * 2, d = 20 + trnd() * 22, x = Math.cos(a) * d, z = Math.sin(a) * d - 4;
+        if (Math.abs(x) < 14 && z > -12 && z < 14) continue;
+        const tr = mesh(new THREE.CylinderGeometry(0.18, 0.26, 2.2, 8), trunk); tr.position.set(x, 1.1, z); scene.add(tr);
+        const cr = mesh(new THREE.SphereGeometry(1.4 + trnd() * 0.8, 12, 10), crown[n % 3]); cr.position.set(x, 3 + trnd() * 0.6, z); cr.scale.y = 0.85; scene.add(cr);
+      }
+      // farmhouse
+      const house = new THREE.Group(); house.position.set(-22, 0, -14); house.rotation.y = 0.4; scene.add(house);
+      const walls = mesh(new THREE.BoxGeometry(6, 3, 4.5), mat(0xe9dcc4)); walls.position.set(0, 1.5, 0); house.add(walls);
+      const roof = mesh(new THREE.ConeGeometry(4.6, 2, 4), mat(0xa4432e)); roof.position.y = 4; roof.rotation.y = Math.PI / 4; roof.scale.z = 0.8; house.add(roof);
+      const door = mesh(new THREE.BoxGeometry(1, 1.8, 0.1), mat(0x5a3a24)); door.position.set(0, 0.9, 2.3); house.add(door);
+      // the restricted canal behind the field: concrete walls, cracked dry bed
+      const conc = mat(0xb9b4a8, { roughness: 0.95 });
+      [-10.6, -12.4].forEach((z) => { const wl = mesh(new THREE.BoxGeometry(60, 0.8, 0.3), conc); wl.position.set(0, 0.25, z); scene.add(wl); });
+      const cracked = tex(512, 128, (g, w, h) => { const rnd = mulberry(8); g.fillStyle = '#b79a6e'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(80,58,35,.8)'; for (let n = 0; n < 70; n++) { let x = rnd() * w, y = rnd() * h; g.lineWidth = 1 + rnd() * 2; g.beginPath(); g.moveTo(x, y); for (let j = 0; j < 5; j++) { x += (rnd() - 0.5) * 30; y += (rnd() - 0.5) * 30; g.lineTo(x, y); } g.stroke(); } }, [8, 1]);
+      const bed = mesh(new THREE.PlaneGeometry(60, 1.5), mat(0xffffff, { map: cracked, roughness: 1 }), false); bed.rotation.x = -Math.PI / 2; bed.position.set(0, -0.12, -11.5); scene.add(bed);
+      R.canalWater = mesh(new THREE.PlaneGeometry(60, 1.5), new THREE.MeshStandardMaterial({ color: 0x3f7fb0, transparent: true, opacity: 0, roughness: 0.1 }), false); R.canalWater.rotation.x = -Math.PI / 2; R.canalWater.position.set(0, 0.25, -11.5); scene.add(R.canalWater);
+
+      // the field: three zones, ridges and an instanced crop
+      const soilTex = tex(256, 256, (g, w, h) => { const rnd = mulberry(6); g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); for (let n = 0; n < 3000; n++) { const v = 150 + rnd() * 100 | 0; g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; g.fillRect(rnd() * w, rnd() * h, 2, 2); } }, [3, 6]);
+      R.zoneSoil = []; R.zoneWet = []; R.zoneOutline = [];
+      ZX.forEach((x, zi) => {
+        const sm = mat(0xb08a5e, { map: soilTex, roughness: 1 });
+        const plot = mesh(new THREE.BoxGeometry(6.2, 0.1, 13.2), sm); plot.position.set(x, 0.05, 0); scene.add(plot); R.zoneSoil.push(sm);
+        ROWX.forEach((rx) => { const ridge = mesh(new THREE.BoxGeometry(0.55, 0.16, 12.6), sm); ridge.position.set(x + rx, 0.13, 0); scene.add(ridge); });
+        const wet = mesh(new THREE.PlaneGeometry(6.2, 13.2), new THREE.MeshBasicMaterial({ color: 0x2c1d12, transparent: true, opacity: 0, depthWrite: false }), false);
+        wet.rotation.x = -Math.PI / 2; wet.position.set(x, 0.225, 0); scene.add(wet); R.zoneWet.push(wet);
+        const ol = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(6.4, 0.02, 13.4)), new THREE.LineBasicMaterial({ color: [0xffc24b, 0x7fd4ff, 0xff8f6b][zi], transparent: true, opacity: 0 }));
+        ol.position.set(x, 0.32, 0); scene.add(ol); R.zoneOutline.push(ol);
+      });
+      R.flood = mesh(new THREE.PlaneGeometry(21, 13.6), new THREE.MeshStandardMaterial({ color: 0x4d8fbf, transparent: true, opacity: 0, roughness: 0.05, metalness: 0.1 }), false);
+      R.flood.rotation.x = -Math.PI / 2; R.flood.position.set(0, 0.3, 0); scene.add(R.flood);
+      // crops: leafy plant cards (two crossed planes with a drawn plant), one instanced set per zone so each zone can be tinted
+      const plantTex = tex(256, 256, (g, w, h) => {
+        const rnd = mulberry(33);
+        g.clearRect(0, 0, w, h);
+        g.strokeStyle = '#c9d6b8'; g.lineWidth = 6; g.beginPath(); g.moveTo(128, 256); g.quadraticCurveTo(124, 150, 130, 40); g.stroke();
+        for (let n = 0; n < 16; n++) {
+          const y = 230 - n * 12, side = n % 2 ? 1 : -1, len = 70 - n * 2.5 + rnd() * 16, ang = side * (0.5 + rnd() * 0.5) - Math.PI / 2;
+          g.save(); g.translate(128 + side * 4, y); g.rotate(ang + Math.PI / 2);
+          const v = 225 + rnd() * 30 | 0; g.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')';
+          g.beginPath(); g.ellipse(0, -len / 2, len * 0.22, len / 2, 0, 0, Math.PI * 2); g.fill();
+          g.strokeStyle = 'rgba(150,165,140,0.9)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -len); g.stroke();
+          g.restore();
+        }
+        for (let n = 0; n < 3; n++) { g.fillStyle = '#e8e8e8'; g.beginPath(); g.arc(108 + n * 22, 110 + rnd() * 40, 6, 0, Math.PI * 2); g.fill(); }
+      });
+      const pa = new THREE.PlaneGeometry(1.0, 1.1).toNonIndexed(), pb = pa.clone(); pb.rotateY(Math.PI / 2);
+      const cross = new THREE.BufferGeometry();
+      ['position', 'normal', 'uv'].forEach((k) => { const A = pa.attributes[k].array, B = pb.attributes[k].array, C = new Float32Array(A.length + B.length); C.set(A); C.set(B, A.length); cross.setAttribute(k, new THREE.BufferAttribute(C, pa.attributes[k].itemSize)); });
+      cross.translate(0, 0.72, 0);
+      const perZone = ROWX.length * 12;
+      const dummy = new THREE.Object3D(), crnd = mulberry(21); R.emit = [[], [], []]; R.cropMats = []; R.crops = [];
+      ZX.forEach((x, zi) => {
+        const cm = new THREE.MeshStandardMaterial({ map: plantTex, color: 0xa58d4a, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.75 });
+        const im = new THREE.InstancedMesh(cross, cm, perZone); im.castShadow = true; R.cropMats.push(cm); R.crops.push(im);
+        let n = 0;
+        ROWX.forEach((rx) => { for (let j = 0; j < 12; j++) {
+          const z = ZMIN + 0.5 + j * ((ZMAX - ZMIN - 1) / 11), sc = 0.8 + crnd() * 0.45;
+          dummy.position.set(x + rx + (crnd() - 0.5) * 0.12, 0.2, z); dummy.rotation.set(0, crnd() * 6, 0); dummy.scale.set(sc, sc, sc); dummy.updateMatrix();
+          im.setMatrixAt(n++, dummy.matrix);
+          R.emit[zi].push(V([x + rx + 0.18, 0.32, z]));
+        } });
+        scene.add(im);
+      });
+      R.cDry = new THREE.Color(0x9a7f3e); R.cGreen = new THREE.Color(0x2e7f35); R.cTmp = new THREE.Color();
+
+      // water source: farm pond + overhead tank on a stand
+      const pond = mesh(new THREE.CylinderGeometry(3, 2.6, 0.5, 40), mat(0x2f3a33), false); pond.position.set(-16, -0.1, 4); scene.add(pond);
+      R.pondWater = mesh(new THREE.CircleGeometry(2.8, 40), new THREE.MeshStandardMaterial({ color: 0x2e6f9a, roughness: 0.08, metalness: 0.2 }), false); R.pondWater.rotation.x = -Math.PI / 2; R.pondWater.position.set(-16, 0.1, 4); scene.add(R.pondWater);
+      R.tankG = new THREE.Group(); R.tankG.position.set(-12, 0, 9); scene.add(R.tankG);
+      const steel = mat(0x7a8088, { metalness: 0.6, roughness: 0.4 });
+      [[-0.9, -0.9], [0.9, -0.9], [-0.9, 0.9], [0.9, 0.9]].forEach((p) => { const leg = mesh(new THREE.BoxGeometry(0.15, 3, 0.15), steel); leg.position.set(p[0], 1.5, p[1]); R.tankG.add(leg); });
+      const deck = mesh(new THREE.BoxGeometry(2.3, 0.15, 2.3), steel); deck.position.y = 3; R.tankG.add(deck);
+      const tankShell = mesh(new THREE.CylinderGeometry(1.05, 1.05, 2, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0x20262b, roughness: 0.5, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }), false); tankShell.position.y = 4.1; R.tankG.add(tankShell);
+      const tankLid = mesh(new THREE.CylinderGeometry(1.08, 1.08, 0.12, 32), mat(0x20262b)); tankLid.position.y = 5.1; R.tankG.add(tankLid);
+      R.tankWater = mesh(new THREE.CylinderGeometry(1, 1, 1, 32), new THREE.MeshStandardMaterial({ color: 0x3a8ed0, roughness: 0.1, transparent: true, opacity: 0.85 }), false); R.tankWater.position.y = 3.2; R.tankG.add(R.tankWater);
+      tubeOf([[-14.2, 0.2, 5.5], [-13.2, 0.3, 7.5], [-12.6, 0.4, 8.6], [-12.4, 3.2, 8.8]], 0.08, mat(0x30353a));
+
+      // pipes: main line along the front, valves, drip laterals per row
+      const pvc = mat(0xe8e6df, { roughness: 0.5 }), black = mat(0x1d2023, { roughness: 0.6 });
+      R.main = tubeOf([[-11.6, 3.0, 9.0], [-11.2, 0.4, 8.4], [-10, 0.18, 7.6], [10, 0.18, 7.6]], 0.11, pvc, 80); R.main.geometry.setDrawRange(0, 0);
+      R.laterals = []; R.valves = []; R.valveLeds = [];
+      ZX.forEach((x, zi) => {
+        const head = tubeOf([[x, 0.18, 7.6], [x, 0.18, 7.0], [x - 2.1, 0.12, 6.8], [x + 2.1, 0.12, 6.8]], 0.06, black, 30); head.geometry.setDrawRange(0, 0); R.laterals.push(head);
+        ROWX.forEach((rx) => { const lat = tubeOf([[x + rx + 0.18, 0.24, 6.8], [x + rx + 0.18, 0.24, 0], [x + rx + 0.18, 0.24, -6.2]], 0.035, black, 40); lat.geometry.setDrawRange(0, 0); R.laterals.push(lat); });
+        const vg = new THREE.Group(); vg.position.set(x, 0.18, 7.6); vg.scale.setScalar(0.001); scene.add(vg);
+        vg.add(mesh(new THREE.BoxGeometry(0.5, 0.35, 0.35), mat(0x2f6fd6)));
+        const coil = mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.35, 16), mat(0x1a1a1a)); coil.position.y = 0.33; vg.add(coil);
+        const led = mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshStandardMaterial({ color: 0x40ff70, emissive: 0x40ff70, emissiveIntensity: 0.05 }), false); led.position.set(0.18, 0.2, 0.18); vg.add(led);
+        R.valves.push(vg); R.valveLeds.push(led);
+      });
+      // drops: one instanced set per zone
+      R.drops = R.emit.map((pts) => {
+        const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 6, 5), new THREE.MeshStandardMaterial({ color: 0x6fb8ff, roughness: 0.05, transparent: true, opacity: 0.9 }), pts.length);
+        im.visible = false; scene.add(im); return { im, pts, ph: pts.map(() => Math.random()) };
+      });
+
+      // sensors per zone
+      R.sensors = ZX.map((x) => {
+        const g = new THREE.Group(); g.position.set(x - 0.55, 0.2, 2.2); g.scale.setScalar(0.001); scene.add(g);
+        const post = mesh(new THREE.BoxGeometry(0.06, 0.8, 0.06), mat(0x30343a)); post.position.y = 0.3; g.add(post);
+        const board = mesh(new THREE.BoxGeometry(0.28, 0.4, 0.03), mat(0x15181b)); board.position.y = 0.75; g.add(board);
+        const box = mesh(new THREE.BoxGeometry(0.34, 0.24, 0.16), mat(0xdedad0)); box.position.y = 1.05; g.add(box);
+        const led = mesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshStandardMaterial({ color: 0xff4636, emissive: 0xff4636, emissiveIntensity: 0.3 }), false); led.position.set(0.1, 1.1, 0.09); g.add(led);
+        const ring = mesh(new THREE.TorusGeometry(0.5, 0.025, 6, 32), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0, depthWrite: false }), false); ring.rotation.x = Math.PI / 2; ring.position.y = 0.05; g.add(ring);
+        return { g, led, ring };
+      });
+
+      // solar ESP32 controller on a pole
+      R.ctrl = new THREE.Group(); R.ctrl.position.set(11.5, 0, 8.6); R.ctrl.scale.setScalar(0.001); scene.add(R.ctrl);
+      const pole = mesh(new THREE.CylinderGeometry(0.09, 0.11, 3.6, 10), steel); pole.position.y = 1.8; R.ctrl.add(pole);
+      const cells = tex(256, 160, (g, w, h) => { g.fillStyle = '#16325a'; g.fillRect(0, 0, w, h); g.strokeStyle = '#9fb8d8'; g.lineWidth = 2; for (let x = 0; x <= w; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y <= h; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } });
+      const panel = mesh(new THREE.BoxGeometry(1.8, 0.06, 1.1), [steel, steel, mat(0xffffff, { map: cells, metalness: 0.4, roughness: 0.25 }), steel, steel, steel]); panel.position.set(0, 3.75, 0); panel.rotation.x = -0.45; R.ctrl.add(panel);
+      const enc = mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), mat(0xd9d6ce)); enc.position.set(0, 1.9, 0.25); R.ctrl.add(enc);
+      const encTex = tex(128, 160, (g) => { g.fillStyle = '#d9d6ce'; g.fillRect(0, 0, 128, 160); g.fillStyle = '#1f2a33'; g.fillRect(16, 24, 96, 56); g.fillStyle = '#9cd2ff'; g.font = '700 16px monospace'; g.fillText('ESP32', 36, 58); g.fillStyle = '#2f8a4f'; g.font = '600 13px sans-serif'; g.fillText('AquaSense', 28, 112); });
+      const face = mesh(new THREE.PlaneGeometry(0.66, 0.86), new THREE.MeshStandardMaterial({ map: encTex }), false); face.position.set(0, 1.9, 0.43); R.ctrl.add(face);
+      const ant = mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 6), mat(0x111111)); ant.position.set(0.25, 2.6, 0.25); R.ctrl.add(ant);
+      R.ctrlLed = mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshStandardMaterial({ color: 0x4f9dff, emissive: 0x4f9dff, emissiveIntensity: 0.4 }), false); R.ctrlLed.position.set(0.22, 1.6, 0.44); R.ctrl.add(R.ctrlLed);
+
+      // cloud + database + farmer's phone
+      R.cloud = new THREE.Group(); R.cloud.position.set(2, 13, -10); scene.add(R.cloud);
+      const cm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, emissive: 0x6fb2ff, emissiveIntensity: 0 }); R.cloudMat = cm;
+      [[0, 0, 0, 2.2], [2.3, -0.3, 0.2, 1.7], [-2.2, -0.4, 0, 1.6], [0.8, 1.1, -0.2, 1.5]].forEach((c) => { const s = mesh(new THREE.SphereGeometry(c[3], 20, 16), cm, false); s.position.set(c[0], c[1], c[2]); R.cloud.add(s); });
+      const db = new THREE.Group(); db.position.set(2, 9.6, -9); scene.add(db);
+      for (let j = 0; j < 3; j++) { const d = mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.42, 32), mat(0x2c4f7c, { metalness: 0.5, roughness: 0.3 })); d.position.y = j * 0.55; db.add(d); }
+      R.db = db;
+      R.phone = new THREE.Group(); R.phone.position.set(9.5, 6.2, 11); R.phone.rotation.set(-0.15, -0.45, 0); scene.add(R.phone);
+      R.phone.add(mesh(new THREE.BoxGeometry(1.6, 3.1, 0.12), mat(0x111417, { roughness: 0.3 })));
+      R.scr = document.createElement('canvas'); R.scr.width = 256; R.scr.height = 500;
+      R.scrTex = new THREE.CanvasTexture(R.scr); R.scrTex.encoding = THREE.sRGBEncoding;
+      const sp = new THREE.Mesh(new THREE.PlaneGeometry(1.46, 2.86), new THREE.MeshBasicMaterial({ map: R.scrTex, toneMapped: false })); sp.position.z = 0.065; R.phone.add(sp);
+      R.dots = [0, 1, 2, 3].map(() => { const m = mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshBasicMaterial({ color: 0x5ea9ff, toneMapped: false }), false); m.visible = false; scene.add(m); return m; });
+      R.pUp = new THREE.CatmullRomCurve3([V([11.7, 2.6, 8.7]), V([9, 9, 2]), V([3, 9.8, -8.6])]);
+      R.pDown = new THREE.CatmullRomCurve3([V([3, 10.4, -8.6]), V([8, 11, 4]), V([9.5, 7.6, 11])]);
+      R.pIn = ZX.map((x) => new THREE.CatmullRomCurve3([V([x - 0.55, 1.4, 2.2]), V([(x + 11.5) / 2, 4, 6]), V([11.5, 2.4, 8.6])]));
+
+      label('canal', 'Canal: water restricted', [0, 1.4, -11.5]);
+      ZN.forEach((z, i) => label('z' + z, 'Zone ' + z, [ZX[i] - 0.55, 2.0, 2.2]));
+      label('valves', 'Valves', [-7, 1.1, 7.8]);
+      label('ctrl', 'Solar ESP32 controller', [11.5, 4.6, 8.6]);
+      label('tank', 'Stored water', [-12, 5.8, 9]);
+      label('pond', 'Farm pond', [-16, 1, 4]);
+      label('cloud', 'Cloud database', [2, 15.8, -10]);
+      label('phone', 'Farmer\'s phone', [9.5, 8.2, 11]);
+    }
+
+    function drawPhone(s) {
+      const g = R.scr.getContext('2d'); g.fillStyle = '#0f1b18'; g.fillRect(0, 0, 256, 500);
+      g.fillStyle = '#e3efe6'; g.font = '800 24px sans-serif'; g.fillText('AquaSense', 18, 40);
+      g.fillStyle = '#93a99b'; g.font = '500 13px monospace'; g.fillText('FARM · 3 ZONES', 18, 62);
+      s.m.forEach((m, i) => {
+        const y = 92 + i * 116; g.fillStyle = '#13261f'; g.fillRect(14, y, 228, 100);
+        g.fillStyle = '#e3efe6'; g.font = '700 18px sans-serif'; g.fillText('Zone ' + ZN[i], 28, y + 30);
+        g.fillStyle = m < 35 ? '#e0a64a' : '#5ec47f'; g.font = '800 30px sans-serif'; g.textAlign = 'right'; g.fillText(Math.round(m) + '%', 228, y + 34); g.textAlign = 'left';
+        g.fillStyle = '#243a2e'; g.fillRect(28, y + 50, 200, 12); g.fillStyle = m < 35 ? '#e0a64a' : '#5eb0ff'; g.fillRect(28, y + 50, 2 * m, 12);
+        g.fillStyle = s.open[i] ? '#5eb0ff' : '#93a99b'; g.font = '600 14px sans-serif'; g.fillText(s.open[i] ? 'Valve OPEN · watering' : m < 35 ? 'Dry · needs water' : 'OK · valve closed', 28, y + 84);
+      });
+      R.scrTex.needsUpdate = true;
+    }
+
+    function fail() { failed = true; $('simFallback2').hidden = false; }
+    function init() {
+      if (!started) { started = true; requestAnimationFrame(frame); }
+      if (ready || failed) return;
+      if (!window.THREE) return fail();
+      try { renderer = new THREE.WebGLRenderer({ canvas: $('simCanvas2'), antialias: true }); } catch (e) { return fail(); }
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+      scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(42, 1, 0.1, 300);
+      R.camPos = V(CAM[0][0]); R.camTgt = V(CAM[0][1]); R.v = new THREE.Vector3(); R.v2 = new THREE.Vector3();
+      build(); ready = true;
+      new ResizeObserver(resize).observe($('simStage2')); resize();
+    }
+    function resize() { if (!renderer) return; const r = $('simStage2').getBoundingClientRect(); if (!r.width) return; renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix(); }
+
+    function updateDOM(s) {
+      if (s.k !== lastK) {
+        lastK = s.k;
+        $('sc2Step').textContent = 'Our plan · Step ' + (s.k + 1) + ' of ' + N;
+        $('sc2Title').textContent = STEPS2[s.k].title; $('sc2Text').textContent = STEPS2[s.k].text;
+        $$('#storyRail2 button').forEach((b) => { const i = +b.dataset.step2; b.classList.toggle('active', i === s.k); b.classList.toggle('done', i < s.k); });
+        $('newsCard').classList.toggle('gone', s.k > 1);
+        $('meter2').hidden = s.k < 7;
+      }
+      $('sc2Bar').style.width = (s.t * 100).toFixed(1) + '%';
+      const drip = Math.round(1900 * s.meter), flood = Math.round(6400 * s.meter);
+      $('mDrip').textContent = drip.toLocaleString('en-IN') + ' L'; $('mFlood').textContent = flood.toLocaleString('en-IN') + ' L';
+      $('mDripBar').style.width = (drip / 64) + '%'; $('mFloodBar').style.width = (flood / 64) + '%';
+    }
+
+    function update3D(s, dt) {
+      const k = s.k, t = s.t, nk = Math.min(k + 1, N - 1), a = ease(c01((t - 0.6) / 0.4));
+      R.v.fromArray(CAM[k][0]).lerp(R.v2.fromArray(CAM[nk][0]), a); R.camPos.lerp(R.v, 1 - Math.exp(-dt * 3));
+      R.v.fromArray(CAM[k][1]).lerp(R.v2.fromArray(CAM[nk][1]), a); R.camTgt.lerp(R.v, 1 - Math.exp(-dt * 3));
+      camera.position.copy(R.camPos); camera.lookAt(R.camTgt);
+      // crops: colour + droop by health per zone
+      const hz = [s.health, Math.max(s.health, k >= 3 ? 0.55 : s.health), s.health];
+      if (k >= 7) { hz[0] = 0.2 + 0.8 * (k === 7 ? ease(t) : 1); hz[2] = 0.2 + 0.8 * (k === 7 ? ease(c01(t * 1.05)) : 1); hz[1] = 0.6 + 0.4 * (k === 8 ? ease(t) : 0); }
+      R.cropMats.forEach((m, i) => m.color.copy(R.cDry).lerp(R.cGreen, hz[i]));
+      R.crops.forEach((im, i) => { im.scale.y = 0.82 + 0.18 * hz[i]; });
+      R.zoneSoil.forEach((m, i) => m.color.setHex(0xb08a5e).lerp(R.cTmp.setHex(0x6a4a30), s.wet[i] * 0.8));
+      R.zoneWet.forEach((w, i) => { w.material.opacity = s.wet[i] * 0.35; });
+      R.zoneOutline.forEach((o, i) => { o.material.opacity = s.zones * (s.hot.includes('z' + ZN[i]) ? 0.95 : 0.45); });
+      R.flood.material.opacity = s.flood * 0.6;
+      // hardware appears step by step
+      R.sensors.forEach((sn, i) => {
+        sn.g.scale.setScalar(Math.max(0.001, s.sensors));
+        const ph = (time * 0.9 + i * 0.3) % 1; sn.ring.material.opacity = s.sense && s.sensors > 0.9 ? (1 - ph) * 0.8 : 0; sn.ring.scale.setScalar(0.6 + ph * 2.2);
+        sn.led.material.emissiveIntensity = s.sense && Math.sin(time * 12 + i) > 0 ? 2.4 : 0.3;
+      });
+      R.ctrl.scale.setScalar(Math.max(0.001, s.ctrl));
+      R.ctrlLed.material.emissiveIntensity = (k === 6 || k === 7) && Math.sin(time * 16) > 0 ? 2.4 : 0.4;
+      const wh = 1.8 * s.tank; R.tankWater.scale.y = Math.max(0.01, wh); R.tankWater.position.y = 3.1 + wh / 2;
+      R.main.geometry.setDrawRange(0, Math.floor(s.pipes * R.main.geometry.index.count / 6) * 6);
+      R.laterals.forEach((l) => l.geometry.setDrawRange(0, Math.floor(c01(s.pipes * 1.3 - 0.3) * l.geometry.index.count / 6) * 6));
+      R.valves.forEach((v, i) => { v.scale.setScalar(Math.max(0.001, c01(s.pipes * 2 - 0.6))); R.valveLeds[i].material.emissiveIntensity = s.open[i] ? 2.4 : 0.05; });
+      // drips
+      R.drops.forEach((d, zi) => {
+        d.im.visible = s.open[zi];
+        if (!s.open[zi]) return;
+        const dm = R.dummy || (R.dummy = new THREE.Object3D());
+        d.pts.forEach((p, i) => { d.ph[i] = (d.ph[i] + dt * 1.4) % 1; dm.position.set(p.x, p.y - d.ph[i] * 0.25, p.z); const sc = d.ph[i] < 0.15 ? d.ph[i] / 0.15 : 1; dm.scale.set(sc, sc * 1.3, sc); dm.updateMatrix(); d.im.setMatrixAt(i, dm.matrix); });
+        d.im.instanceMatrix.needsUpdate = true;
+      });
+      // data packets
+      R.dots.forEach((d, j) => {
+        let u = s.net - j * 0.08; d.visible = s.net >= 0 && u >= 0 && u < 1;
+        if (!d.visible) return;
+        if (u < 0.33) R.pIn[j % 3].getPoint(u / 0.33, d.position); else if (u < 0.66) R.pUp.getPoint((u - 0.33) / 0.33, d.position); else R.pDown.getPoint((u - 0.66) / 0.34, d.position);
+      });
+      R.cloudMat.emissiveIntensity = s.net > 0.33 && s.net < 0.75 ? 0.35 : 0;
+      R.db.rotation.y += dt * (s.net >= 0 ? 1.5 : 0.2);
+      R.cloud.position.y = 13 + Math.sin(time * 0.7) * 0.2;
+      // things that belong to later steps stay hidden until then
+      const showNet = k >= 6 ? 1 : 0, showTank = s.ctrl;
+      R.cloud.visible = R.db.visible = showNet > 0; R.phone.visible = showNet > 0;
+      R.tankG.scale.setScalar(Math.max(0.001, showTank));
+      R.canalWater.material.opacity = s.flood * 0.7;
+      if (Math.round(time * 6) !== R.lastScr) { R.lastScr = Math.round(time * 6); drawPhone(s); }
+      renderer.render(scene, camera);
+      // labels
+      ZN.forEach((z, i) => { labels['z' + z].el.textContent = 'Zone ' + z + (k >= 3 ? ' · ' + Math.round(s.m[i]) + '%' : ''); labels['z' + z].on = s.zones > 0.5; });
+      labels.canal.on = k <= 1; labels.valves.on = s.pipes > 0.6; labels.ctrl.on = s.ctrl > 0.6; labels.tank.on = k >= 4; labels.pond.on = k === 4;
+      labels.cloud.on = k === 6 || k === 7; labels.phone.on = k >= 6;
+      const r = $('simStage2').getBoundingClientRect();
+      Object.keys(labels).forEach((key) => {
+        const l = labels[key];
+        R.v.copy(l.pos).project(camera);
+        const vis = l.on && R.v.z < 1 && Math.abs(R.v.x) < 1.05 && Math.abs(R.v.y) < 1.05;
+        l.el.style.display = vis ? '' : 'none';
+        l.el.classList.toggle('hot', s.hot.includes(key));
+        if (vis) { l.el.style.left = ((R.v.x + 1) / 2 * r.width) + 'px'; l.el.style.top = ((1 - R.v.y) / 2 * r.height) + 'px'; }
+      });
+    }
+
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now; time += dt;
+      if (view !== 'simulation') { if (playing) stopPlay(); return; }
+      // popup once the first story has been scrolled to its end
+      const s1 = $('story').getBoundingClientRect();
+      if (!popShown && s1.bottom < window.innerHeight * 0.95 && $('planHead').getBoundingClientRect().top > window.innerHeight * 0.55) { popShown = true; pop.hidden = false; }
+      const g = geom();
+      if (g.r.bottom < -200 || g.r.top > window.innerHeight + 400) return;
+      if (!ready && !failed) init();
+      if (playing) { playY += g.total / N / 4.5 * dt; window.scrollTo(0, playY); if (g.prog >= N - 0.02) stopPlay(); }
+      prog = geom().prog;
+      const s = story(prog);
+      updateDOM(s);
+      if (ready) update3D(s, dt);
+    }
+    return { init: () => { if (!started) { started = true; requestAnimationFrame(frame); } } };
+  })();
+
   // ---------------- your plants + pump settings ----------------
   const plantsUI = (function () {
     const SOILS = {
@@ -3306,7 +3875,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         el.firstChild.textContent = out.text; return true;
       } catch (err) { if (err && err.code === 'not_granted') { sampler = null; setAdvBadge(); } el.firstChild.textContent = localText; return false; }
     }
-    function setAdvBadge() { const b = $('advBadge'); b.textContent = sampler ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (sampler ? 'on' : 'off'); }
+    function setAdvBadge() { const on = sampler || AI_URL; const b = $('advBadge'); b.textContent = on ? 'AI on' : 'Built-in analysis'; b.className = 'pill ' + (on ? 'on' : 'off'); }
     async function advAsk(kind, question) {
       if (question) addAdv('user', question);
       const pl = plants[+$('advPlant').value - 1];
@@ -3362,8 +3931,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         plantInfo: (n) => info(n), plants: () => plants.map(info), kb: (id) => generalUI.kb(id),
         extra: (p) => plantIntent(p, pl)
       });
-      const el = addAdv('bot', r.text);
-      const ok = await aiPolish(r.text, plantFacts(pl), el, q);
+      const el = addAdv('bot', AI_URL ? 'Thinking…' : r.text);
+      let ok = false;
+      if (AI_URL) {
+        const ans = await cloudAI(q, r.text, plantFacts(pl), 'plant', []);
+        el.firstChild.textContent = ans || r.text; ok = !!ans;
+      } else ok = await aiPolish(r.text, plantFacts(pl), el, q);
       const s = document.createElement('span'); s.className = 'src'; s.textContent = ok ? 'AI · based on readings' : r.src === 'generic' ? 'Built-in analysis · general answer' : 'Built-in analysis'; el.appendChild(s);
       const a = r.action;
       if (a && a.type === 'thr') thrBtn(el, a.id, a.t);
