@@ -4091,7 +4091,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
       text: 'Now explore on your own. You can replay this tour any time with the 🤖 Tour button at the top. Thanks for visiting AquaSense, where every drop counts!' }
   ];
   const N = STEPS.length;
-  let i = 0, open = false, typing = null, moveTimer = null, curTarget = null;
+  let i = 0, open = false, typing = null, moveTimer = null, curTarget = null, cardTarget = null;
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const tour = $('tour'), spot = $('tourSpot'), card = $('tourCard');
   $('tourDots').innerHTML = STEPS.map(() => '<i></i>').join('');
@@ -4144,12 +4144,17 @@ footer .tag { color: var(--leaf); font-weight: 600; }
       const el = s.target ? document.querySelector(s.target) : null;
       const nav = s.nav ? document.querySelector('.topbar nav [data-nav="' + s.nav + '"]') : null;
       if (el) { const r = el.getBoundingClientRect(); const off = (document.querySelector('.topbar').offsetHeight || 60) + 20; if (r.top < off || r.bottom > window.innerHeight - 40) window.scrollTo({ top: window.scrollY + r.top - off - (r.height < window.innerHeight * 0.5 ? 60 : 0), behavior: 'auto' }); }
-      if (nav) { nav.scrollIntoView({ block: 'nearest', inline: 'center' }); curTarget = nav; placeSpot(nav); placeCard(nav); moveTimer = setTimeout(() => { curTarget = el; placeSpot(el); placeCard(el); }, reduce ? 0 : 1100); }
-      else { curTarget = el; placeSpot(el); placeCard(el); }
+      // the card goes straight to its spot for this step; only the spotlight visits the tab name first
+      cardTarget = el; placeCard(el);
+      if (nav) { nav.scrollIntoView({ block: 'nearest', inline: 'center' }); curTarget = nav; placeSpot(nav); moveTimer = setTimeout(() => { curTarget = el; placeSpot(el); }, reduce ? 0 : 1100); }
+      else { curTarget = el; placeSpot(el); }
     }, 380);
     $('tourNext').focus({ preventScroll: true });
   }
-  function start() { open = true; tour.hidden = false; document.body.classList.add('touring'); document.querySelectorAll('.toast').forEach((t) => t.remove()); bot.start(); show(0); }
+  function start() {
+    open = true; tour.hidden = false; document.body.classList.add('touring');
+    // begin in the middle of the screen (no slide in from the corner)
+    card.style.transition = 'none'; cardTarget = null; placeCard(null); void card.offsetWidth; card.style.transition = ''; document.querySelectorAll('.toast').forEach((t) => t.remove()); bot.start(); show(0); }
   function end() {
     open = false; tour.hidden = true; document.body.classList.remove('touring'); clearTimeout(moveTimer); if (typing) clearInterval(typing); bot.stop();
     try { localStorage.setItem('aqTourDone', '1'); } catch (e) { /* storage unavailable */ }
@@ -4160,7 +4165,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   $('tourSkip').addEventListener('click', end);
   $('tourStart').addEventListener('click', start);
   document.addEventListener('keydown', (e) => { if (!open) return; if (e.key === 'Escape') end(); else if (e.key === 'ArrowRight') $('tourNext').click(); else if (e.key === 'ArrowLeft' && i > 0) show(i - 1); });
-  const relayout = () => { if (open) { placeSpot(curTarget); placeCard(curTarget); } };
+  const relayout = () => { if (open) { placeSpot(curTarget); placeCard(cardTarget); } };
   window.addEventListener('resize', relayout); window.addEventListener('scroll', relayout, { passive: true });
 
   // ---------- Drip: a small, cute 3D robot (falls back to a drawing without WebGL) ----------
