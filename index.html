@@ -508,6 +508,42 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 .meter .bar i { display: block; height: 100%; width: 0; border-radius: 4px; }
 .meter .bar.drip i { background: var(--water); } .meter .bar.flood i { background: var(--soil); }
 @media (max-width: 640px) { .meter { right: 10px; top: auto; bottom: 150px; min-width: 0; } .news-card { left: 10px; top: 10px; padding: 12px; } .news-card p { font-size: .8rem; } }
+
+/* ---------- guided tour with Drip the robot ---------- */
+.tour-btn { flex-shrink: 0; }
+.touring .toasts, .touring .plan-pop { display: none !important; }
+.tour { position: fixed; inset: 0; z-index: 90; }
+.tour-catch { position: absolute; inset: 0; }
+.tour-spot { position: fixed; left: 50%; top: 50%; width: 0; height: 0; border-radius: 18px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(6, 18, 12, .66), 0 0 0 3px var(--leaf), 0 0 34px 10px rgba(92, 196, 127, .55);
+  transition: left .5s cubic-bezier(.3,.8,.3,1), top .5s cubic-bezier(.3,.8,.3,1), width .5s cubic-bezier(.3,.8,.3,1), height .5s cubic-bezier(.3,.8,.3,1); }
+.tour-spot::after { content: ""; position: absolute; inset: -8px; border-radius: 22px; border: 2px solid rgba(124, 220, 150, .8); animation: spotPulse 1.8s ease-out infinite; }
+.tour-spot.none::after { display: none; }
+@keyframes spotPulse { 0% { transform: scale(.98); opacity: .9; } 100% { transform: scale(1.06); opacity: 0; } }
+.tour-card { position: fixed; width: min(480px, calc(100vw - 24px)); background: var(--surface); color: var(--ink); border-radius: 22px; border: 1px solid color-mix(in srgb, var(--leaf) 45%, var(--line)); box-shadow: 0 30px 70px -20px rgba(0,0,0,.6);
+  display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 4px 14px; padding: 16px 18px 14px 10px; transition: left .5s cubic-bezier(.3,.8,.3,1), top .5s cubic-bezier(.3,.8,.3,1); }
+.tour-bot { width: 118px; height: 132px; align-self: start; position: relative; }
+.tour-bot canvas, .tour-bot svg { width: 118px; height: 132px; display: block; }
+.tour-bot .bubble-tail { position: absolute; right: -10px; top: 40px; width: 14px; height: 14px; background: var(--leaf-soft); transform: rotate(45deg); border-radius: 3px; }
+.tour-body { display: grid; gap: 8px; min-width: 0; align-content: start; }
+.tour-body .label { color: var(--leaf); }
+.tour-body h3 { font-size: 1.15rem; }
+.tour-body p { font-size: .93rem; line-height: 1.55; color: var(--ink); min-height: 4.6em; }
+.tour-dots { display: flex; gap: 5px; flex-wrap: wrap; }
+.tour-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: background .3s, width .3s; }
+.tour-dots i.on { background: var(--leaf); width: 18px; border-radius: 4px; }
+.tour-dots i.done { background: color-mix(in srgb, var(--leaf) 45%, var(--line)); }
+.tour-acts { display: flex; gap: 8px; align-items: center; grid-column: 1 / -1; padding-left: 8px; margin-top: 2px; }
+.tour-acts .grow { flex: 1; }
+.tour-skip { background: none; border: 0; color: var(--muted); font: 500 .84rem var(--font-body); cursor: pointer; padding: 6px 4px; }
+.tour-skip:hover { color: var(--ink); text-decoration: underline; }
+@media (max-width: 640px) {
+  .tour-card { left: 10px !important; right: 10px; width: auto; top: auto !important; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); grid-template-columns: 84px minmax(0, 1fr); padding: 12px 12px 12px 6px; }
+  .tour-bot, .tour-bot canvas, .tour-bot svg { width: 84px; height: 96px; }
+  .tour-body p { font-size: .86rem; min-height: 0; }
+  .is-app .tour-card { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } .tour-spot::after { animation: none; } }
 </style>
 
 <header class="topbar">
@@ -529,6 +565,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
       <span class="dot" id="liveDot"></span>
       <b data-bind="m">48%</b>·<span data-bind="pumpShort">Pump off</span>·<span data-bind="modeShort">Auto</span>
     </div>
+    <button class="btn tour-btn" id="tourStart" title="Take a guided tour">🤖 Tour</button>
     <button class="btn primary install-btn" id="installBtn" data-install hidden>⬇ Install app</button>
   </div>
 </header>
@@ -722,6 +759,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
             <li><span>Mobile app running on a phone</span><span class="tag done">Done</span></li>
             <li><span>Cloud sync and sign-in</span><span class="tag done">Done</span></li>
             <li><span>Auto/manual modes, thresholds, safety cutoff</span><span class="tag done">Done</span></li>
+            <li><span>Mid-semester review</span><span class="tag done">Done</span></li>
             <li><span>ESP32 + sensor + pump integration</span><span class="tag plan">Next</span></li>
             <li><span>Physical watering tests and calibration</span><span class="tag plan">Next</span></li>
           </ul>
@@ -732,8 +770,8 @@ footer .tag { color: var(--leaf); font-weight: 600; }
         <div class="timeline" aria-label="Project timeline">
           <div class="done"><b>Registration</b><span>Project approved</span></div>
           <div class="done"><b>Software build</b><span>App, cloud, simulator</span></div>
-          <div class="now"><b>Mid-sem review</b><span>16 Nov 2026</span></div>
-          <div><b>Hardware</b><span>Integrate ESP32</span></div>
+          <div class="done"><b>Mid-sem review ✓</b><span>Done · 16 Nov 2026</span></div>
+          <div class="now"><b>Hardware</b><span>Integrate ESP32 (in progress)</span></div>
           <div><b>Field test</b><span>Calibrate on a plant</span></div>
           <div><b>End-sem review</b><span>Final demo</span></div>
         </div>
@@ -1139,6 +1177,25 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 </footer>
 
 <div class="toasts" id="toasts" aria-live="assertive"></div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-catch" id="tourCatch"></div>
+  <div class="tour-spot none" id="tourSpot"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle" aria-describedby="tourText">
+    <div class="tour-bot" id="tourBot" aria-hidden="true"><canvas id="botCanvas" width="236" height="264"></canvas></div>
+    <div class="tour-body">
+      <span class="label" id="tourStepLbl">Tour · 1 of 13</span>
+      <h3 id="tourTitle">—</h3>
+      <p id="tourText" aria-live="polite">—</p>
+      <div class="tour-dots" id="tourDots"></div>
+    </div>
+    <div class="tour-acts">
+      <button class="tour-skip" id="tourSkip">Skip tour</button>
+      <span class="grow"></span>
+      <button class="btn" id="tourBack">← Back</button>
+      <button class="btn primary" id="tourNext">Next →</button>
+    </div>
+  </div>
+</div>
 <div class="plan-pop" id="planPop" role="dialog" aria-labelledby="planPopTitle" hidden>
   <div class="pp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 20V10l4-3 4 3v10"/><path d="M15 20v-6h4v6"/><path d="M12 4c2-2 5-2 7 0-2 1-5 1-7 0z"/></svg></div>
   <div>
@@ -3997,5 +4054,187 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 
   showView();
   schedule();
+})();
+</script>
+<script>
+// ---------------- guided tour with Drip, the AquaSense robot ----------------
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const isApp = () => document.documentElement.classList.contains('is-app');
+  const STEPS = [
+    { view: 'overview', target: null, title: 'Welcome! I\'m Drip 👋',
+      text: 'Welcome to the software of CS-C Group 10\'s EDI project at VIT Pune! Our project is called AquaSense: a smart irrigation system that waters plants by itself, only when the soil really needs it. Let me show you around.' },
+    { view: 'overview', target: '.hero-art', title: 'The problem we solve',
+      text: 'Most plants are watered by hand or on a fixed timer, which ignores how wet the soil actually is. That wastes water through overwatering, stresses plants when they get too little, and needs someone to check every day. In dry years it matters even more: in May 2026, canal water for farms around Baramati was cut to save Pune\'s drinking water.' },
+    { view: 'overview', target: '.diagram', title: 'How AquaSense works',
+      text: 'A capacitive sensor measures the soil, and an ESP32 decides when to water. A relay switches a small pump, and a drip line puts water right at the roots. Every reading goes through the cloud to your phone and this website.' },
+    { view: 'overview', nav: 'overview', target: '.feature-grid', title: 'Overview tab: your home page',
+      text: 'This is the Overview, your starting point. These cards give a live summary of every part of AquaSense and take you straight there. Further down you\'ll find how the system is connected and our project progress. The mid-sem review is done ✓.' },
+    { view: 'overview', target: '.chip-status', title: 'Live status, always on top',
+      text: 'This little bar stays visible on every page. It shows the main plant\'s soil moisture, whether its pump is running, and whether it\'s in automatic or manual mode, so you can check at a glance.' },
+    { view: 'dashboard', nav: 'dashboard', target: '.dash', title: 'Dashboard: control the main plant',
+      text: 'The Dashboard shows one plant live: its moisture, the raw sensor value, a 12-hour graph and an event log. On the right you can switch the pump between Automatic and Manual whenever you want, and set when watering starts and stops. It exists so you can see and control the system directly.' },
+    { view: 'plants', nav: 'plants', target: '.pl-grid', title: 'Your Plants: every plant at once',
+      text: 'A real garden or farm has many plants with different needs, so here are all 12, each with its own sensor, pump and mode. Switch any plant to manual to take over, and you\'ll get an alert if it gets too dry or too wet.' },
+    { view: 'pumps', nav: 'pumps', target: '.editor', title: 'Settings: tune each plant',
+      text: 'Pick a plant on the left and change its pump power, watering time, start and stop levels and alert limits, then save it for that plant or copy it to others. The plant advisor beside it predicts the soil type, checks the plant\'s health and suggests settings.' },
+    { view: 'simulation', nav: 'simulation', target: '#simStage', title: '3D Simulation: see it working',
+      text: 'Scroll through this 3D story to watch each step: the soil drying, the sensor and ESP32 deciding, water flowing through the drippers, and you taking control in manual mode. After it, "Our plan" shows how AquaSense could help a real Pune farm during canal water cuts.' },
+    { view: 'history', nav: 'history', target: '.hchart', title: 'History: learn from the past',
+      text: 'Every reading is saved here. Pick one plant or compare up to five, switch between 24 hours, 3 days and 7 days, and see every watering in the log. It shows whether your settings really keep the plants healthy.' },
+    { view: 'assistant', nav: 'assistant', target: '.assist .chat', title: 'Assistant: ask anything',
+      text: 'Our AI assistant answers in plain words: "Should I water now or wait for rain?", "What suits a chili plant?", "Why are my drippers clogged?". It knows the live weather and common fixes. For one plant\'s health, ask the plant advisor in Settings.' },
+    { view: 'overview', target: '#getApp', title: 'There\'s an app too! 📱',
+      text: 'One more thing: AquaSense is also an app. Install it on your phone or computer from here, or download the Android app (APK). It opens full screen with its own icon, keeps all your plants one tap away, and even opens offline.',
+      appText: 'You\'re already using the AquaSense app, so all of this is one tap away on your home screen. To share it, send friends the link aquasense-vit.github.io; they can install the app or download the Android APK from the Overview page.' },
+    { view: 'overview', target: null, title: 'That\'s the tour! 🌱',
+      text: 'Now explore on your own. You can replay this tour any time with the 🤖 Tour button at the top. Thanks for visiting AquaSense, where every drop counts!' }
+  ];
+  const N = STEPS.length;
+  let i = 0, open = false, typing = null, moveTimer = null, curTarget = null;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tour = $('tour'), spot = $('tourSpot'), card = $('tourCard');
+  $('tourDots').innerHTML = STEPS.map(() => '<i></i>').join('');
+
+  function goView(v) { if (location.hash.replace('#', '') !== v && !(v === 'overview' && !location.hash)) location.hash = v; }
+  function rectOf(el) { const r = el.getBoundingClientRect(), pad = 8; return { x: r.left - pad, y: r.top - pad, w: r.width + pad * 2, h: r.height + pad * 2 }; }
+  function placeSpot(el) {
+    if (!el) { spot.classList.add('none'); Object.assign(spot.style, { left: '50%', top: '50%', width: '0px', height: '0px' }); return; }
+    spot.classList.remove('none');
+    const r = rectOf(el), vh = window.innerHeight, vw = window.innerWidth;
+    const y = Math.max(4, r.y), h = Math.min(r.h - (y - r.y), vh - y - 4), x = Math.max(4, r.x), w = Math.min(r.w - (x - r.x), vw - x - 4);
+    Object.assign(spot.style, { left: x + 'px', top: y + 'px', width: Math.max(0, w) + 'px', height: Math.max(0, h) + 'px' });
+  }
+  function placeCard(el) {
+    if (window.innerWidth <= 640) return; // CSS docks it at the bottom on phones
+    const cw = card.offsetWidth, ch = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight, m = 14;
+    let x = (vw - cw) / 2, y = (vh - ch) / 2;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom + ch + m * 2 < vh) { y = r.bottom + m + 6; }
+      else if (r.top - ch - m * 2 > 0) { y = r.top - ch - m - 6; }
+      else { y = vh - ch - m; }
+      x = Math.min(Math.max(m, r.left + r.width / 2 - cw / 2), vw - cw - m);
+    }
+    card.style.left = x + 'px'; card.style.top = Math.max(m, y) + 'px';
+  }
+  function type(text) {
+    const p = $('tourText');
+    if (typing) clearInterval(typing);
+    if (reduce) { p.textContent = text; return; }
+    let n = 0; p.textContent = '';
+    const stepN = Math.max(2, Math.ceil(text.length / 70));
+    bot.talk(true);
+    typing = setInterval(() => { n += stepN; p.textContent = text.slice(0, n); if (n >= text.length) { clearInterval(typing); typing = null; bot.talk(false); } }, 16);
+  }
+  function show(k) {
+    i = Math.max(0, Math.min(N - 1, k));
+    const s = STEPS[i];
+    goView(s.view);
+    $('tourStepLbl').textContent = 'Tour · ' + (i + 1) + ' of ' + N;
+    $('tourTitle').textContent = s.title;
+    $('tourBack').disabled = i === 0;
+    $('tourNext').textContent = i === N - 1 ? 'Finish ✓' : i === 0 ? 'Start the tour →' : 'Next →';
+    Array.from($('tourDots').children).forEach((d, j) => { d.className = j === i ? 'on' : j < i ? 'done' : ''; });
+    type(isApp() && s.appText ? s.appText : s.text);
+    bot.wave();
+    clearTimeout(moveTimer);
+    // let the view render, scroll the target into view, then light up the tab name and glide to the part being explained
+    setTimeout(() => {
+      const el = s.target ? document.querySelector(s.target) : null;
+      const nav = s.nav ? document.querySelector('.topbar nav [data-nav="' + s.nav + '"]') : null;
+      if (el) { const r = el.getBoundingClientRect(); const off = (document.querySelector('.topbar').offsetHeight || 60) + 20; if (r.top < off || r.bottom > window.innerHeight - 40) window.scrollTo({ top: window.scrollY + r.top - off - (r.height < window.innerHeight * 0.5 ? 60 : 0), behavior: 'auto' }); }
+      if (nav) { nav.scrollIntoView({ block: 'nearest', inline: 'center' }); curTarget = nav; placeSpot(nav); placeCard(nav); moveTimer = setTimeout(() => { curTarget = el; placeSpot(el); placeCard(el); }, reduce ? 0 : 1100); }
+      else { curTarget = el; placeSpot(el); placeCard(el); }
+    }, 380);
+    $('tourNext').focus({ preventScroll: true });
+  }
+  function start() { open = true; tour.hidden = false; document.body.classList.add('touring'); document.querySelectorAll('.toast').forEach((t) => t.remove()); bot.start(); show(0); }
+  function end() {
+    open = false; tour.hidden = true; document.body.classList.remove('touring'); clearTimeout(moveTimer); if (typing) clearInterval(typing); bot.stop();
+    try { localStorage.setItem('aqTourDone', '1'); } catch (e) { /* storage unavailable */ }
+    goView('overview'); window.scrollTo(0, 0);
+  }
+  $('tourNext').addEventListener('click', () => { if (typing) { clearInterval(typing); typing = null; bot.talk(false); const s = STEPS[i]; $('tourText').textContent = isApp() && s.appText ? s.appText : s.text; return; } if (i === N - 1) end(); else show(i + 1); });
+  $('tourBack').addEventListener('click', () => show(i - 1));
+  $('tourSkip').addEventListener('click', end);
+  $('tourStart').addEventListener('click', start);
+  document.addEventListener('keydown', (e) => { if (!open) return; if (e.key === 'Escape') end(); else if (e.key === 'ArrowRight') $('tourNext').click(); else if (e.key === 'ArrowLeft' && i > 0) show(i - 1); });
+  const relayout = () => { if (open) { placeSpot(curTarget); placeCard(curTarget); } };
+  window.addEventListener('resize', relayout); window.addEventListener('scroll', relayout, { passive: true });
+
+  // ---------- Drip: a small, cute 3D robot (falls back to a drawing without WebGL) ----------
+  const bot = (function () {
+    let r3 = null, scene, cam, parts = {}, raf = 0, t0 = performance.now(), talking = false, waveT = 9;
+    function fallback() {
+      $('tourBot').innerHTML = '<svg viewBox="0 0 118 132"><ellipse cx="59" cy="124" rx="26" ry="5" fill="rgba(0,0,0,.18)"/><line x1="59" y1="18" x2="59" y2="34" stroke="#9aa4ac" stroke-width="3"/><path d="M59 6c5 6 8 10 8 14a8 8 0 0 1-16 0c0-4 3-8 8-14z" fill="#3fa1ff"/><rect x="26" y="32" width="66" height="50" rx="22" fill="#f4f7f5"/><rect x="34" y="42" width="50" height="28" rx="13" fill="#123"/><circle cx="48" cy="56" r="6" fill="#62e2ff"/><circle cx="70" cy="56" r="6" fill="#62e2ff"/><rect x="34" y="82" width="50" height="34" rx="16" fill="#f4f7f5"/><rect x="47" y="90" width="24" height="16" rx="6" fill="#4caf50"/></svg>';
+    }
+    function init() {
+      if (r3) return true;
+      if (!window.THREE) { fallback(); return false; }
+      try { r3 = new THREE.WebGLRenderer({ canvas: $('botCanvas'), antialias: true, alpha: true }); } catch (e) { fallback(); return false; }
+      r3.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); r3.setSize(236, 264, false);
+      r3.outputEncoding = THREE.sRGBEncoding; r3.toneMapping = THREE.ACESFilmicToneMapping;
+      scene = new THREE.Scene(); cam = new THREE.PerspectiveCamera(32, 236 / 264, 0.1, 50); cam.position.set(0, 0.35, 6.2); cam.lookAt(0, 0.15, 0);
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x5b7a64, 0.9));
+      const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(2.5, 4, 5); scene.add(key);
+      const rim = new THREE.DirectionalLight(0x9fd7ff, 0.6); rim.position.set(-3, 2, -3); scene.add(rim);
+      const shell = new THREE.MeshStandardMaterial({ color: 0xf3f6f4, roughness: 0.35, metalness: 0.05 });
+      const green = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.45 });
+      const dark = new THREE.MeshStandardMaterial({ color: 0x10202a, roughness: 0.15, metalness: 0.3 });
+      const eyeM = new THREE.MeshStandardMaterial({ color: 0x62e2ff, emissive: 0x3cc8ff, emissiveIntensity: 1.6 });
+      const g = new THREE.Group(); scene.add(g); parts.root = g;
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.78, 32, 24), shell); body.scale.set(1, 0.92, 0.9); body.position.y = -0.55; g.add(body);
+      const belly = new THREE.Mesh(new THREE.CircleGeometry(0.34, 32), green); belly.position.set(0, -0.5, 0.71); g.add(belly);
+      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x9fe0ff, emissiveIntensity: 0.6 })); drop.scale.y = 1.3; drop.position.set(0, -0.48, 0.74); g.add(drop);
+      const head = new THREE.Group(); head.position.y = 0.62; g.add(head); parts.head = head;
+      const skull = new THREE.Mesh(new THREE.SphereGeometry(0.82, 32, 24), shell); skull.scale.set(1.12, 0.9, 0.92); head.add(skull);
+      const visor = new THREE.Mesh(new THREE.SphereGeometry(0.66, 32, 24, 0, Math.PI * 2, 0, Math.PI * 0.62), dark); visor.rotation.x = Math.PI / 2; visor.scale.set(1.05, 0.62, 0.75); visor.position.set(0, -0.02, 0.36); head.add(visor);
+      parts.eyes = [-0.26, 0.26].map((x) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), eyeM); e.position.set(x, 0.04, 0.8); e.scale.set(1, 1.25, 0.5); head.add(e); return e; });
+      const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 8, 16, Math.PI), eyeM); mouth.rotation.z = Math.PI; mouth.position.set(0, -0.2, 0.8); head.add(mouth); parts.mouth = mouth;
+      [-1, 1].forEach((sx) => { const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.14, 20), green); ear.rotation.z = Math.PI / 2; ear.position.set(sx * 0.9, 0, 0); head.add(ear); });
+      const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0x9aa4ac, metalness: 0.6, roughness: 0.3 })); stalk.position.y = 0.9; head.add(stalk);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), new THREE.MeshStandardMaterial({ color: 0x3fa1ff, emissive: 0x1a6fd0, emissiveIntensity: 0.5, roughness: 0.1 })); tip.scale.set(1, 1.3, 1); tip.position.y = 1.18; head.add(tip); parts.tip = tip;
+      const leafShape = new THREE.Shape(); leafShape.moveTo(0, 0); leafShape.bezierCurveTo(0.12, 0.1, 0.3, 0.12, 0.42, 0); leafShape.bezierCurveTo(0.3, -0.12, 0.12, -0.1, 0, 0);
+      const leafM = new THREE.MeshStandardMaterial({ color: 0x58b85c, side: THREE.DoubleSide, roughness: 0.5 });
+      [[0.4, 0.5], [Math.PI - 0.4, 0.45]].forEach((a) => { const l = new THREE.Mesh(new THREE.ShapeGeometry(leafShape, 8), leafM); l.position.set(0, 0.7, 0); l.rotation.set(0, a[0], a[1]); head.add(l); });
+      parts.arms = [-1, 1].map((sx) => {
+        const pivot = new THREE.Group(); pivot.position.set(sx * 0.74, -0.42, 0); g.add(pivot);
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.5, 14), shell); arm.position.y = -0.3; pivot.add(arm);
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), shell); shoulder.position.y = -0.05; pivot.add(shoulder);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 12), green); hand.position.y = -0.62; pivot.add(hand);
+        pivot.rotation.z = sx * 0.25; return pivot;
+      });
+      const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.75, 32), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = -1.65; scene.add(shadow); parts.shadow = shadow;
+      return true;
+    }
+    function frame(now) {
+      raf = requestAnimationFrame(frame);
+      const t = (now - t0) / 1000;
+      const p = parts;
+      p.root.position.y = Math.sin(t * 2) * 0.08;
+      p.root.rotation.y = Math.sin(t * 0.7) * 0.25;
+      p.head.rotation.z = Math.sin(t * 1.3) * 0.05;
+      p.shadow.scale.setScalar(1 - Math.sin(t * 2) * 0.06);
+      const blink = (t % 3.2) < 0.12 ? 0.12 : 1.25; p.eyes.forEach((e) => { e.scale.y = blink; });
+      p.mouth.scale.set(1, talking ? 0.6 + Math.abs(Math.sin(t * 14)) * 1.2 : 1, 1);
+      p.tip.position.y = 1.18 + Math.sin(t * 3) * 0.04;
+      waveT += 1 / 60;
+      const right = p.arms[1];
+      right.rotation.z = waveT < 1.6 ? 2.4 + Math.sin(waveT * 12) * 0.35 : 0.25 + Math.sin(t * 2) * 0.05;
+      p.arms[0].rotation.z = -0.25 - Math.sin(t * 2) * 0.05;
+      r3.render(scene, cam);
+    }
+    return {
+      start() { if (init() && !raf) { t0 = performance.now(); raf = requestAnimationFrame(frame); } },
+      stop() { if (raf) cancelAnimationFrame(raf); raf = 0; },
+      talk(on) { talking = on; },
+      wave() { waveT = 0; }
+    };
+  })();
+
+  // first visit: start the tour automatically on the home page
+  let done = false; try { done = localStorage.getItem('aqTourDone') === '1'; } catch (e) { done = true; }
+  if (!done && (!location.hash || location.hash === '#overview')) setTimeout(() => { if (!open) start(); }, 1300);
 })();
 </script>
