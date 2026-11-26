@@ -509,6 +509,52 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 .meter .bar.drip i { background: var(--water); } .meter .bar.flood i { background: var(--soil); }
 @media (max-width: 640px) { .meter { right: 10px; top: auto; bottom: 150px; min-width: 0; } .news-card { left: 10px; top: 10px; padding: 12px; } .news-card p { font-size: .8rem; } }
 
+/* ---------- menu (☰) and current-page indicator ---------- */
+.topbar .wrap { flex-wrap: nowrap !important; gap: 14px; }
+.menu-btn { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; position: relative; font: 600 .92rem var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 15px 8px 12px; cursor: pointer; box-shadow: var(--shadow); transition: border-color .15s, transform .15s; }
+.menu-btn:hover { border-color: var(--leaf); transform: translateY(-1px); }
+.menu-btn[aria-expanded="true"] { border-color: var(--leaf); background: var(--leaf-soft); }
+.burger { display: grid; gap: 4px; width: 18px; }
+.burger i { display: block; height: 2px; border-radius: 2px; background: currentColor; transition: transform .25s, opacity .25s; }
+.menu-btn[aria-expanded="true"] .burger i:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.menu-btn[aria-expanded="true"] .burger i:nth-child(2) { opacity: 0; }
+.menu-btn[aria-expanded="true"] .burger i:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.menu-btn .nav-badge { position: absolute; top: -6px; right: -6px; margin: 0; }
+.page-now { flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px; padding: 4px 14px 4px 6px; border-radius: 999px; background: linear-gradient(90deg, var(--leaf-soft), transparent 85%); }
+.pn-ico { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--leaf); border: 1px solid var(--line); }
+.pn-ico svg { width: 18px; height: 18px; }
+.pn-txt { display: flex; align-items: baseline; gap: 4px 10px; min-width: 0; flex-wrap: wrap; line-height: 1.25; }
+.pn-txt b { font: 700 1rem var(--font-display); white-space: nowrap; }
+.pn-where { font: 500 .66rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pn-desc { font-size: .84rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 1100px) { .pn-where { display: none; } }
+@media (max-width: 860px) { .pn-desc { display: none; } .tour-btn { padding: 8px 11px; } }
+@media (max-width: 600px) { .chip-status { display: none; } .mb-txt { display: none; } .menu-btn { padding: 9px 11px; } .brand { font-size: 1.05rem; } .page-now { padding-right: 8px; } .pn-ico { width: 30px; height: 30px; } }
+@media (max-width: 600px) { .tb-txt { display: none; } .tour-btn { padding: 8px 10px; } .topbar .wrap { gap: 10px; } }
+@media (max-width: 460px) { .brand-txt { display: none; } }
+.menu-back { position: fixed; inset: 0; z-index: 70; background: rgba(6, 18, 12, .45); opacity: 0; transition: opacity .25s; }
+.menu-back.open { opacity: 1; }
+.menu-panel { position: fixed; z-index: 71; top: 0; bottom: 0; left: 0; width: min(330px, 86vw); background: var(--surface); border-right: 1px solid var(--line); box-shadow: 20px 0 50px -20px rgba(0,0,0,.45);
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 4px; overflow-y: auto;
+  transform: translateX(-105%); transition: transform .28s cubic-bezier(.3,.8,.3,1); }
+.menu-panel.open { transform: none; }
+.mp-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.mp-close { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 1rem; cursor: pointer; }
+.mp-lbl { padding: 4px 8px; color: var(--leaf); }
+.menu-panel a[data-nav] { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; text-decoration: none; color: var(--ink); border: 1px solid transparent; position: relative; transition: background .15s; }
+.menu-panel a[data-nav]:hover { background: var(--sunk); }
+.menu-panel a[data-nav][aria-current="page"] { background: var(--leaf-soft); border-color: color-mix(in srgb, var(--leaf) 40%, transparent); }
+.menu-panel .mi { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center; background: var(--leaf-soft); color: var(--leaf); }
+.menu-panel .mi.w { background: var(--water-soft); color: var(--water); }
+.menu-panel .mi svg { width: 21px; height: 21px; }
+.menu-panel .mt { display: grid; min-width: 0; }
+.menu-panel .mt b { font-weight: 600; }
+.menu-panel .mt small { font-size: .8rem; color: var(--muted); }
+.menu-panel .nav-badge { margin-left: auto; }
+.mp-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; }
+.mp-foot .btn { flex: 1; justify-content: center; }
+.is-app main, .is-app footer { padding-bottom: 0 !important; }
+
 /* ---------- guided tour with Drip the robot ---------- */
 .tour-btn { flex-shrink: 0; }
 .touring .toasts, .touring .plan-pop { display: none !important; }
@@ -550,25 +596,43 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   <div class="wrap">
     <a class="brand" href="#overview" aria-label="AquaSense overview">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M12 19.5c0-4 1.6-6.4 5.6-7.6-.3 3.9-2.2 6.4-5.6 7.6Z" fill="var(--leaf)"/><path d="M12 20v-3.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
-      AquaSense
+      <span class="brand-txt">AquaSense</span>
     </a>
-    <nav aria-label="Views">
-      <a href="#overview" data-nav="overview">Overview</a>
-      <a href="#dashboard" data-nav="dashboard">Dashboard</a>
-      <a href="#plants" data-nav="plants">Your Plants<span class="nav-badge" id="navBadge" hidden>0</span></a>
-      <a href="#pumps" data-nav="pumps">Settings</a>
-      <a href="#simulation" data-nav="simulation">3D Simulation</a>
-      <a href="#history" data-nav="history">History</a>
-      <a href="#assistant" data-nav="assistant">Assistant</a>
-    </nav>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuPanel" aria-label="Open the menu">
+      <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-txt">Menu</span><span class="nav-badge" id="menuBadge" hidden>0</span>
+    </button>
+    <div class="page-now" id="pageNow" aria-live="polite">
+      <span class="pn-ico" id="pnIco" aria-hidden="true"></span>
+      <div class="pn-txt"><span class="pn-where">You are on</span><b id="pnName">Overview</b><span class="pn-desc" id="pnDesc">Home page and project summary</span></div>
+    </div>
     <div class="chip-status" aria-live="off">
       <span class="dot" id="liveDot"></span>
       <b data-bind="m">48%</b>·<span data-bind="pumpShort">Pump off</span>·<span data-bind="modeShort">Auto</span>
     </div>
-    <button class="btn tour-btn" id="tourStart" title="Take a guided tour">🤖 Tour</button>
+    <button class="btn tour-btn" id="tourStart" title="Take a guided tour" aria-label="Take a guided tour">🤖<span class="tb-txt"> Tour</span></button>
     <button class="btn primary install-btn" id="installBtn" data-install hidden>⬇ Install app</button>
   </div>
 </header>
+
+<div class="menu-back" id="menuBack" hidden></div>
+<nav class="menu-panel" id="menuPanel" aria-label="Pages" hidden>
+  <div class="mp-head">
+    <span class="brand" style="font-size:1.1rem"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="width:24px;height:24px"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M12 19.5c0-4 1.6-6.4 5.6-7.6-.3 3.9-2.2 6.4-5.6 7.6Z" fill="var(--leaf)"/></svg>AquaSense</span>
+    <button class="mp-close" id="menuClose" aria-label="Close the menu">✕</button>
+  </div>
+  <span class="label mp-lbl">Pages</span>
+  <a href="#overview" data-nav="overview"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></span><span class="mt"><b>Overview</b><small>Home page and project summary</small></span></a>
+  <a href="#dashboard" data-nav="dashboard"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3c3 3.6 5.5 6.9 5.5 9.8a5.5 5.5 0 0 1-11 0C6.5 9.9 9 6.6 12 3z"/></svg></span><span class="mt"><b>Dashboard</b><small>Live moisture and pump control</small></span></a>
+  <a href="#plants" data-nav="plants"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/><path d="M7 21h10"/></svg></span><span class="mt"><b>Your Plants</b><small>All 12 plants and their alerts</small></span><span class="nav-badge" id="navBadge" hidden>0</span></a>
+  <a href="#pumps" data-nav="pumps"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span class="mt"><b>Settings</b><small>Pump, levels and alerts per plant</small></span></a>
+  <a href="#simulation" data-nav="simulation"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span><span class="mt"><b>3D Simulation</b><small>See AquaSense work, step by step</small></span></a>
+  <a href="#history" data-nav="history"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg></span><span class="mt"><b>History</b><small>Past moisture and waterings</small></span></a>
+  <a href="#assistant" data-nav="assistant"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14v10H9l-4 4z"/><path d="M9 10h6"/></svg></span><span class="mt"><b>Assistant</b><small>AI help, weather and fixes</small></span></a>
+  <div class="mp-foot">
+    <button class="btn" id="menuTour">🤖 Take the tour</button>
+    <a class="btn" href="#overview" id="menuApp">📱 Get the app</a>
+  </div>
+</nav>
 
 <main>
   <!-- ================= OVERVIEW ================= -->
@@ -3628,7 +3692,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
     hooks.tick.push(() => plants.forEach((pl) => step(pl, true, M.length - 1)));
 
     const activeCount = () => plants.filter((p) => p.alertLow || p.alertHigh).length;
-    function badge() { const n = activeCount(), b = $('navBadge'); b.hidden = n === 0; b.textContent = n; }
+    function badge() { const n = activeCount(); ['navBadge', 'menuBadge'].forEach((id) => { const b = $(id); if (b) { b.hidden = n === 0; b.textContent = n; } }); }
 
     // ----- plants grid -----
     let built = false;
@@ -4057,6 +4121,41 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 })();
 </script>
 <script>
+// ---------------- ☰ menu panel + "You are on" indicator ----------------
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const btn = $('menuBtn'), panel = $('menuPanel'), back = $('menuBack');
+  let hideTimer = null;
+  function open() {
+    clearTimeout(hideTimer); panel.hidden = false; back.hidden = false;
+    setTimeout(() => { panel.classList.add('open'); back.classList.add('open'); }, 10);
+    btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-label', 'Close the menu');
+  }
+  function close() {
+    panel.classList.remove('open'); back.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', 'Open the menu');
+    clearTimeout(hideTimer); hideTimer = setTimeout(() => { if (!panel.classList.contains('open')) { panel.hidden = true; back.hidden = true; } }, 300);
+  }
+  const isOpen = () => panel.classList.contains('open');
+  btn.addEventListener('click', () => { if (isOpen()) close(); else { open(); const cur = panel.querySelector('[aria-current="page"]') || panel.querySelector('a[data-nav]'); setTimeout(() => cur.focus({ preventScroll: true }), 60); } });
+  back.addEventListener('click', close);
+  $('menuClose').addEventListener('click', close);
+  panel.addEventListener('click', (e) => { if (e.target.closest('a[data-nav]')) close(); });
+  $('menuTour').addEventListener('click', () => { close(); setTimeout(() => $('tourStart').click(), 200); });
+  $('menuApp').addEventListener('click', () => { close(); setTimeout(() => { const g = $('getApp'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 450); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen() && !document.body.classList.contains('touring')) { close(); btn.focus(); } });
+  function updatePage() {
+    const v = location.hash.replace('#', '') || 'overview';
+    const a = panel.querySelector('[data-nav="' + v + '"]') || panel.querySelector('[data-nav="overview"]');
+    $('pnName').textContent = a.querySelector('b').textContent;
+    $('pnDesc').textContent = a.querySelector('small').textContent;
+    $('pnIco').innerHTML = a.querySelector('.mi').innerHTML;
+  }
+  window.addEventListener('hashchange', updatePage); updatePage();
+  window.aqMenu = { open, close, isOpen };
+})();
+</script>
+<script>
 // ---------------- guided tour with Drip, the AquaSense robot ----------------
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -4068,27 +4167,29 @@ footer .tag { color: var(--leaf); font-weight: 600; }
       text: 'Most plants are watered by hand or on a fixed timer, which ignores how wet the soil actually is. That wastes water through overwatering, stresses plants when they get too little, and needs someone to check every day. In dry years it matters even more: in May 2026, canal water for farms around Baramati was cut to save Pune\'s drinking water.' },
     { view: 'overview', target: '.diagram', title: 'How AquaSense works',
       text: 'A capacitive sensor measures the soil, and an ESP32 decides when to water. A relay switches a small pump, and a drip line puts water right at the roots. Every reading goes through the cloud to your phone and this website.' },
-    { view: 'overview', nav: 'overview', target: '.feature-grid', title: 'Overview tab: your home page',
-      text: 'This is the Overview, your starting point. These cards give a live summary of every part of AquaSense and take you straight there. Further down you\'ll find how the system is connected and our project progress. The mid-sem review is done ✓.' },
-    { view: 'overview', target: '.chip-status', title: 'Live status, always on top',
-      text: 'This little bar stays visible on every page. It shows the main plant\'s soil moisture, whether its pump is running, and whether it\'s in automatic or manual mode, so you can check at a glance.' },
-    { view: 'dashboard', nav: 'dashboard', target: '.dash', title: 'Dashboard: control the main plant',
+    { view: 'overview', target: '#menuPanel', openMenu: true, title: 'The ☰ Menu: every page in one place',
+      text: 'All of AquaSense\'s pages live in this menu. Tap the ☰ Menu button at the top left any time to open it, then pick Overview, Dashboard, Your Plants, Settings, 3D Simulation, History or Assistant. Each page has a short note saying what it\'s for, and a red number on the button means a plant needs attention.' },
+    { view: 'overview', target: '#pageNow', title: 'Always know where you are',
+      text: 'Next to the menu button, the top bar shows which page you\'re on and what it\'s for, so you never get lost. On the right, a small live bar shows the main plant\'s moisture, whether its pump is running, and automatic or manual mode, on every page.' },
+    { view: 'overview', nav: 'overview', target: '.feature-grid', title: 'Menu → Overview: your home page',
+      text: 'Overview is the first page in the menu and your starting point. These cards give a live summary of every part of AquaSense and take you straight there. Further down you\'ll find how the system is connected and our project progress. The mid-sem review is done ✓.' },
+    { view: 'dashboard', nav: 'dashboard', target: '.dash', title: 'Menu → Dashboard: control the main plant',
       text: 'The Dashboard shows one plant live: its moisture, the raw sensor value, a 12-hour graph and an event log. On the right you can switch the pump between Automatic and Manual whenever you want, and set when watering starts and stops. It exists so you can see and control the system directly.' },
-    { view: 'plants', nav: 'plants', target: '.pl-grid', title: 'Your Plants: every plant at once',
+    { view: 'plants', nav: 'plants', target: '.pl-grid', title: 'Menu → Your Plants: every plant at once',
       text: 'A real garden or farm has many plants with different needs, so here are all 12, each with its own sensor, pump and mode. Switch any plant to manual to take over, and you\'ll get an alert if it gets too dry or too wet.' },
-    { view: 'pumps', nav: 'pumps', target: '.editor', title: 'Settings: tune each plant',
+    { view: 'pumps', nav: 'pumps', target: '.editor', title: 'Menu → Settings: tune each plant',
       text: 'Pick a plant on the left and change its pump power, watering time, start and stop levels and alert limits, then save it for that plant or copy it to others. The plant advisor beside it predicts the soil type, checks the plant\'s health and suggests settings.' },
-    { view: 'simulation', nav: 'simulation', target: '#simStage', title: '3D Simulation: see it working',
+    { view: 'simulation', nav: 'simulation', target: '#simStage', title: 'Menu → 3D Simulation: see it working',
       text: 'Scroll through this 3D story to watch each step: the soil drying, the sensor and ESP32 deciding, water flowing through the drippers, and you taking control in manual mode. After it, "Our plan" shows how AquaSense could help a real Pune farm during canal water cuts.' },
-    { view: 'history', nav: 'history', target: '.hchart', title: 'History: learn from the past',
+    { view: 'history', nav: 'history', target: '.hchart', title: 'Menu → History: learn from the past',
       text: 'Every reading is saved here. Pick one plant or compare up to five, switch between 24 hours, 3 days and 7 days, and see every watering in the log. It shows whether your settings really keep the plants healthy.' },
-    { view: 'assistant', nav: 'assistant', target: '.assist .chat', title: 'Assistant: ask anything',
+    { view: 'assistant', nav: 'assistant', target: '.assist .chat', title: 'Menu → Assistant: ask anything',
       text: 'Our AI assistant answers in plain words: "Should I water now or wait for rain?", "What suits a chili plant?", "Why are my drippers clogged?". It knows the live weather and common fixes. For one plant\'s health, ask the plant advisor in Settings.' },
     { view: 'overview', target: '#getApp', title: 'There\'s an app too! 📱',
       text: 'One more thing: AquaSense is also an app. Install it on your phone or computer from here, or download the Android app (APK). It opens full screen with its own icon, keeps all your plants one tap away, and even opens offline.',
       appText: 'You\'re already using the AquaSense app, so all of this is one tap away on your home screen. To share it, send friends the link aquasense-vit.github.io; they can install the app or download the Android APK from the Overview page.' },
     { view: 'overview', target: null, title: 'That\'s the tour! 🌱',
-      text: 'Now explore on your own. You can replay this tour any time with the 🤖 Tour button at the top. Thanks for visiting AquaSense, where every drop counts!' }
+      text: 'Now explore on your own: open the ☰ Menu to jump to any page. You can replay this tour any time with the 🤖 Tour button at the top, or from the menu. Thanks for visiting AquaSense, where every drop counts!' }
   ];
   const N = STEPS.length;
   let i = 0, open = false, typing = null, moveTimer = null, curTarget = null, cardTarget = null;
@@ -4109,6 +4210,12 @@ footer .tag { color: var(--leaf); font-weight: 600; }
     if (window.innerWidth <= 640) return; // CSS docks it at the bottom on phones
     const cw = card.offsetWidth, ch = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight, m = 14;
     let x = (vw - cw) / 2, y = (vh - ch) / 2;
+    if (el && el.id === 'menuPanel') {
+      // tall menu on the left: sit to its right
+      const r = el.getBoundingClientRect();
+      card.style.left = Math.min(vw - cw - m, Math.max(330, r.right) + 24) + 'px'; card.style.top = Math.max(m, (vh - ch) / 2) + 'px';
+      return;
+    }
     if (el) {
       const r = el.getBoundingClientRect();
       if (r.bottom + ch + m * 2 < vh) { y = r.bottom + m + 6; }
@@ -4140,13 +4247,16 @@ footer .tag { color: var(--leaf); font-weight: 600; }
     bot.wave();
     clearTimeout(moveTimer);
     // let the view render, scroll the target into view, then light up the tab name and glide to the part being explained
+    const menu = window.aqMenu;
+    if (menu) { if (s.openMenu || s.nav) menu.open(); else menu.close(); }
     setTimeout(() => {
-      const el = s.target ? document.querySelector(s.target) : null;
-      const nav = s.nav ? document.querySelector('.topbar nav [data-nav="' + s.nav + '"]') : null;
-      if (el) { const r = el.getBoundingClientRect(); const off = (document.querySelector('.topbar').offsetHeight || 60) + 20; if (r.top < off || r.bottom > window.innerHeight - 40) window.scrollTo({ top: window.scrollY + r.top - off - (r.height < window.innerHeight * 0.5 ? 60 : 0), behavior: 'auto' }); }
+      let el = s.target ? document.querySelector(s.target) : null;
+      if (el && !el.getClientRects().length) el = null; // hidden on this screen size
+      const nav = s.nav ? document.querySelector('#menuPanel [data-nav="' + s.nav + '"]') : null;
+      if (el && el.id !== 'menuPanel' && !el.closest('.topbar')) { const r = el.getBoundingClientRect(); const off = (document.querySelector('.topbar').offsetHeight || 60) + 20; if (r.top < off || r.bottom > window.innerHeight - 40) window.scrollTo({ top: window.scrollY + r.top - off - (r.height < window.innerHeight * 0.5 ? 60 : 0), behavior: 'auto' }); }
       // the card goes straight to its spot for this step; only the spotlight visits the tab name first
       cardTarget = el; placeCard(el);
-      if (nav) { nav.scrollIntoView({ block: 'nearest', inline: 'center' }); curTarget = nav; placeSpot(nav); moveTimer = setTimeout(() => { curTarget = el; placeSpot(el); }, reduce ? 0 : 1100); }
+      if (nav) { curTarget = nav; placeSpot(nav); moveTimer = setTimeout(() => { if (menu) menu.close(); curTarget = el; placeSpot(el); }, reduce ? 300 : 1400); }
       else { curTarget = el; placeSpot(el); }
     }, 380);
     $('tourNext').focus({ preventScroll: true });
@@ -4156,7 +4266,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
     // begin in the middle of the screen (no slide in from the corner)
     card.style.transition = 'none'; cardTarget = null; placeCard(null); void card.offsetWidth; card.style.transition = ''; document.querySelectorAll('.toast').forEach((t) => t.remove()); bot.start(); show(0); }
   function end() {
-    open = false; tour.hidden = true; document.body.classList.remove('touring'); clearTimeout(moveTimer); if (typing) clearInterval(typing); bot.stop();
+    open = false; tour.hidden = true; document.body.classList.remove('touring'); clearTimeout(moveTimer); if (window.aqMenu) window.aqMenu.close(); if (typing) clearInterval(typing); bot.stop();
     try { localStorage.setItem('aqTourDone', '1'); } catch (e) { /* storage unavailable */ }
     goView('overview'); window.scrollTo(0, 0);
   }
