@@ -552,7 +552,8 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 .menu-panel .mt small { font-size: .8rem; color: var(--muted); }
 .menu-panel .nav-badge { margin-left: auto; }
 .mp-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; }
-.mp-foot .btn { flex: 1; justify-content: center; }
+.mp-foot { flex-direction: column; }
+.mp-foot .btn { flex: none; width: 100%; justify-content: center; white-space: nowrap; }
 .is-app main, .is-app footer { padding-bottom: 0 !important; }
 
 /* ---------- guided tour with Drip the robot ---------- */
@@ -590,17 +591,40 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   .is-app .tour-card { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-card { transition: none; } .tour-spot::after { animation: none; } }
+
+/* ---------- tidy top bar: Menu at the far left, everything the same height ---------- */
+.topbar .wrap { max-width: none; padding-block: 9px; gap: 12px; align-items: center; }
+.menu-btn, .tour-btn, .pn-ico { height: 40px; }
+.menu-btn { box-shadow: none; }
+.brand { gap: 7px; padding: 0 2px; }
+.tb-sep { width: 1px; height: 26px; background: var(--line); flex-shrink: 0; }
+.page-now { height: 42px; padding-block: 0; background: none; border: 1px solid var(--line); border-radius: 999px; padding: 0 16px 0 3px; max-width: 560px; }
+.page-now .pn-ico { width: 34px; height: 34px; border: 0; background: var(--leaf-soft); }
+.chip-status { margin-left: auto; height: 40px; padding: 0 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.tour-btn { padding: 0 14px; }
+@media (max-width: 860px) { .tb-sep { display: none; } .page-now { border: 0; padding-right: 6px; } }
+@media (max-width: 600px) { .chip-status { display: none; } .page-now { margin-right: auto; } }
+
+/* ---------- on wider screens the menu is a side panel that pushes the page over instead of covering it ---------- */
+@media (min-width: 900px) {
+  .menu-panel { top: var(--hdr, 60px); z-index: 8; width: 280px; box-shadow: none; padding-top: 12px; background: color-mix(in srgb, var(--surface) 96%, var(--leaf-soft)); }
+  .menu-panel .mp-head { display: none; }
+  .menu-back { display: none !important; }
+  main, footer { transition: margin-left .28s cubic-bezier(.3,.8,.3,1); }
+  body.menu-open:not(.touring) main, body.menu-open:not(.touring) footer { margin-left: 280px; }
+}
 </style>
 
 <header class="topbar">
   <div class="wrap">
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuPanel" aria-label="Open the menu">
+      <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-txt">Menu</span><span class="nav-badge" id="menuBadge" hidden>0</span>
+    </button>
     <a class="brand" href="#overview" aria-label="AquaSense overview">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c3.6 4.3 6.5 8.2 6.5 11.6A6.5 6.5 0 0 1 5.5 14.1C5.5 10.7 8.4 6.8 12 2.5Z" fill="var(--water)"/><path d="M12 19.5c0-4 1.6-6.4 5.6-7.6-.3 3.9-2.2 6.4-5.6 7.6Z" fill="var(--leaf)"/><path d="M12 20v-3.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>
       <span class="brand-txt">AquaSense</span>
     </a>
-    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menuPanel" aria-label="Open the menu">
-      <span class="burger" aria-hidden="true"><i></i><i></i><i></i></span><span class="mb-txt">Menu</span><span class="nav-badge" id="menuBadge" hidden>0</span>
-    </button>
+    <span class="tb-sep" aria-hidden="true"></span>
     <div class="page-now" id="pageNow" aria-live="polite">
       <span class="pn-ico" id="pnIco" aria-hidden="true"></span>
       <div class="pn-txt"><span class="pn-where">You are on</span><b id="pnName">Overview</b><span class="pn-desc" id="pnDesc">Home page and project summary</span></div>
@@ -4126,13 +4150,17 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   const $ = (id) => document.getElementById(id);
   const btn = $('menuBtn'), panel = $('menuPanel'), back = $('menuBack');
   let hideTimer = null;
+  const wide = window.matchMedia('(min-width: 900px)');
+  const setHdr = () => document.documentElement.style.setProperty('--hdr', (document.querySelector('.topbar').offsetHeight || 60) + 'px');
+  setHdr(); window.addEventListener('resize', setHdr);
   function open() {
+    setHdr();
     clearTimeout(hideTimer); panel.hidden = false; back.hidden = false;
-    setTimeout(() => { panel.classList.add('open'); back.classList.add('open'); }, 10);
+    setTimeout(() => { panel.classList.add('open'); back.classList.add('open'); document.body.classList.add('menu-open'); }, 10);
     btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-label', 'Close the menu');
   }
   function close() {
-    panel.classList.remove('open'); back.classList.remove('open');
+    panel.classList.remove('open'); back.classList.remove('open'); document.body.classList.remove('menu-open');
     btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-label', 'Open the menu');
     clearTimeout(hideTimer); hideTimer = setTimeout(() => { if (!panel.classList.contains('open')) { panel.hidden = true; back.hidden = true; } }, 300);
   }
@@ -4140,7 +4168,9 @@ footer .tag { color: var(--leaf); font-weight: 600; }
   btn.addEventListener('click', () => { if (isOpen()) close(); else { open(); const cur = panel.querySelector('[aria-current="page"]') || panel.querySelector('a[data-nav]'); setTimeout(() => cur.focus({ preventScroll: true }), 60); } });
   back.addEventListener('click', close);
   $('menuClose').addEventListener('click', close);
-  panel.addEventListener('click', (e) => { if (e.target.closest('a[data-nav]')) close(); });
+  // on wide screens the menu is a side panel that can stay open; on phones it closes after picking a page
+  panel.addEventListener('click', (e) => { if (e.target.closest('a[data-nav]') && !wide.matches) close(); });
+  wide.addEventListener && wide.addEventListener('change', () => { if (isOpen()) { close(); } });
   $('menuTour').addEventListener('click', () => { close(); setTimeout(() => $('tourStart').click(), 200); });
   $('menuApp').addEventListener('click', () => { close(); setTimeout(() => { const g = $('getApp'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 450); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen() && !document.body.classList.contains('touring')) { close(); btn.focus(); } });
