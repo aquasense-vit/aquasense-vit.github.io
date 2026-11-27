@@ -570,6 +570,7 @@ footer .tag { color: var(--leaf); font-weight: 600; }
 /* ---------- guided tour with Drip the robot ---------- */
 .tour-btn { flex-shrink: 0; }
 .touring .toasts, .touring .plan-pop { display: none !important; }
+.on-live .toast:not(.lv-toast) { display: none; }
 .tour { position: fixed; inset: 0; z-index: 90; }
 .tour-catch { position: absolute; inset: 0; }
 .tour-spot { position: fixed; left: 50%; top: 50%; width: 0; height: 0; border-radius: 18px; pointer-events: none;
@@ -1685,6 +1686,7 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
     const h = location.hash.replace('#', '');
     view = VIEWS.includes(h) ? h : 'overview';
     VIEWS.forEach((v) => { $('view-' + v).hidden = v !== view; });
+    document.body.classList.toggle('on-live', view === 'live'); // demo-plant alerts stay hidden on the real-hardware page
     $$('[data-nav]').forEach((a) => a.setAttribute('aria-current', a.dataset.nav === view ? 'page' : 'false'));
     window.scrollTo(0, 0);
     if (view === 'simulation') { sim3d.init(); farmStory.init(); }
@@ -4379,7 +4381,7 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
   const ago = (ts) => { if (!ts) return 'never'; const s = Math.round((Date.now() - ts) / 1000); return s < 60 ? s + ' s ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; };
   const fmtS = (t) => t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : '');
   function toast(title, body, ok) {
-    const t = document.createElement('div'); t.className = 'toast'; t.style.borderColor = ok ? 'var(--ok)' : 'var(--crit)';
+    const t = document.createElement('div'); t.className = 'toast lv-toast'; t.style.borderColor = ok ? 'var(--ok)' : 'var(--crit)';
     t.innerHTML = '<b></b><p></p>'; t.querySelector('b').textContent = title; t.querySelector('p').textContent = body;
     $('toasts').prepend(t); setTimeout(() => t.remove(), 6000);
   }
