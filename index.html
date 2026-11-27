@@ -645,6 +645,29 @@ body.menu-open .to-top { left: 296px; }
 ::selection { background: color-mix(in srgb, var(--leaf) 30%, transparent); }
 html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transparent; }
 
+/* ---------- Live Hardware page ---------- */
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); margin-left: auto; flex-shrink: 0; }
+.live-dot.on { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+.lv-status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font: 500 .85rem var(--font-body); }
+.lv-status.on .dot { background: var(--ok); }
+.lv-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; }
+@media (max-width: 760px) { .lv-top { grid-template-columns: 1fr; } }
+.lv-keyform { display: flex; gap: 8px; }
+.lv-keyform input { flex: 1; min-width: 0; font: 400 .95rem var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; }
+.lv-unlocked { display: flex; align-items: center; gap: 10px; }
+.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 18px; }
+.lv-card { padding: 18px; display: grid; gap: 10px; }
+.lv-card.alerting { border-color: var(--crit); }
+.lv-card canvas { width: 100%; height: 70px; display: block; }
+.lv-card .lv-stale { font-size: .78rem; color: var(--warn); }
+.lv-set { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lv-set label { display: grid; gap: 3px; font-size: .78rem; color: var(--muted); }
+.lv-set input { font: 500 .9rem var(--font-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; width: 100%; }
+.lv-empty { margin-top: 18px; text-align: center; justify-items: center; padding: 36px 24px; }
+.lv-empty p { max-width: 62ch; color: var(--muted); }
+.lv-empty-ico { font-size: 2.6rem; }
+.lv-locked-note { font-size: .78rem; color: var(--muted); }
+
 /* ---------- tidy top bar: Menu at the far left, everything the same height ---------- */
 .topbar .wrap { max-width: none; padding-block: 9px; gap: 12px; align-items: center; }
 .menu-btn, .tour-btn, .pn-ico { height: 40px; }
@@ -706,6 +729,8 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
   <a href="#simulation" data-nav="simulation"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span><span class="mt"><b>3D Simulation</b><small>See AquaSense work, step by step</small></span></a>
   <a href="#history" data-nav="history"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg></span><span class="mt"><b>History</b><small>Past moisture and waterings</small></span></a>
   <a href="#assistant" data-nav="assistant"><span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14v10H9l-4 4z"/><path d="M9 10h6"/></svg></span><span class="mt"><b>Assistant</b><small>AI help, weather and fixes</small></span></a>
+  <span class="label mp-lbl" style="margin-top:6px">Real hardware</span>
+  <a href="#live" data-nav="live"><span class="mi w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-7"/><circle cx="12" cy="11" r="2"/><path d="M8.5 7.5a5 5 0 0 0 0 7M15.5 7.5a5 5 0 0 1 0 7M5.6 4.6a9 9 0 0 0 0 12.8M18.4 4.6a9 9 0 0 1 0 12.8"/></svg></span><span class="mt"><b>Live Hardware</b><small>Real readings from the ESP32</small></span><span class="live-dot" id="liveMenuDot" title="Hardware offline"></span></a>
   <div class="mp-foot">
     <button class="btn" id="menuTour">🤖 Take the tour</button>
     <a class="btn" href="#overview" id="menuApp">📱 Get the app</a>
@@ -1260,6 +1285,48 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
     </div>
   </section>
 
+  <!-- ================= LIVE HARDWARE ================= -->
+  <section data-view="live" id="view-live" hidden>
+    <div class="wrap" id="liveWrap">
+      <div class="view-head">
+        <div>
+          <span class="label">Live hardware</span>
+          <h2>Real readings from the ESP32</h2>
+          <p>This page shows what the real AquaSense hardware is sending: soil moisture, pumps and modes. It refreshes every 10 seconds. The other pages run in demo mode with simulated plants.</p>
+        </div>
+        <div class="lv-status" id="lvStatus"><span class="dot paused"></span><span id="lvStatusTxt">Checking…</span></div>
+      </div>
+      <div class="lv-top">
+        <div class="panel panel-pad lv-dev">
+          <h3>ESP32 device</h3>
+          <ul class="factors">
+            <li><span>Status</span><b id="lvOnline">—</b></li>
+            <li><span>Last reading</span><b class="mono" id="lvSeen">—</b></li>
+            <li><span>Wi-Fi signal</span><b class="mono" id="lvRssi">—</b></li>
+            <li><span>Firmware</span><b class="mono" id="lvFw">—</b></li>
+            <li><span>Commands waiting</span><b class="mono" id="lvPend">—</b></li>
+          </ul>
+        </div>
+        <div class="panel panel-pad lv-key">
+          <h3>Team controls</h3>
+          <p class="hint" id="lvKeyHint">Anyone can watch the readings. To switch pumps or change settings, enter your team password (the ADMIN_KEY you made in Cloudflare). It is saved only on this device.</p>
+          <form class="lv-keyform" id="lvKeyForm" autocomplete="off">
+            <input type="password" id="lvKey" placeholder="Team password" aria-label="Team password">
+            <button class="btn primary" type="submit">Unlock</button>
+          </form>
+          <div class="lv-unlocked" id="lvUnlocked" hidden><span class="pill on">🔓 Controls unlocked</span><button class="btn" id="lvLock">Lock</button></div>
+        </div>
+      </div>
+      <div class="lv-grid" id="lvGrid"></div>
+      <div class="panel panel-pad lv-empty" id="lvEmpty" hidden>
+        <div class="lv-empty-ico" aria-hidden="true">📡</div>
+        <h3>No hardware connected yet</h3>
+        <p>When your ESP32 sends its first reading, each of its plants appears here with live moisture, a 24-hour graph and pump controls. Until then, the Dashboard, Your Plants and History pages show simulated demo data.</p>
+        <p class="hint">Setup guide: <b>tools\esp32\README.md</b> in the project folder. To try this page without hardware, run the test sender (<b>tools\test-sender.ps1</b>).</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= ASSISTANT ================= -->
   <section data-view="assistant" id="view-assistant" hidden>
     <div class="wrap">
@@ -1324,7 +1391,7 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
           <li><a href="#overview">Overview</a> · <a href="#dashboard">Dashboard</a></li>
           <li><a href="#plants">Your Plants</a> · <a href="#pumps">Settings</a></li>
           <li><a href="#simulation">3D Simulation</a> · <a href="#history">History</a></li>
-          <li><a href="#assistant">Assistant</a></li>
+          <li><a href="#assistant">Assistant</a> · <a href="#live">Live Hardware</a></li>
         </ul>
       </div>
       <div>
@@ -1612,7 +1679,7 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
   }
 
   // ---------------- views ----------------
-  const VIEWS = ['overview', 'dashboard', 'plants', 'pumps', 'simulation', 'history', 'assistant'];
+  const VIEWS = ['overview', 'dashboard', 'plants', 'pumps', 'simulation', 'history', 'assistant', 'live'];
   let view = 'overview';
   function showView() {
     const h = location.hash.replace('#', '');
@@ -4302,6 +4369,139 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
 })();
 </script>
 <script>
+// ---------------- Live Hardware: real readings from the ESP32 via the AquaSense Worker ----------------
+(function () {
+  const API = 'https://aquasense-ai.chinmay-k1708.workers.dev';
+  const $ = (id) => document.getElementById(id);
+  let state = null, timer = null, keyCache = null, editing = {}, lastErr = '';
+  const getKey = () => { if (keyCache !== null) return keyCache; try { keyCache = localStorage.getItem('aqAdminKey') || ''; } catch (e) { keyCache = ''; } return keyCache; };
+  const setKey = (k) => { keyCache = k; try { if (k) localStorage.setItem('aqAdminKey', k); else localStorage.removeItem('aqAdminKey'); } catch (e) { /* storage unavailable */ } };
+  const ago = (ts) => { if (!ts) return 'never'; const s = Math.round((Date.now() - ts) / 1000); return s < 60 ? s + ' s ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : Math.round(s / 3600) + ' h ago'; };
+  const fmtS = (t) => t < 60 ? t + ' s' : Math.floor(t / 60) + ' min' + (t % 60 ? ' ' + t % 60 + ' s' : '');
+  function toast(title, body, ok) {
+    const t = document.createElement('div'); t.className = 'toast'; t.style.borderColor = ok ? 'var(--ok)' : 'var(--crit)';
+    t.innerHTML = '<b></b><p></p>'; t.querySelector('b').textContent = title; t.querySelector('p').textContent = body;
+    $('toasts').prepend(t); setTimeout(() => t.remove(), 6000);
+  }
+
+  async function load() {
+    try {
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 12000);
+      const r = await fetch(API + '/api/state', { cache: 'no-store', signal: ctrl.signal }); clearTimeout(tm);
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      state = j; lastErr = '';
+    } catch (e) { lastErr = navigator.onLine ? 'Could not reach the AquaSense cloud (' + (e.message || 'error') + ').' : 'You are offline.'; }
+    render();
+  }
+
+  function render() {
+    const online = !!(state && state.online) && !lastErr;
+    const dot = $('liveMenuDot'); if (dot) { dot.classList.toggle('on', online); dot.title = online ? 'Hardware online' : 'Hardware offline'; }
+    if (location.hash.replace('#', '') !== 'live') return;
+    const st = $('lvStatus');
+    st.classList.toggle('on', online); st.querySelector('.dot').className = 'dot' + (online ? '' : ' paused');
+    $('lvStatusTxt').textContent = lastErr ? 'Cloud unreachable' : !state ? 'Checking…' : online ? 'Hardware online' : state.device ? 'Hardware offline' : 'Waiting for hardware';
+    const d = state && state.device;
+    $('lvOnline').textContent = lastErr ? lastErr : online ? '🟢 Online' : d ? '⚪ Offline' : 'Not connected yet';
+    $('lvSeen').textContent = d ? ago(d.lastSeen) : '—';
+    $('lvRssi').textContent = d && d.rssi != null ? d.rssi + ' dBm' + (d.rssi > -60 ? ' (strong)' : d.rssi > -75 ? ' (good)' : ' (weak)') : '—';
+    $('lvFw').textContent = d && d.fw ? d.fw : '—';
+    $('lvPend').textContent = state ? String(state.pending || 0) : '—';
+    const unlocked = !!getKey();
+    $('lvKeyForm').hidden = unlocked; $('lvUnlocked').hidden = !unlocked;
+    const ids = state ? Object.keys(state.plants).sort((a, b) => a - b) : [];
+    $('lvEmpty').hidden = ids.length > 0;
+    const grid = $('lvGrid');
+    // keep cards that are being edited; rebuild the rest
+    ids.forEach((id) => {
+      let c = grid.querySelector('[data-lv="' + id + '"]');
+      if (!c) { c = document.createElement('article'); c.className = 'panel lv-card'; c.dataset.lv = id; grid.appendChild(c); }
+      if (editing[id]) return;
+      const p = state.plants[id], s = state.settings[id] || {}, stale = Date.now() - p.at > 6 * 60 * 1000;
+      const alertLow = p.mode === 'manual' && !p.pump && p.m < s.lowLim, alertHigh = p.mode === 'manual' && p.pump && p.m > s.highLim;
+      c.classList.toggle('alerting', alertLow || alertHigh);
+      c.innerHTML =
+        '<div class="row"><h3>Plant ' + id + '</h3><span class="pill ' + (p.pump ? 'on' : 'off') + '">' + (p.pump ? 'Pump on' : 'Pump off') + '</span></div>' +
+        (alertLow ? '<div class="pc-alert">⚠ Below ' + s.lowLim + '% and the pump is off</div>' : alertHigh ? '<div class="pc-alert">⚠ Above ' + s.highLim + '% and the pump is on</div>' : '') +
+        '<div class="pc-m"><span class="pc-val">' + Math.round(p.m) + '%</span><span class="label">raw ' + p.raw + '</span></div>' +
+        '<div class="pc-bar"><i style="width:' + p.m + '%" class="' + (p.m < s.dry ? 'dry' : '') + '"></i><b style="left:' + s.dry + '%"></b><b style="left:' + s.wet + '%"></b></div>' +
+        '<canvas aria-label="Moisture over the last 24 hours"></canvas>' +
+        (stale ? '<span class="lv-stale">No new reading for ' + ago(p.at).replace(' ago', '') + '</span>' : '<span class="label">Updated ' + ago(p.at) + '</span>') +
+        '<div class="mini-switch" role="group" aria-label="Mode for plant ' + id + '"><button data-lvact="auto" aria-pressed="' + (p.mode === 'auto') + '">Automatic</button><button data-lvact="manual" aria-pressed="' + (p.mode === 'manual') + '">Manual</button></div>' +
+        '<button class="btn pc-pump' + (p.pump && p.mode === 'manual' ? ' stop' : '') + '" data-lvact="pump"' + (p.mode !== 'manual' ? ' disabled' : '') + '>' + (p.mode !== 'manual' ? (p.pump ? 'Watering (automatic)' : 'Automatic') : p.pump ? 'Turn pump off' : 'Turn pump on') + '</button>' +
+        '<div class="pc-set">Waters ' + s.dry + '–' + s.wet + '% · alerts &lt;' + s.lowLim + '% / &gt;' + s.highLim + '% · burst ' + fmtS(s.timing) + ' · max ' + s.maxRun + ' min</div>' +
+        '<button class="btn" data-lvact="edit">Change settings</button>' +
+        (unlocked ? '' : '<span class="lv-locked-note">🔒 Enter the team password above to control this plant.</span>');
+      drawSpark(c.querySelector('canvas'), state.history[id] || [], s);
+    });
+    grid.querySelectorAll('[data-lv]').forEach((c) => { if (!ids.includes(c.dataset.lv)) c.remove(); });
+  }
+
+  function drawSpark(cv, h, s) {
+    const r = cv.getBoundingClientRect(); if (!r.width) return;
+    const dpr = window.devicePixelRatio || 1; cv.width = r.width * dpr; cv.height = r.height * dpr;
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const W = r.width, H = r.height, y = (v) => 3 + (1 - v / 100) * (H - 6), t1 = Date.now(), t0 = t1 - 24 * 3600 * 1000, x = (t) => (t - t0) / (t1 - t0) * W;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = css('--water-soft'); h.forEach((pt, i) => { if (pt[2] && h[i + 1]) g.fillRect(x(pt[0]), 0, Math.max(1, x(h[i + 1][0]) - x(pt[0])), H); });
+    g.setLineDash([3, 3]); g.lineWidth = 1;
+    g.strokeStyle = css('--soil'); g.beginPath(); g.moveTo(0, y(s.dry)); g.lineTo(W, y(s.dry)); g.stroke();
+    g.strokeStyle = css('--water'); g.beginPath(); g.moveTo(0, y(s.wet)); g.lineTo(W, y(s.wet)); g.stroke(); g.setLineDash([]);
+    if (h.length < 2) { g.fillStyle = css('--muted'); g.font = '12px sans-serif'; g.fillText('Graph builds up as readings arrive', 6, H / 2); return; }
+    g.beginPath(); h.forEach((pt, i) => { const X = x(pt[0]), Y = y(pt[1]); i ? g.lineTo(X, Y) : g.moveTo(X, Y); });
+    g.strokeStyle = css('--ink'); g.lineWidth = 1.8; g.stroke();
+  }
+
+  async function command(id, action, value) {
+    const key = getKey();
+    if (!key) { toast('Locked', 'Enter the team password first to control the hardware.'); $('lvKey').focus(); return false; }
+    try {
+      const r = await fetch(API + '/api/command', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key }, body: JSON.stringify({ plant: Number(id), action, value }) });
+      const j = await r.json();
+      if (r.status === 401) { setKey(''); toast('Wrong team password', 'Controls are locked again. Check the ADMIN_KEY you set in Cloudflare.'); render(); return false; }
+      if (!r.ok) { toast('Not sent', j.error || 'Something went wrong.'); return false; }
+      toast('Sent to Plant ' + id, 'The ESP32 picks it up with its next reading (within about 30 seconds).', true);
+      setTimeout(load, 1500); return true;
+    } catch (e) { toast('Not sent', 'Could not reach the AquaSense cloud. Check your internet connection.'); return false; }
+  }
+
+  $('lvKeyForm').addEventListener('submit', (e) => { e.preventDefault(); const k = $('lvKey').value.trim(); if (!k) return; setKey(k); $('lvKey').value = ''; render(); toast('Controls unlocked', 'If the password is wrong, the first command will tell you.', true); });
+  $('lvLock').addEventListener('click', () => { setKey(''); render(); });
+  $('lvGrid').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-lvact]'); if (!b) return;
+    const c = b.closest('[data-lv]'), id = c.dataset.lv, p = state.plants[id], s = state.settings[id];
+    const act = b.dataset.lvact;
+    if (act === 'auto' || act === 'manual') { if (p.mode !== act) command(id, 'mode', act); }
+    else if (act === 'pump') command(id, 'pump', !p.pump);
+    else if (act === 'edit') {
+      if (!getKey()) { toast('Locked', 'Enter the team password first to change settings.'); return; }
+      editing[id] = true;
+      c.innerHTML = '<div class="row"><h3>Plant ' + id + ' settings</h3></div><form class="lv-set" data-lvform>' +
+        [['dry', 'Start watering below (%)', 5, 80], ['wet', 'Stop watering at (%)', 15, 95], ['lowLim', 'Alert if below (%)', 0, 50], ['highLim', 'Alert if above (%)', 50, 100], ['timing', 'Burst length (s)', 10, 150], ['maxRun', 'Safety max run (min)', 5, 120]]
+          .map((f) => '<label>' + f[1] + '<input type="number" name="' + f[0] + '" min="' + f[2] + '" max="' + f[3] + '" value="' + s[f[0]] + '"></label>').join('') +
+        '<button class="btn primary" type="submit">Save to hardware</button><button class="btn" type="button" data-lvact="cancel">Cancel</button></form>';
+    } else if (act === 'cancel') { delete editing[id]; render(); }
+  });
+  $('lvGrid').addEventListener('submit', async (e) => {
+    e.preventDefault(); const f = e.target, c = f.closest('[data-lv]'), id = c.dataset.lv;
+    const v = {}; new FormData(f).forEach((val, k) => { v[k] = Number(val); });
+    if (await command(id, 'settings', v)) { delete editing[id]; }
+  });
+
+  function onView() {
+    const live = location.hash.replace('#', '') === 'live';
+    clearInterval(timer);
+    timer = setInterval(load, live ? 10000 : 60000); // check often on this page, rarely elsewhere (for the menu dot)
+    if (live) load();
+  }
+  window.addEventListener('hashchange', onView);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && location.hash === '#live') load(); });
+  onView(); load();
+})();
+</script>
+<script>
 // ---------------- guided tour with Drip, the AquaSense robot ----------------
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -4331,6 +4531,8 @@ html { scrollbar-color: color-mix(in srgb, var(--leaf) 45%, var(--line)) transpa
       text: 'Every reading is saved here. Pick one plant or compare up to five, switch between 24 hours, 3 days and 7 days, and see every watering in the log. It shows whether your settings really keep the plants healthy.' },
     { view: 'assistant', nav: 'assistant', target: '.assist .chat', title: 'Menu → Assistant: ask anything',
       text: 'Our AI assistant answers in plain words: "Should I water now or wait for rain?", "What suits a chili plant?", "Why are my drippers clogged?". It knows the live weather and common fixes. For one plant\'s health, ask the plant advisor in Settings.' },
+    { view: 'live', nav: 'live', target: '#liveWrap', title: 'Menu → Live Hardware: the real system',
+      text: 'This page is for the real AquaSense hardware. When our ESP32 is connected, it shows live soil moisture from each sensor, a 24-hour graph, and lets the team switch pumps and change settings with a password. Until the hardware is built, the other pages run in demo mode.' },
     { view: 'overview', target: '#getApp', title: 'There\'s an app too! 📱',
       text: 'One more thing: AquaSense is also an app. Install it on your phone or computer from here, or download the Android app (APK). It opens full screen with its own icon, keeps all your plants one tap away, and even opens offline.',
       appText: 'You\'re already using the AquaSense app, so all of this is one tap away on your home screen. To share it, send friends the link aquasense-vit.github.io; they can install the app or download the Android APK from the Overview page.' },
